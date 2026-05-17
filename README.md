@@ -46,6 +46,7 @@ mead --help
 - `must add-sugar --vol --sg --mass`
 - `must add-fruit --vol --sg --mass [--fruit | (--brix and --moisture)] [--extract-yield]`
 - `calc fortify-volume --vol --og --abv --fg [--spirit-abv] [--method]`
+- `calc fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]`
 - `calc potential-abv --og [--fg] [--method]`
 - `calc attenuation --og --fg`
 - `calc stalled-gravity --og --max-abv [--method] [--tol] [--min-fg]`
@@ -57,6 +58,7 @@ mead --help
 - `adjust so2-ph --vol --og --ph [--target-mol-so2]`
 
 All commands support `--format text|json`.
+`--spirit-vol` value is 40 by default.
 
 ## Dynamic Fermentables And Fruits
 

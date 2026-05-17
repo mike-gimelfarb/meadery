@@ -340,6 +340,31 @@ def must_fortify_volume(
     )
 
 
+@calc_app.command("fortify-abv")
+def must_fortify_abv(
+    volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
+    gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
+    fg: float = typer.Option(..., "--fg", help="Final gravity after fermentation"),
+    spirit_vol: float = typer.Option(..., "--spirit-vol", help="Volume of fortifying spirit in mL"),
+    spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
+    method: AbvMethod = typer.Option(AbvMethod.cutaia, "--method", help="ABV calculation method"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    _validate_must(volume, gravity)
+    if fg <= 0:
+        raise typer.BadParameter("final gravity must be > 0")
+    if spirit_abv <= 0:
+        raise typer.BadParameter("spirit ABV must be > 0")
+
+    result = Must(volume=volume, gravity=gravity).fortify_abv(
+        fg=fg, spirit_vol_ml=spirit_vol, spirit_abv=spirit_abv, method=method.value)
+    payload = {"fg": fg, "fortified_abv_percent": result}
+    _emit(
+        payload if output == OutputFormat.json else f'{round(result, 2)}%',
+        output
+    )
+
+
 @calc_app.command("potential-abv")
 def calc_potential_abv(
     gravity: float = typer.Option(..., "--og", help="Original gravity"),

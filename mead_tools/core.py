@@ -204,6 +204,31 @@ class Must:
             raise ValueError("The wine has already fermented past your target ABV.")
         return self.volume * (target_abv - abv_fermented) / (spirit_abv - target_abv)
 
+    def fortify_abv(self, fg: float, spirit_vol_ml: float, spirit_abv: float=40.0,
+                    method: str='cutaia') -> float:
+        '''Return the resulting ABV (%) after fermenting this must from its OG to
+        `fg` and then adding `spirit_vol_ml` milliliters of spirit at `spirit_abv` ABV.
+
+        :param fg: the final gravity after fermentation in specific gravity
+        :param spirit_vol_ml: the volume of spirit to add in milliliters
+        :param spirit_abv: the ABV of the spirit used for fortification in percent
+        :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
+        '''
+        if spirit_vol_ml < 0:
+            raise ValueError('spirit_vol_ml must be non-negative')
+        if spirit_abv < 0 or spirit_abv > 100:
+            raise ValueError('spirit_abv must be between 0 and 100')
+
+        produced_abv = self.potential_abv(fg=fg, method=method)
+        ethanol_from_must_ml = self.volume * (produced_abv / 100.0)
+        ethanol_from_spirit_ml = spirit_vol_ml * (spirit_abv / 100.0)
+        total_ethanol_ml = ethanol_from_must_ml + ethanol_from_spirit_ml
+        total_volume_ml = self.volume + spirit_vol_ml
+        if total_volume_ml == 0:
+            return 0.0
+        else:
+            return (total_ethanol_ml / total_volume_ml) * 100.0
+
     # ====================================================================================
     #                              Brewing Calculation Methods    
     # ====================================================================================
