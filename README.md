@@ -27,7 +27,13 @@ mead --help
 - `calc`: ABV, attenuation, original gravity, dilution, stalled gravity, fortification
 - `adjust`: TOSNA and SO2 adjustment calculations
 
-## Current Commands
+## ABV Calculation Methods
+
+- `standard`: simple linear formula, fast but inaccurate for typical wine/mead gravities
+- `alternate`: non-linear Hall formula, more accurate for higher gravities
+- `cutaia`: Cutaia-Reid-Speers formula, most accurate and currently the default
+
+## Supported Functions
 
 - `convert sg-to-plato --sg`
 - `convert brix-to-sg --brix`
