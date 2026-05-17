@@ -85,18 +85,21 @@ class Fruit:
 FRUITS = {
     'apple': Fruit(brix=12.0, moisture_content=86.0),
     'pear': Fruit(brix=13.0, moisture_content=84.0),
-    'peach': Fruit(brix=11.0, moisture_content=86.0),
-    'plum': Fruit(brix=14.0, moisture_content=83.0),
+    'peach': Fruit(brix=11.0, moisture_content=88.0),
+    'plum': Fruit(brix=12.0, moisture_content=86.0),
     'apricot': Fruit(brix=13.0, moisture_content=84.0),
-    'cherry-sweet': Fruit(brix=17.0, moisture_content=80.0),
+    'cherry-bing': Fruit(brix=18.0, moisture_content=80.0),
+    'cherry-montmorency': Fruit(brix=13.0, moisture_content=82.0),
     'strawberry': Fruit(brix=8.0, moisture_content=90.0),
-    'raspberry': Fruit(brix=9.0, moisture_content=89.0),
+    'raspberry': Fruit(brix=9.0, moisture_content=86.0),
     'blackberry': Fruit(brix=10.0, moisture_content=88.0),
     'blueberry': Fruit(brix=12.0, moisture_content=85.0),
     'cranberry': Fruit(brix=8.0, moisture_content=87.0),
-    'elderberry': Fruit(brix=15.0, moisture_content=80.0),
+    'elderberry': Fruit(brix=11.0, moisture_content=80.0),
     'grape-wine': Fruit(brix=24.0, moisture_content=74.0),
-    'grape-late-harvest': Fruit(brix=28.0, moisture_content=68.0)
+    'grape-late-harvest': Fruit(brix=28.0, moisture_content=68.0),
+    'banana': Fruit(brix=20.0, moisture_content=75.0),
+    'pomegrante': Fruit(brix=16.0, moisture_content=80.0),
 }
 
 
@@ -168,6 +171,20 @@ class Must:
         juice_must = Must(volume=juice_vol_ml, gravity=sg_juice)
         return self.combine(juice_must)
     
+    def fortify_volume(self, target_abv: float, target_fg: float, spirit_abv: float=40.0) -> float:
+        '''Returns the volume of spirit needed to fortify this must to a target ABV and FG.
+        
+        :param target_abv: the target ABV in percent
+        :param target_fg: the target final gravity at fortification in specific gravity
+        :param spirit_abv: the ABV of the spirit used for fortification in percent
+        '''
+        if spirit_abv <= target_abv:
+            raise ValueError("Spirit ABV must be strictly higher than the target ABV.")
+        abv_fermented = self.potential_abv(fg=target_fg, method='cutaia')
+        if abv_fermented >= target_abv:
+            raise ValueError("The wine has already fermented past your target ABV.")
+        return self.volume * (target_abv - abv_fermented) / (spirit_abv - target_abv)
+
     # ====================================================================================
     #                              Brewing Calculation Methods    
     # ====================================================================================
