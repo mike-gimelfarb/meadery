@@ -312,7 +312,7 @@ def must_add_fruit(
     )
 
 
-@must_app.command("fortify-volume")
+@calc_app.command("fortify-volume")
 def must_fortify_volume(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
@@ -452,6 +452,34 @@ def calc_dilution(
     _emit(
         payload if output == OutputFormat.json 
         else f'{fermentable_key}={masses["fermentable"]}g\nbase={masses["base"]}g', 
+        output
+    )
+
+
+@calc_app.command("dilution-to-sg")
+def calc_dilute_to_sg(
+    volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
+    gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
+    target_sg: float = typer.Option(..., "--target-sg", help="Target specific gravity after dilution"),
+    fermentable: str = typer.Option("water", "--fermentable", help="Fermentable name for dilution",
+        case_sensitive=False, show_choices=True, prompt=True,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    _validate_must(volume, gravity)
+    if target_sg <= 0:
+        raise typer.BadParameter("target SG must be > 0")
+    result = Must(volume=volume, gravity=gravity).dilute_to_sg(
+        target_sg=target_sg, fermentable=FERMENTABLES[fermentable.strip().lower()])
+    payload = {
+        "current_volume_ml": volume,
+        "current_gravity": gravity,
+        "target_gravity": target_sg,
+        "fermentable": fermentable.strip().lower(),
+        "added_fermentable_g": round(result, 2),
+    }
+    _emit(
+        payload if output == OutputFormat.json else f'{round(result, 2)}g',
         output
     )
 
