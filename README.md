@@ -39,6 +39,7 @@ mead --help
 - `must add-honey --vol --sg --mass`
 - `must add-sugar --vol --sg --mass`
 - `must add-fruit --vol --sg --mass [--fruit | (--brix and --moisture)] [--extract-yield]`
+- `must fortify-volume --vol --sg --abv --fg [--spirit-abv] [--method]`
 - `calc potential-abv --og [--fg] [--method]`
 - `calc attenuation --og --fg`
 - `calc stalled-gravity --og --max-abv [--method] [--tol] [--min-fg]`
