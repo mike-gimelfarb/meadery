@@ -315,7 +315,7 @@ def must_add_fruit(
 @must_app.command("fortify-volume")
 def must_fortify_volume(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
-    gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
+    gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
     target_abv: Optional[float] = typer.Option(..., "--abv", help="Target ABV in percent"),
     target_gravity: float = typer.Option(..., "--fg", help="Target specific gravity after fortification"),
     spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
