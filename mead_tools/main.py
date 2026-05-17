@@ -319,6 +319,7 @@ def must_fortify_volume(
     target_abv: Optional[float] = typer.Option(None, "--target-abv", help="Target ABV in percent"),
     target_gravity: float = typer.Option(..., "--target-fg", help="Target specific gravity after fortification"),
     spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
+    method: AbvMethod = typer.Option(AbvMethod.cutaia, "--method", help="ABV calculation method"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity)
@@ -330,7 +331,7 @@ def must_fortify_volume(
         raise typer.BadParameter("spirit ABV must be > 0")
 
     result = Must(volume=volume, gravity=gravity).fortify_volume(
-        target_abv=target_abv, target_fg=target_gravity, spirit_abv=spirit_abv)
+        target_abv=target_abv, target_fg=target_gravity, spirit_abv=spirit_abv, method=method.value)
     payload = {"target_abv": target_abv, "target_gravity": target_gravity, 
                "fortified_volume_ml": result}
     _emit(

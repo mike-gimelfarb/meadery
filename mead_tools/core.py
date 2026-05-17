@@ -171,16 +171,18 @@ class Must:
         juice_must = Must(volume=juice_vol_ml, gravity=sg_juice)
         return self.combine(juice_must)
     
-    def fortify_volume(self, target_abv: float, target_fg: float, spirit_abv: float=40.0) -> float:
+    def fortify_volume(self, target_abv: float, target_fg: float, spirit_abv: float=40.0,
+                       method: str='cutaia') -> float:
         '''Returns the volume of spirit needed to fortify this must to a target ABV and FG.
         
         :param target_abv: the target ABV in percent
         :param target_fg: the target final gravity at fortification in specific gravity
         :param spirit_abv: the ABV of the spirit used for fortification in percent
+        :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
         '''
         if spirit_abv <= target_abv:
             raise ValueError("Spirit ABV must be strictly higher than the target ABV.")
-        abv_fermented = self.potential_abv(fg=target_fg, method='cutaia')
+        abv_fermented = self.potential_abv(fg=target_fg, method=method)
         if abv_fermented >= target_abv:
             raise ValueError("The wine has already fermented past your target ABV.")
         return self.volume * (target_abv - abv_fermented) / (spirit_abv - target_abv)
