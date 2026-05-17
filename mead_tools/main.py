@@ -316,8 +316,8 @@ def must_add_fruit(
 def must_fortify_volume(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
-    target_abv: Optional[float] = typer.Option(None, "--target-abv", help="Target ABV in percent"),
-    target_gravity: float = typer.Option(..., "--target-fg", help="Target specific gravity after fortification"),
+    target_abv: Optional[float] = typer.Option(..., "--abv", help="Target ABV in percent"),
+    target_gravity: float = typer.Option(..., "--fg", help="Target specific gravity after fortification"),
     spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
     method: AbvMethod = typer.Option(AbvMethod.cutaia, "--method", help="ABV calculation method"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
