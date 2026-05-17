@@ -13,4 +13,4 @@ dependencies = [
 ]
 
 [project.scripts]
-meadtools = "mead_tools.main:app"
+mead = "mead_tools.main:app"
