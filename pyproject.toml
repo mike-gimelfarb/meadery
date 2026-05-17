@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mead-tools"
+version = "0.1"
+description = "Tools for mead and wine calculations."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "typer>=0.12,<1.0"
+]
+
+[project.scripts]
+meadtools = "mead_tools.main:app"
