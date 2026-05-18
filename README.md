@@ -39,13 +39,13 @@ mead --help
 - `convert brix-to-sg --brix`
 - `correct hydrometer --sg --temp --calib-temp`
 - `correct refractometer --brix --og`
-- `must combine --vol1 --sg1 --vol2 --sg2`
-- `must add --vol --sg --fermentable --mass`
-- `must add-water --vol --sg --mass`
-- `must add-honey --vol --sg --mass`
-- `must add-sugar --vol --sg --mass`
-- `must add-fruit --vol --sg --mass [--fruit | (--brix and --moisture)] [--extract-yield]`
-- `must add-fruit-juice --vol --sg --fruit-vol [--fruit | --brix]`
+- `must combine --vol1 --sg1 --ph1 --vol2 --sg2 --ph2`
+- `must add --vol --sg --ph --fermentable --mass`
+- `must add-water --vol --sg --ph --mass`
+- `must add-honey --vol --sg --ph --mass`
+- `must add-sugar --vol --sg --ph --mass`
+- `must add-fruit --vol --sg --ph --fruit --mass [--extract-yield]`
+- `must add-fruit-juice --vol --sg --ph --fruit --fruit-vol`
 - `must from-recipe <file>`
 - `calc fortify-volume --vol --og --abv --fg [--spirit-abv] [--method]`
 - `calc fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]`
@@ -68,13 +68,13 @@ All commands support `--format text|json`.
 
 Current fermentables are defined in `FERMENTABLES`:
 - `water`
-- `white-grape-juice`
 - `honey`
 - `maple`
 - `agave`
 - `molasses`
 - `table-sugar`
 - `brown-sugar`
+- `liquid-malt-extract`
 
 Current fruits are defined in `FRUITS`:
 - `apple`
