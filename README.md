@@ -45,6 +45,7 @@ mead --help
 - `must add-honey --vol --sg --mass`
 - `must add-sugar --vol --sg --mass`
 - `must add-fruit --vol --sg --mass [--fruit | (--brix and --moisture)] [--extract-yield]`
+- `must add-fruit-juice --vol --sg --fruit-vol [--fruit | --brix]`
 - `calc fortify-volume --vol --og --abv --fg [--spirit-abv] [--method]`
 - `calc fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]`
 - `calc potential-abv --og [--fg] [--method]`

@@ -203,6 +203,21 @@ class Must:
         juice_must = Must(volume=juice_vol_ml, gravity=sg_juice)
         return self.combine(juice_must)
     
+    def add_fruit_juice(self, fruit: Fruit, volume: float) -> 'Must':
+        '''Returns a new Must with the given volume of fruit juice added.
+        
+        :param fruit: the Fruit profile to use for the juice
+        :param volume: the volume of fruit juice to add in milliliters
+        '''
+        if volume < 0:
+            raise ValueError('Fruit juice volume must be non-negative.')
+        if fruit.brix < 0 or fruit.brix >= 100:
+            raise ValueError('Fruit brix must be between 0 and 100 (exclusive upper bound).')
+
+        sg_juice = brix_to_sg(fruit.brix)
+        juice_must = Must(volume=volume, gravity=sg_juice)
+        return self.combine(juice_must)
+
     def fortify_volume(self, target_abv: float, target_fg: float, spirit_abv: float=40.0,
                        method: str='cutaia', tol: float=1e-6) -> dict:
         '''Returns the volume of spirit needed to fortify this must to a target ABV and FG.

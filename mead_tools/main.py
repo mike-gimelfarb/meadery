@@ -75,6 +75,10 @@ def _emit(value, output: OutputFormat) -> None:
     typer.echo(str(value))
 
 
+# ===================================================
+#                Conversion Commands
+# ===================================================
+
 @convert_app.command("sg-to-plato")
 def convert_sg_to_plato(
     gravity: float = typer.Option(..., "--sg", help="Specific gravity"),
@@ -98,6 +102,10 @@ def convert_brix_to_sg(
         output
     )
 
+
+# ===================================================
+#                Correction Commands
+# ===================================================
 
 @correct_app.command("hydrometer")
 def correct_hydrometer(
@@ -142,6 +150,10 @@ def correct_refractometer(
         output,
     )
 
+
+# ===================================================
+#                  Must Commands
+# ===================================================
 
 @must_app.command("combine")
 def must_combine(
@@ -312,8 +324,63 @@ def must_add_fruit(
     )
 
 
+@must_app.command("add-fruit-juice")
+def must_add_fruit_juice(
+    volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
+    gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
+    juice_volume: float = typer.Option(..., "--juice-vol", help="Fruit juice volume in mL"),
+    fruit: Optional[str] = typer.Option(None, "--fruit", help="Preset fruit name",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
+    brix: Optional[float] = typer.Option(None, "--brix", help="Custom fruit juice Brix"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    _validate_must(volume, gravity)
+    if juice_volume < 0:
+        raise typer.BadParameter("juice-vol must be >= 0")
+
+    selected_fruit = None
+    source = "custom"
+    if fruit is not None:
+        fruit_key = fruit.strip().lower()
+        selected_fruit = FRUITS.get(fruit_key)
+        if selected_fruit is None:
+            choices = ", ".join(sorted(FRUITS.keys()))
+            raise typer.BadParameter(f"unknown fruit '{fruit}'. Choose one of: {choices}")
+        source = fruit_key
+    else:
+        if brix is None:
+            raise typer.BadParameter("provide either --fruit or --brix")
+        selected_fruit = Fruit(brix=brix, moisture_content=0.0)
+
+    try:
+        result = Must(volume=volume, gravity=gravity).add_fruit_juice(
+            selected_fruit,
+            volume=juice_volume,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    payload = {
+        "fruit": source,
+        "brix": selected_fruit.brix,
+        "juice_volume_ml": juice_volume,
+        "volume_ml": result.volume,
+        "gravity": result.gravity,
+    }
+    _emit(
+        payload if output == OutputFormat.json
+        else f"vol={round(result.volume, 2)}ml\nsg={round(result.gravity, 4)}",
+        output,
+    )
+
+
+# ===================================================
+#                  Calc Commands
+# ===================================================
+
 @calc_app.command("fortify-volume")
-def must_fortify_volume(
+def calc_fortify_volume(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
     target_abv: Optional[float] = typer.Option(..., "--abv", help="Target ABV in percent"),
@@ -348,7 +415,7 @@ def must_fortify_volume(
 
 
 @calc_app.command("fortify-abv")
-def must_fortify_abv(
+def calc_fortify_abv(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
     fg: float = typer.Option(..., "--fg", help="Final gravity after fermentation"),
@@ -515,6 +582,10 @@ def calc_dilute_to_sg(
         output
     )
 
+
+# ===================================================
+#                  Adjust Commands
+# ===================================================
 
 @adjust_app.command("tosna3")
 def adjust_tosna3(
