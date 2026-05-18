@@ -18,6 +18,20 @@ def root_find(f, a: float, b: float, tol: float=1e-6) -> float:
             b, fb = c, fc
 
 
+def root_bracket(f, a: float, b: float, expand: float=2.0, max_bound: float=1e7):
+    '''Returns a bracket [a, b] such that f(a) and f(b) have opposite signs.'''
+    fa = f(a)
+    fb = f(b)
+    if fa == 0.0:
+        return a, b, fa, fb
+    while fa * fb > 0 and abs(b) < max_bound:
+        b *= expand
+        fb = f(b)
+    if fa * fb > 0:
+        raise ValueError('Unable to bracket root.')
+    return a, b, fa, fb
+
+
 def sg_to_plato(sg: float) -> float:
     '''Converts specific gravity to Plato using the polynomial approximation.'''
     return -616.868 + (1111.14 * sg) - (630.272 * sg ** 2) + (135.997 * sg ** 3)
@@ -199,35 +213,23 @@ class Must:
         :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
         :param tol: tolerance for root finding
         '''
+        V = self.volume
         if spirit_abv <= target_abv:
             raise ValueError("Spirit ABV must be strictly higher than the target ABV.")
-        V = self.volume
         if target_fg < 1.0:
-            raise ValueError('target_fg must be > 1.0.')
-        target_fg = max(target_fg, 1.0 + 1e-6)
+            raise ValueError('target_fg must be >= 1.0.')
         if self.potential_abv(fg=target_fg, method=method) >= target_abv:
             raise ValueError("The wine has already fermented past your target ABV.")
 
-        # solve directly for spirit volume v using the module's regula‑falsi root finder
         def fg_before_of_v(v):
             return 1.0 + (target_fg - 1.0) * (V + v) / V
 
         def f_v(v):
-            fg_b = fg_before_of_v(v)
             post_abv = self.fortify_abv(
-                fg=fg_b, spirit_vol_ml=v, spirit_abv=spirit_abv, method=method)
+                fg=fg_before_of_v(v), spirit_vol_ml=v, spirit_abv=spirit_abv, method=method)
             return post_abv - target_abv
 
-        # bracket the solution using exponential search
-        lo, hi = 0.0, max(V, 1)
-        flo, fhi = f_v(lo), f_v(hi)
-        while flo * fhi > 0 and hi < 1e7:
-            hi *= 2.0
-            fhi = f_v(hi)
-        if flo * fhi > 0:
-            raise ValueError('Unable to bracket solution for fortify_volume.')
-
-        # find the spirit volume needed using root finding
+        lo, hi, _, _ = root_bracket(f_v, 0.0, max(V, 1), expand=2.0, max_bound=1e7)
         v_needed = root_find(f_v, lo, hi, tol=tol)
         if v_needed < 0:
             raise ValueError('Calculated spirit volume is negative.')
@@ -333,19 +335,13 @@ class Must:
         if target_sg >= self.gravity:
             raise ValueError('target_sg must be lower than current must gravity.')
         
-        # bracket the solution using exponential search
-        a, b = 0.0, 100.0
-        fa = self.add(fermentable, a).gravity - target_sg
-        fb = self.add(fermentable, b).gravity - target_sg
-        if fa <= 0:
+        def _f_mass(m):
+            return self.add(fermentable, m).gravity - target_sg
+        
+        a0, b0 = 0.0, 100.0
+        if _f_mass(a0) <= 0:
             return 0.0
-        while fb > 0 and b < 1e7:
-            a, fa = b, fb
-            b *= 2.0
-            fb = self.add(fermentable, b).gravity - target_sg
-        if fb > 0:
-            raise RuntimeError('Unable to bracket solution for dilute_to_sg.')
-
+        a, b, _, _ = root_bracket(_f_mass, a0, b0, expand=2.0, max_bound=1e7)
         return root_find(
             lambda mass: self.add(fermentable, mass).gravity - target_sg,
             a, b, tol=tol
