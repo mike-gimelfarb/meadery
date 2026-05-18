@@ -129,6 +129,7 @@ FRUITS = {
     'grape-late-harvest': Fruit(brix=28.0, moisture_content=68.0),
     'banana': Fruit(brix=20.0, moisture_content=75.0),
     'pomegranate': Fruit(brix=16.0, moisture_content=80.0),
+    'watermelon': Fruit(brix=10.0, moisture_content=92.0)
 }
 
 
