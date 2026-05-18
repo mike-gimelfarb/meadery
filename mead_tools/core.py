@@ -189,20 +189,50 @@ class Must:
         return self.combine(juice_must)
     
     def fortify_volume(self, target_abv: float, target_fg: float, spirit_abv: float=40.0,
-                       method: str='cutaia') -> float:
+                       method: str='cutaia', tol: float=1e-6) -> dict:
         '''Returns the volume of spirit needed to fortify this must to a target ABV and FG.
+        Also returns the gravity at which to fortify.
         
         :param target_abv: the target ABV in percent
-        :param target_fg: the target final gravity at fortification in specific gravity
+        :param target_fg: the target final gravity after fortification in specific gravity
         :param spirit_abv: the ABV of the spirit used for fortification in percent
         :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
+        :param tol: tolerance for root finding
         '''
         if spirit_abv <= target_abv:
             raise ValueError("Spirit ABV must be strictly higher than the target ABV.")
-        abv_fermented = self.potential_abv(fg=target_fg, method=method)
-        if abv_fermented >= target_abv:
+        V = self.volume
+        if target_fg < 1.0:
+            raise ValueError('target_fg must be > 1.0.')
+        target_fg = max(target_fg, 1.0 + 1e-6)
+        if self.potential_abv(fg=target_fg, method=method) >= target_abv:
             raise ValueError("The wine has already fermented past your target ABV.")
-        return self.volume * (target_abv - abv_fermented) / (spirit_abv - target_abv)
+
+        # solve directly for spirit volume v using the module's regula‑falsi root finder
+        def fg_before_of_v(v):
+            return 1.0 + (target_fg - 1.0) * (V + v) / V
+
+        def f_v(v):
+            fg_b = fg_before_of_v(v)
+            post_abv = self.fortify_abv(
+                fg=fg_b, spirit_vol_ml=v, spirit_abv=spirit_abv, method=method)
+            return post_abv - target_abv
+
+        # bracket the solution using exponential search
+        lo, hi = 0.0, max(V, 1)
+        flo, fhi = f_v(lo), f_v(hi)
+        while flo * fhi > 0 and hi < 1e7:
+            hi *= 2.0
+            fhi = f_v(hi)
+        if flo * fhi > 0:
+            raise ValueError('Unable to bracket solution for fortify_volume.')
+
+        # find the spirit volume needed using root finding
+        v_needed = root_find(f_v, lo, hi, tol=tol)
+        if v_needed < 0:
+            raise ValueError('Calculated spirit volume is negative.')
+        fg_before = fg_before_of_v(v_needed)
+        return {"fortify_gravity": fg_before, "spirit_volume": v_needed}
 
     def fortify_abv(self, fg: float, spirit_vol_ml: float, spirit_abv: float=40.0,
                     method: str='cutaia') -> float:

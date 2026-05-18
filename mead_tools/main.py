@@ -330,12 +330,19 @@ def must_fortify_volume(
     if spirit_abv <= 0:
         raise typer.BadParameter("spirit ABV must be > 0")
 
-    result = Must(volume=volume, gravity=gravity).fortify_volume(
-        target_abv=target_abv, target_fg=target_gravity, spirit_abv=spirit_abv, method=method.value)
+    try:
+        result = Must(volume=volume, gravity=gravity).fortify_volume(
+            target_abv=target_abv, target_fg=target_gravity, spirit_abv=spirit_abv, 
+            method=method.value)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     payload = {"target_abv": target_abv, "target_gravity": target_gravity, 
-               "fortified_volume_ml": result}
+               **result}
+    spirit_vol = round(result["spirit_volume"], 2)
+    fortify_gravity = round(result["fortify_gravity"], 4)
     _emit(
-        payload if output == OutputFormat.json else f'{round(result, 2)}ml',
+        payload if output == OutputFormat.json 
+        else f'spirit_volume={spirit_vol}ml\nfortify_gravity={fortify_gravity}',
         output
     )
 
