@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 
 
-def root_find(f, a: float, b: float, tol: float=1e-6) -> float:
+def root_find(f, a, b, tol=1e-6):
     '''Finds a root of the function f in the interval [a, b] using the regula falsi method.'''
-    fa = f(a)
-    fb = f(b)
+    fa, fb = f(a), f(b)
     while True:
         c = (a * fb - b * fa) / (fb - fa)
         fc = f(c)
@@ -18,18 +17,17 @@ def root_find(f, a: float, b: float, tol: float=1e-6) -> float:
             b, fb = c, fc
 
 
-def root_bracket(f, a: float, b: float, expand: float=2.0, max_bound: float=1e7):
+def root_bracket(f, a, b, expand=2.0, max_bound=1e7):
     '''Returns a bracket [a, b] such that f(a) and f(b) have opposite signs.'''
-    fa = f(a)
-    fb = f(b)
+    fa, fb = f(a), f(b)
     if fa == 0.0:
-        return a, b, fa, fb
+        return a, b
     while fa * fb > 0 and abs(b) < max_bound:
         b *= expand
         fb = f(b)
     if fa * fb > 0:
         raise ValueError('Unable to bracket root.')
-    return a, b, fa, fb
+    return a, b
 
 
 def sg_to_plato(sg: float) -> float:
@@ -130,7 +128,7 @@ FRUITS = {
     'grape-wine': Fruit(brix=24.0, moisture_content=74.0),
     'grape-late-harvest': Fruit(brix=28.0, moisture_content=68.0),
     'banana': Fruit(brix=20.0, moisture_content=75.0),
-    'pomegrante': Fruit(brix=16.0, moisture_content=80.0),
+    'pomegranate': Fruit(brix=16.0, moisture_content=80.0),
 }
 
 
@@ -147,12 +145,11 @@ class Must:
     def combine(self, other: 'Must') -> 'Must':
         '''Returns a new Must that is the combination of this Must and another Must.'''
         total_volume = self.volume + other.volume
+        if total_volume <= 0:
+            raise ValueError('Total volume must be positive when combining musts.')
         points_a = (self.gravity - 1.0) * self.volume
         points_b = (other.gravity - 1.0) * other.volume
-        if total_volume == 0:
-            new_gravity = 1.0
-        else:
-            new_gravity = 1.0 + (points_a + points_b) / total_volume
+        new_gravity = 1.0 + (points_a + points_b) / total_volume
         return Must(volume=total_volume, gravity=new_gravity)
     
     def add(self, fermentable: Fermentable, mass: float) -> 'Must':
@@ -161,6 +158,8 @@ class Must:
         :param fermentable: the Fermentable to add
         :param mass: the mass of the fermentable to add in grams
         '''
+        if mass < 0:
+            raise ValueError('Mass of fermentable must be non-negative.')
         v_total_ml = self.volume + fermentable.volume(mass)
         v_total_gal = v_total_ml / 3785.41
         w_additive_lbs = mass / 453.59
@@ -224,13 +223,13 @@ class Must:
         def fg_before_of_v(v):
             return 1.0 + (target_fg - 1.0) * (V + v) / V
 
-        def f_v(v):
+        def f_v_to_abv(v):
             post_abv = self.fortify_abv(
                 fg=fg_before_of_v(v), spirit_vol_ml=v, spirit_abv=spirit_abv, method=method)
             return post_abv - target_abv
 
-        lo, hi, _, _ = root_bracket(f_v, 0.0, max(V, 1), expand=2.0, max_bound=1e7)
-        v_needed = root_find(f_v, lo, hi, tol=tol)
+        lo, hi = root_bracket(f_v_to_abv, 0.0, max(V, 1))
+        v_needed = root_find(f_v_to_abv, lo, hi, tol=tol)
         if v_needed < 0:
             raise ValueError('Calculated spirit volume is negative.')
         fg_before = fg_before_of_v(v_needed)
@@ -256,10 +255,9 @@ class Must:
         ethanol_from_spirit_ml = spirit_vol_ml * (spirit_abv / 100.0)
         total_ethanol_ml = ethanol_from_must_ml + ethanol_from_spirit_ml
         total_volume_ml = self.volume + spirit_vol_ml
-        if total_volume_ml == 0:
-            return 0.0
-        else:
-            return (total_ethanol_ml / total_volume_ml) * 100.0
+        if total_volume_ml <= 0:
+            raise ValueError('Total volume after fortification must be positive.')
+        return (total_ethanol_ml / total_volume_ml) * 100.0
 
     # ====================================================================================
     #                              Brewing Calculation Methods    
@@ -304,10 +302,9 @@ class Must:
         :param tol: tolerance for the root-finding algorithm
         :param min_fg: minimum final gravity to consider for root-finding
         '''
-        return root_find(
-            lambda fg: self.potential_abv(fg=fg, method=method) - yeast_abv_limit,
-            min_fg, self.gravity, tol=tol
-        )
+        def f_fg_to_abv(fg):
+            return self.potential_abv(fg=fg, method=method) - yeast_abv_limit
+        return root_find(f_fg_to_abv, min_fg, self.gravity, tol=tol)
      
     def dilution(self, fermentable: Fermentable, base: Fermentable=FERMENTABLES['water']) -> float:
         '''Returns the mass of a fermentable and base required to create this must.'''
@@ -323,8 +320,7 @@ class Must:
         mass_base_g = total_mass_g - mass_ferment_g
         return mass_ferment_g, mass_base_g
 
-    def dilute_to_sg(self, target_sg: float, 
-                     fermentable: Fermentable=FERMENTABLES['water'], 
+    def dilute_to_sg(self, target_sg: float, fermentable: Fermentable=FERMENTABLES['water'], 
                      tol: float=1e-6) -> float:
         '''Compute mass in grams of `fermentable` to add to this must to reach `target_sg`.
         
@@ -335,17 +331,15 @@ class Must:
         if target_sg >= self.gravity:
             raise ValueError('target_sg must be lower than current must gravity.')
         
-        def _f_mass(m):
+        def f_mass_to_abv(m):
             return self.add(fermentable, m).gravity - target_sg
         
         a0, b0 = 0.0, 100.0
-        if _f_mass(a0) <= 0:
+        if f_mass_to_abv(a0) <= 0:
             return 0.0
-        a, b, _, _ = root_bracket(_f_mass, a0, b0, expand=2.0, max_bound=1e7)
-        return root_find(
-            lambda mass: self.add(fermentable, mass).gravity - target_sg,
-            a, b, tol=tol
-        )
+        else:
+            a, b = root_bracket(f_mass_to_abv, a0, b0)
+            return root_find(f_mass_to_abv, a, b, tol=tol)
         
     # ====================================================================================
     #                           Adjustment Calculation Methods    
@@ -398,13 +392,12 @@ def original_gravity(target_abv: float, fg: float,
     :param tol: tolerance for the root-finding algorithm
     :param max_og: maximum original gravity to consider for root-finding
     '''
-    return root_find(
-        lambda og: Must(1, og).potential_abv(fg=fg, method=method) - target_abv,
-        fg, max_og, tol=tol
-    )
+    def f_og_to_abv(og):
+        return Must(1, og).potential_abv(fg=fg, method=method) - target_abv
+    return root_find(f_og_to_abv, fg, max_og, tol=tol)
     
 
 if __name__ == "__main__":
     must = Must(volume=3400, gravity=1.11)
-    print(must.dilution_to_sg(1.1))
+    print(must.dilute_to_sg(1.1))
     
