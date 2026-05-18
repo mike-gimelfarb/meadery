@@ -1,14 +1,11 @@
-import json
-
-from typing import Optional, List
 from enum import Enum
-
+import json
 import typer
+from typing import Optional, List
 
 from mead_tools.core import (
     FERMENTABLES,
     FRUITS,
-    Fruit,
     Hydrometer,
     Must,
     Refractometer,
@@ -54,15 +51,18 @@ class YeastDemand(str, Enum):
 def get_fermentable_choices() -> List[str]:
     return list(FERMENTABLES.keys())
 
+
 def get_fruit_choices() -> List[str]:
     return list(FRUITS.keys())
 
 
-def _validate_must(volume: float, gravity: float) -> None:
+def _validate_must(volume: float, gravity: float, ph: Optional[float] = None) -> None:
     if volume < 0:
         raise typer.BadParameter("volume must be >= 0")
     if gravity <= 0:
         raise typer.BadParameter("gravity must be > 0")
+    if ph is not None and (ph < 0 or ph > 14):
+        raise typer.BadParameter("pH must be between 0 and 14")
 
 
 def _emit(value, output: OutputFormat) -> None:
@@ -160,18 +160,19 @@ def correct_refractometer(
 def must_combine(
     volume_a: float = typer.Option(..., "--vol1", help="Must A volume in mL"),
     gravity_a: float = typer.Option(..., "--sg1", help="Must A specific gravity"),
+    ph_a: float = typer.Option(..., "--ph1", help="Must A pH"),
     volume_b: float = typer.Option(..., "--vol2", help="Must B volume in mL"),
     gravity_b: float = typer.Option(..., "--sg2", help="Must B specific gravity"),
+    ph_b: float = typer.Option(..., "--ph2", help="Must B pH"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
-    _validate_must(volume_a, gravity_a)
-    _validate_must(volume_b, gravity_b)
-    result = Must(volume=volume_a, gravity=gravity_a).combine(
-        Must(volume=volume_b, gravity=gravity_b))
-    payload = {"volume_ml": result.volume, "gravity": result.gravity}
+    _validate_must(volume_a, gravity_a, ph_a)
+    _validate_must(volume_b, gravity_b, ph_b)
+    result = Must(volume=volume_a, gravity=gravity_a, ph=ph_a).combine(
+        Must(volume=volume_b, gravity=gravity_b, ph=ph_b))
+    payload = {"volume_ml": result.volume, "gravity": result.gravity, "ph": result.ph}
     _emit(
-        payload if output == OutputFormat.json 
-        else f"vol={round(result.volume, 2)}ml\nsg={round(result.gravity, 4)}", 
+        payload if output == OutputFormat.json else str(result), 
         output
     )
 
@@ -180,29 +181,31 @@ def must_combine(
 def must_add(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
+    ph: float = typer.Option(..., "--ph", help="Must pH"),
     fermentable: str = typer.Option(..., "--fermentable", help="Fermentable name",
         case_sensitive=False, show_choices=True, prompt=True, 
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
     mass: float = typer.Option(..., "--mass", help="Fermentable mass in grams"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
-    _validate_must(volume, gravity)
+    _validate_must(volume, gravity, ph)
     if mass < 0:
         raise typer.BadParameter("mass must be >= 0")
     fermentable_key = fermentable.strip().lower()
     if fermentable_key not in FERMENTABLES:
         choices = ", ".join(sorted(FERMENTABLES.keys()))
         raise typer.BadParameter(f"unknown fermentable '{fermentable}'. Choose one of: {choices}")
-    result = Must(volume=volume, gravity=gravity).add(FERMENTABLES[fermentable_key], mass=mass)
+    result = Must(volume=volume, gravity=gravity, ph=ph).add(
+        FERMENTABLES[fermentable_key], mass=mass)
     payload = {
         "fermentable": fermentable_key,
         "mass_g": mass,
         "volume_ml": result.volume,
         "gravity": result.gravity,
+        "ph": result.ph,
     }
     _emit(
-        payload if output == OutputFormat.json
-        else f"vol={round(result.volume, 2)}ml\nsg={round(result.gravity, 4)}", 
+        payload if output == OutputFormat.json else str(result), 
         output
     )
 
@@ -211,18 +214,19 @@ def must_add(
 def must_add_water(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
+    ph: float = typer.Option(..., "--ph", help="Must pH"),
     mass: float = typer.Option(..., "--mass", help="Water mass in grams"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
-    _validate_must(volume, gravity)
+    _validate_must(volume, gravity, ph)
     if mass < 0:
         raise typer.BadParameter("mass must be >= 0")
 
-    result = Must(volume=volume, gravity=gravity).add_water(mass=mass)
-    payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity}
+    result = Must(volume=volume, gravity=gravity, ph=ph).add_water(mass=mass)
+    payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity, 
+               "ph": result.ph}
     _emit(
-        payload if output == OutputFormat.json 
-        else f"vol={round(result.volume, 2)}ml\nsg={round(result.gravity, 4)}", 
+        payload if output == OutputFormat.json else str(result), 
         output
     )
 
@@ -231,18 +235,19 @@ def must_add_water(
 def must_add_honey(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
+    ph: float = typer.Option(..., "--ph", help="Must pH"),
     mass: float = typer.Option(..., "--mass", help="Honey mass in grams"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
-    _validate_must(volume, gravity)
+    _validate_must(volume, gravity, ph)
     if mass < 0:
         raise typer.BadParameter("mass must be >= 0")
 
-    result = Must(volume=volume, gravity=gravity).add_honey(mass=mass)
-    payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity}
+    result = Must(volume=volume, gravity=gravity, ph=ph).add_honey(mass=mass)
+    payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity, 
+               "ph": result.ph}
     _emit(
-        payload if output == OutputFormat.json 
-        else f"vol={round(result.volume, 2)}ml\nsg={round(result.gravity, 4)}", 
+        payload if output == OutputFormat.json else str(result), 
         output
     )
 
@@ -251,18 +256,19 @@ def must_add_honey(
 def must_add_sugar(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
+    ph: float = typer.Option(..., "--ph", help="Must pH"),
     mass: float = typer.Option(..., "--mass", help="Sugar mass in grams"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
-    _validate_must(volume, gravity)
+    _validate_must(volume, gravity, ph)
     if mass < 0:
         raise typer.BadParameter("mass must be >= 0")
 
-    result = Must(volume=volume, gravity=gravity).add_sugar(mass=mass)
-    payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity}
+    result = Must(volume=volume, gravity=gravity, ph=ph).add_sugar(mass=mass)
+    payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity, 
+               "ph": result.ph}
     _emit(
-        payload if output == OutputFormat.json 
-        else f"vol={round(result.volume, 2)}ml\nsg={round(result.gravity, 4)}", 
+        payload if output == OutputFormat.json else str(result), 
         output
     )
 
@@ -271,41 +277,30 @@ def must_add_sugar(
 def must_add_fruit(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
-    mass: float = typer.Option(..., "--mass", help="Fruit mass in grams"),
+    ph: float = typer.Option(..., "--ph", help="Must pH"),
     fruit: Optional[str] = typer.Option(None, "--fruit", help="Preset fruit name",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
-    brix: Optional[float] = typer.Option(None, "--brix", help="Custom fruit juice Brix"),
-    moisture: Optional[float] = typer.Option(None, "--moisture", help="Custom fruit moisture percentage"),
+    mass: float = typer.Option(..., "--mass", help="Fruit mass in grams"),
     extract_yield: float = typer.Option(1.0, "--extract-yield", help="Extracted juice yield from 0 to 1"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
-    _validate_must(volume, gravity)
+    _validate_must(volume, gravity, ph)
     if mass < 0:
         raise typer.BadParameter("mass must be >= 0")
     if extract_yield < 0 or extract_yield > 1:
         raise typer.BadParameter("extract-yield must be between 0 and 1")
 
-    selected_fruit = None
-    source = "custom"
-    if fruit is not None:
-        fruit_key = fruit.strip().lower()
-        selected_fruit = FRUITS.get(fruit_key)
-        if selected_fruit is None:
-            choices = ", ".join(sorted(FRUITS.keys()))
-            raise typer.BadParameter(f"unknown fruit '{fruit}'. Choose one of: {choices}")
-        source = fruit_key
-    else:
-        if brix is None or moisture is None:
-            raise typer.BadParameter("provide either --fruit or both --brix and --moisture")
-        selected_fruit = Fruit(brix=brix, moisture_content=moisture)
-
+    fruit_key = fruit.strip().lower()
+    selected_fruit = FRUITS.get(fruit_key)
+    if selected_fruit is None:
+        choices = ", ".join(sorted(FRUITS.keys()))
+        raise typer.BadParameter(f"unknown fruit '{fruit}'. Choose one of: {choices}")
+    source = fruit_key
+    
     try:
-        result = Must(volume=volume, gravity=gravity).add_fruit(
-            selected_fruit,
-            mass=mass,
-            extract_yield=extract_yield,
-        )
+        result = Must(volume=volume, gravity=gravity, ph=ph).add_fruit(
+            selected_fruit, mass=mass, extract_yield=extract_yield)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
@@ -317,10 +312,52 @@ def must_add_fruit(
         "mass_g": mass,
         "volume_ml": result.volume,
         "gravity": result.gravity,
+        "ph": result.ph,
     }
     _emit(
-        payload if output == OutputFormat.json
-        else f"vol={round(result.volume, 2)}ml\nsg={round(result.gravity, 4)}",
+        payload if output == OutputFormat.json else str(result),
+        output,
+    )
+
+
+@must_app.command("add-fruit-juice")
+def must_add_fruit_juice(
+    volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
+    gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
+    ph: float = typer.Option(..., "--ph", help="Must pH"),
+    fruit: Optional[str] = typer.Option(None, "--fruit", help="Preset fruit name",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
+    juice_volume: float = typer.Option(..., "--juice-vol", help="Fruit juice volume in mL"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    _validate_must(volume, gravity, ph)
+    if juice_volume < 0:
+        raise typer.BadParameter("juice-vol must be >= 0")
+   
+    fruit_key = fruit.strip().lower()
+    selected_fruit = FRUITS.get(fruit_key)
+    if selected_fruit is None:
+        choices = ", ".join(sorted(FRUITS.keys()))
+        raise typer.BadParameter(f"unknown fruit '{fruit}'. Choose one of: {choices}")
+    source = fruit_key
+
+    try:
+        result = Must(volume=volume, gravity=gravity, ph=ph).add_fruit_juice(
+            selected_fruit, volume=juice_volume)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    payload = {
+        "fruit": source,
+        "brix": selected_fruit.brix,
+        "juice_volume_ml": juice_volume,
+        "volume_ml": result.volume,
+        "gravity": result.gravity,
+        "ph": result.ph,
+    }
+    _emit(
+        payload if output == OutputFormat.json else str(result),
         output,
     )
 
@@ -334,60 +371,9 @@ def must_from_recipe(
         must = parse_recipe(recipe)
     except Exception as exc:
         raise typer.BadParameter(str(exc)) from exc
-    payload = {"volume_ml": must.volume, "gravity": must.gravity}
+    payload = {"volume_ml": must.volume, "gravity": must.gravity, "ph": must.ph}
     _emit(
-        payload if output == OutputFormat.json else f"vol={round(must.volume, 2)}ml\nsg={round(must.gravity, 4)}",
-        output,
-    )
-
-
-@must_app.command("add-fruit-juice")
-def must_add_fruit_juice(
-    volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
-    gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
-    juice_volume: float = typer.Option(..., "--juice-vol", help="Fruit juice volume in mL"),
-    fruit: Optional[str] = typer.Option(None, "--fruit", help="Preset fruit name",
-        case_sensitive=False, show_choices=True, prompt=False,
-        autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
-    brix: Optional[float] = typer.Option(None, "--brix", help="Custom fruit juice Brix"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
-) -> None:
-    _validate_must(volume, gravity)
-    if juice_volume < 0:
-        raise typer.BadParameter("juice-vol must be >= 0")
-
-    selected_fruit = None
-    source = "custom"
-    if fruit is not None:
-        fruit_key = fruit.strip().lower()
-        selected_fruit = FRUITS.get(fruit_key)
-        if selected_fruit is None:
-            choices = ", ".join(sorted(FRUITS.keys()))
-            raise typer.BadParameter(f"unknown fruit '{fruit}'. Choose one of: {choices}")
-        source = fruit_key
-    else:
-        if brix is None:
-            raise typer.BadParameter("provide either --fruit or --brix")
-        selected_fruit = Fruit(brix=brix, moisture_content=0.0)
-
-    try:
-        result = Must(volume=volume, gravity=gravity).add_fruit_juice(
-            selected_fruit,
-            volume=juice_volume,
-        )
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-
-    payload = {
-        "fruit": source,
-        "brix": selected_fruit.brix,
-        "juice_volume_ml": juice_volume,
-        "volume_ml": result.volume,
-        "gravity": result.gravity,
-    }
-    _emit(
-        payload if output == OutputFormat.json
-        else f"vol={round(result.volume, 2)}ml\nsg={round(result.gravity, 4)}",
+        payload if output == OutputFormat.json else str(must),
         output,
     )
 
@@ -415,13 +401,12 @@ def calc_fortify_volume(
         raise typer.BadParameter("spirit ABV must be > 0")
 
     try:
-        result = Must(volume=volume, gravity=gravity).fortify_volume(
+        result = Must(volume=volume, gravity=gravity, ph=None).fortify_volume(
             target_abv=target_abv, target_fg=target_gravity, spirit_abv=spirit_abv, 
             method=method.value)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    payload = {"target_abv": target_abv, "target_gravity": target_gravity, 
-               **result}
+    payload = {"target_abv": target_abv, "target_gravity": target_gravity, **result}
     spirit_vol = round(result["spirit_volume"], 2)
     fortify_gravity = round(result["fortify_gravity"], 4)
     _emit(
@@ -447,7 +432,7 @@ def calc_fortify_abv(
     if spirit_abv <= 0:
         raise typer.BadParameter("spirit ABV must be > 0")
 
-    result = Must(volume=volume, gravity=gravity).fortify_abv(
+    result = Must(volume=volume, gravity=gravity, ph=None).fortify_abv(
         fg=fg, spirit_vol_ml=spirit_vol, spirit_abv=spirit_abv, method=method.value)
     payload = {"fg": fg, "fortified_abv_percent": result}
     _emit(
@@ -465,7 +450,7 @@ def calc_potential_abv(
 ) -> None:
     volume = 3785.41
     _validate_must(volume, gravity)
-    result = Must(volume=volume, gravity=gravity).potential_abv(fg=fg, method=method.value)
+    result = Must(volume=volume, gravity=gravity, ph=None).potential_abv(fg=fg, method=method.value)
     payload = {"og": gravity, "fg": fg, "method": method.value, "abv_percent": result}
     _emit(payload if output == OutputFormat.json else f'{round(result, 2)}%', output)
 
@@ -478,7 +463,7 @@ def calc_attenuation(
 ) -> None:
     volume = 3785.41
     _validate_must(volume, gravity)
-    result = Must(volume=volume, gravity=gravity).attenuation(fg=fg)
+    result = Must(volume=volume, gravity=gravity, ph=None).attenuation(fg=fg)
     payload = {"og": gravity, "fg": fg, "attenuation_percent": result}
     _emit(payload if output == OutputFormat.json else f'{round(result, 2)}%', output)
 
@@ -494,7 +479,7 @@ def calc_stalled_gravity(
 ) -> None:
     volume = 3785.41
     _validate_must(volume, gravity)
-    result = Must(volume=volume, gravity=gravity).stalled_final_gravity(
+    result = Must(volume=volume, gravity=gravity, ph=None).stalled_final_gravity(
         yeast_abv_limit=yeast_abv_limit,
         method=method.value,
         tol=tol,
@@ -552,7 +537,7 @@ def calc_dilution(
     if fermentable_key not in FERMENTABLES or base_key not in FERMENTABLES:
         choices = ", ".join(sorted(FERMENTABLES.keys()))
         raise typer.BadParameter(f"unknown fermentable or base. Choose from: {choices}")
-    result = Must(volume=volume, gravity=gravity).dilution(
+    result = Must(volume=volume, gravity=gravity, ph=None).dilution(
         FERMENTABLES[fermentable_key], base=FERMENTABLES[base_key])
     masses = {
         "fermentable": round(result[0], 2),
@@ -585,8 +570,10 @@ def calc_dilute_to_sg(
     _validate_must(volume, gravity)
     if target_sg <= 0:
         raise typer.BadParameter("target SG must be > 0")
-    result = Must(volume=volume, gravity=gravity).dilute_to_sg(
-        target_sg=target_sg, fermentable=FERMENTABLES[fermentable.strip().lower()])
+    result = Must(volume=volume, gravity=gravity, ph=None).dilute_to_sg(
+        target_sg=target_sg, 
+        fermentable=FERMENTABLES[fermentable.strip().lower()]
+    )
     payload = {
         "current_volume_ml": volume,
         "current_gravity": gravity,
@@ -612,7 +599,7 @@ def adjust_tosna3(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity)
-    result = Must(volume=volume, gravity=gravity).tosna_3(yeast_demand=yeast_demand.value)
+    result = Must(volume=volume, gravity=gravity, ph=None).tosna_3(yeast_demand=yeast_demand.value)
     _emit(result, output)
 
 
@@ -624,7 +611,7 @@ def adjust_so2_target(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity)
-    result = Must(volume=volume, gravity=gravity).so2_from_target_ppm(target_ppm=target_ppm)
+    result = Must(volume=volume, gravity=gravity, ph=None).so2_from_target_ppm(target_ppm=target_ppm)
     _emit(result, output)
 
 
@@ -632,12 +619,13 @@ def adjust_so2_target(
 def adjust_so2_ph(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
-    ph: float = typer.Option(..., "--ph", help="Measured pH"),
+    ph: float = typer.Option(..., "--ph", help="Must pH"),
     target_mol_so2: float = typer.Option(0.8, "--target-mol-so2", help="Target molecular SO2 in ppm"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
-    _validate_must(volume, gravity)
-    result = Must(volume=volume, gravity=gravity).so2_from_ph(ph=ph, target_mol_so2=target_mol_so2)
+    _validate_must(volume, gravity, ph)
+    result = Must(volume=volume, gravity=gravity, ph=ph).so2_from_ph(
+        target_mol_so2=target_mol_so2)
     _emit(result, output)
 
 

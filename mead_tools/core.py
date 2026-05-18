@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import math
 
 
 def root_find(f, a, b, tol=1e-6):
@@ -84,6 +85,7 @@ class Fermentable:
     '''Represents a fermentable that can be added to a must, such as water or honey.'''
     ppg: int
     density: float
+    ph: float
 
     def volume(self, mass: float) -> float:
         '''Returns the volume of the additive given a mass in grams.'''
@@ -92,14 +94,14 @@ class Fermentable:
 
 # Define some common additives with their PPG and density in g/mL.
 FERMENTABLES = {
-    'water': Fermentable(ppg=0,  density=1.00),
-    'honey': Fermentable(ppg=35, density=1.42),
-    'maple': Fermentable(ppg=30, density=1.33),
-    'agave': Fermentable(ppg=34, density=1.42),
-    'molasses': Fermentable(ppg=36, density=1.40),
-    'table-sugar': Fermentable(ppg=46, density=1.59),
-    'brown-sugar': Fermentable(ppg=45, density=1.54),
-    'liquid-malt-extract': Fermentable(ppg=36, density=1.42),
+    'water': Fermentable(ppg=0,  density=1.00, ph=7.0),
+    'honey': Fermentable(ppg=35, density=1.42, ph=3.9),
+    'maple': Fermentable(ppg=30, density=1.33, ph=5.2),
+    'agave': Fermentable(ppg=34, density=1.42, ph=4.5),
+    'molasses': Fermentable(ppg=36, density=1.40, ph=5.5),
+    'table-sugar': Fermentable(ppg=46, density=1.59, ph=7.0),
+    'brown-sugar': Fermentable(ppg=45, density=1.54, ph=6.0),
+    'liquid-malt-extract': Fermentable(ppg=36, density=1.42, ph=5.5),
 }
 
 
@@ -108,28 +110,29 @@ class Fruit:
     '''Represents a solid fruit additive.'''
     brix: float
     moisture_content: float
+    ph: float
 
 
 # Common whole-fruit profiles for recipe planning.
 FRUITS = {
-    'apple': Fruit(brix=12.0, moisture_content=86.0),
-    'pear': Fruit(brix=13.0, moisture_content=84.0),
-    'peach': Fruit(brix=11.0, moisture_content=88.0),
-    'plum': Fruit(brix=12.0, moisture_content=86.0),
-    'apricot': Fruit(brix=13.0, moisture_content=84.0),
-    'cherry-bing': Fruit(brix=18.0, moisture_content=80.0),
-    'cherry-montmorency': Fruit(brix=13.0, moisture_content=82.0),
-    'strawberry': Fruit(brix=8.0, moisture_content=90.0),
-    'raspberry': Fruit(brix=9.0, moisture_content=86.0),
-    'blackberry': Fruit(brix=10.0, moisture_content=88.0),
-    'blueberry': Fruit(brix=12.0, moisture_content=85.0),
-    'cranberry': Fruit(brix=8.0, moisture_content=87.0),
-    'elderberry': Fruit(brix=11.0, moisture_content=80.0),
-    'grape-wine': Fruit(brix=24.0, moisture_content=74.0),
-    'grape-late-harvest': Fruit(brix=28.0, moisture_content=68.0),
-    'banana': Fruit(brix=20.0, moisture_content=75.0),
-    'pomegranate': Fruit(brix=16.0, moisture_content=80.0),
-    'watermelon': Fruit(brix=10.0, moisture_content=92.0)
+    'apple': Fruit(brix=12.0, moisture_content=86.0, ph=3.5),
+    'pear': Fruit(brix=13.0, moisture_content=84.0, ph=3.6),
+    'peach': Fruit(brix=11.0, moisture_content=88.0, ph=3.7),
+    'plum': Fruit(brix=12.0, moisture_content=86.0, ph=3.5),
+    'apricot': Fruit(brix=13.0, moisture_content=84.0, ph=3.8),
+    'cherry-bing': Fruit(brix=18.0, moisture_content=80.0, ph=4.0),
+    'cherry-montmorency': Fruit(brix=13.0, moisture_content=82.0, ph=3.5),
+    'strawberry': Fruit(brix=8.0, moisture_content=90.0, ph=3.5),
+    'raspberry': Fruit(brix=9.0, moisture_content=86.0, ph=3.5),
+    'blackberry': Fruit(brix=10.0, moisture_content=88.0, ph=3.5),
+    'blueberry': Fruit(brix=12.0, moisture_content=85.0, ph=3.2),
+    'cranberry': Fruit(brix=8.0, moisture_content=87.0, ph=2.5),
+    'elderberry': Fruit(brix=11.0, moisture_content=80.0, ph=4.9),
+    'grape-wine': Fruit(brix=24.0, moisture_content=74.0, ph=3.4),
+    'grape-late-harvest': Fruit(brix=28.0, moisture_content=68.0, ph=3.5),
+    'banana': Fruit(brix=20.0, moisture_content=75.0, ph=4.9),
+    'pomegranate': Fruit(brix=16.0, moisture_content=80.0, ph=3.1),
+    'watermelon': Fruit(brix=10.0, moisture_content=92.0, ph=5.3),
 }
 
 
@@ -138,11 +141,24 @@ class Must:
     '''Represents a must, a mixture of water and fermentable sugars before fermentation.'''
     volume: float
     gravity: float
+    ph: float
 
     # ====================================================================================
     #                                  Must Manipulation Methods    
     # ====================================================================================
 
+    @staticmethod
+    def ph_of_mixture(vol1, ph1, vol2, ph2):
+        '''Returns the pH of a mixture of two solutions given their volumes and pH values.'''
+        if vol1 < 0 or vol2 < 0:
+            raise ValueError('Volumes must be non-negative.')
+        if ph1 < 0 or ph1 > 14 or ph2 < 0 or ph2 > 14:
+            raise ValueError('pH values must be between 0 and 14.')
+        if vol1 + vol2 <= 0:
+            raise ValueError('Total volume must be positive to calculate pH of mixture.')
+        total_h_conc = (10 ** (-ph1) * vol1 + 10 ** (-ph2) * vol2) / (vol1 + vol2)
+        return -math.log10(total_h_conc)
+    
     def combine(self, other: 'Must') -> 'Must':
         '''Returns a new Must that is the combination of this Must and another Must.'''
         total_volume = self.volume + other.volume
@@ -151,7 +167,8 @@ class Must:
         points_a = (self.gravity - 1.0) * self.volume
         points_b = (other.gravity - 1.0) * other.volume
         new_gravity = 1.0 + (points_a + points_b) / total_volume
-        return Must(volume=total_volume, gravity=new_gravity)
+        new_ph = self.ph_of_mixture(self.volume, self.ph, other.volume, other.ph)
+        return Must(volume=total_volume, gravity=new_gravity, ph=new_ph)
     
     def add(self, fermentable: Fermentable, mass: float) -> 'Must':
         '''Returns a new Must with the given fermentable added.
@@ -167,7 +184,9 @@ class Must:
         gravity_added = (w_additive_lbs / v_total_gal) * (fermentable.ppg / 1000)
         points_diluted = (self.gravity - 1) * (self.volume / v_total_ml)
         new_gravity = 1.0 + gravity_added + points_diluted
-        return Must(volume=v_total_ml, gravity=new_gravity)
+        new_ph = self.ph_of_mixture(
+            self.volume, self.ph, fermentable.volume(mass), fermentable.ph)
+        return Must(volume=v_total_ml, gravity=new_gravity, ph=new_ph)
 
     def add_water(self, mass: float) -> 'Must':
         '''Returns a new Must with the given mass of water added.'''
@@ -199,7 +218,7 @@ class Must:
         juice_mass_g = theoretical_juice_mass_g * extract_yield
         sg_juice = brix_to_sg(fruit.brix)
         juice_vol_ml = juice_mass_g / sg_juice if juice_mass_g > 0 else 0.0
-        juice_must = Must(volume=juice_vol_ml, gravity=sg_juice)
+        juice_must = Must(volume=juice_vol_ml, gravity=sg_juice, ph=fruit.ph)
         return self.combine(juice_must)
     
     def add_fruit_juice(self, fruit: Fruit, volume: float) -> 'Must':
@@ -214,7 +233,7 @@ class Must:
             raise ValueError('Fruit brix must be between 0 and 100 (exclusive upper bound).')
 
         sg_juice = brix_to_sg(fruit.brix)
-        juice_must = Must(volume=volume, gravity=sg_juice)
+        juice_must = Must(volume=volume, gravity=sg_juice, ph=fruit.ph)
         return self.combine(juice_must)
 
     def fortify_volume(self, target_abv: float, target_fg: float, spirit_abv: float=40.0,
@@ -387,14 +406,19 @@ class Must:
             'target_ppm':   round(target_ppm, 2)
         }
     
-    def so2_from_ph(self, ph: float, target_mol_so2: float=0.8) -> dict:
+    def so2_from_ph(self, target_mol_so2: float=0.8) -> dict:
         '''Calculates SO2 additions needed for must/wine preservation based on pH.
 
-        :param ph: the pH of the must/wine
         :param target_mol_so2: the target molecular SO2 concentration in ppm
         '''
-        target_ppm = target_mol_so2 * (1.0 + (10.0 ** (ph - 1.81)))
+        target_ppm = target_mol_so2 * (1.0 + (10.0 ** (self.ph - 1.81)))
         return self.so2_from_target_ppm(target_ppm=target_ppm)
+    
+    def __str__(self):
+        if self.ph is None:
+            return f"Must(volume={self.volume:.2f}ml, gravity={self.gravity:.4f})"
+        else:
+            return f"Must(volume={self.volume:.2f}ml, gravity={self.gravity:.4f}, ph={self.ph:.2f})"
 
 
 def original_gravity(target_abv: float, fg: float, 
@@ -409,14 +433,9 @@ def original_gravity(target_abv: float, fg: float,
     :param max_og: maximum original gravity to consider for root-finding
     '''
     def f_og_to_abv(og):
-        return Must(1, og).potential_abv(fg=fg, method=method) - target_abv
+        return Must(volume=1, gravity=og, ph=7).potential_abv(fg=fg, method=method) - target_abv
     return root_find(f_og_to_abv, fg, max_og, tol=tol)
     
-
-if __name__ == "__main__":
-    must = Must(volume=3400, gravity=1.11)
-    print(must.dilute_to_sg(1.1))
-
 
 def parse_recipe(path: str) -> Must:
     """Parse a simple recipe file and return the resulting Must.
@@ -427,7 +446,7 @@ def parse_recipe(path: str) -> Must:
     - fruit juice quantities are in milliliters; write as "<fruit> juice"
     - lines starting with '#' or blank lines are ignored
     """
-    must = Must(volume=0.0, gravity=1.0)
+    must = Must(volume=0.0, gravity=1.0, ph=7.0)
     with open(path, 'r', encoding='utf-8') as fh:
         for lineno, raw in enumerate(fh, start=1):
             line = raw.split('#', 1)[0].strip()
@@ -458,4 +477,3 @@ def parse_recipe(path: str) -> Must:
             else:
                 raise ValueError(f"Line {lineno}: unknown ingredient '{lhs}'.")
     return must
-    
