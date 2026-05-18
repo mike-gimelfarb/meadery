@@ -93,7 +93,6 @@ class Fermentable:
 # Define some common additives with their PPG and density in g/mL.
 FERMENTABLES = {
     'water': Fermentable(ppg=0,  density=1.00),
-    'white-grape-juice': Fermentable(ppg=5, density=1.06),
     'honey': Fermentable(ppg=35, density=1.42),
     'maple': Fermentable(ppg=30, density=1.33),
     'agave': Fermentable(ppg=34, density=1.42),
@@ -417,4 +416,46 @@ def original_gravity(target_abv: float, fg: float,
 if __name__ == "__main__":
     must = Must(volume=3400, gravity=1.11)
     print(must.dilute_to_sg(1.1))
+
+
+def parse_recipe(path: str) -> Must:
+    """Parse a simple recipe file and return the resulting Must.
+
+    Recipe format (one instruction per line):
+      <ingredient>=<quantity>
+    - fermentables and whole fruit quantities are in grams
+    - fruit juice quantities are in milliliters; write as "<fruit> juice"
+    - lines starting with '#' or blank lines are ignored
+    """
+    must = Must(volume=0.0, gravity=1.0)
+    with open(path, 'r', encoding='utf-8') as fh:
+        for lineno, raw in enumerate(fh, start=1):
+            line = raw.split('#', 1)[0].strip()
+            if not line:
+                continue
+            if '=' not in line:
+                raise ValueError(f"Line {lineno}: missing '=' separator.")
+            lhs, rhs = [s.strip() for s in line.split('=', 1)]
+            if not lhs:
+                raise ValueError(f"Line {lineno}: empty ingredient.")
+            try:
+                qty = float(rhs)
+            except Exception:
+                raise ValueError(f"Line {lineno}: invalid quantity '{rhs}'.")
+            key = lhs.lower()
+            if key.endswith(' juice'):
+                fruit_name = key[:-6].strip()
+                fruit = FRUITS.get(fruit_name)
+                if fruit is None:
+                    raise ValueError(f"Line {lineno}: unknown fruit '{fruit_name}'.")
+                must = must.add_fruit_juice(fruit, volume=qty)
+            elif key in FERMENTABLES:
+                fermentable = FERMENTABLES[key]
+                must = must.add(fermentable, qty)
+            elif key in FRUITS:
+                fruit = FRUITS[key]
+                must = must.add_fruit(fruit, qty)
+            else:
+                raise ValueError(f"Line {lineno}: unknown ingredient '{lhs}'.")
+    return must
     

@@ -46,6 +46,7 @@ mead --help
 - `must add-sugar --vol --sg --mass`
 - `must add-fruit --vol --sg --mass [--fruit | (--brix and --moisture)] [--extract-yield]`
 - `must add-fruit-juice --vol --sg --fruit-vol [--fruit | --brix]`
+- `must from-recipe <file>`
 - `calc fortify-volume --vol --og --abv --fg [--spirit-abv] [--method]`
 - `calc fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]`
 - `calc potential-abv --og [--fg] [--method]`
@@ -102,3 +103,25 @@ Use `--format json` for machine-friendly output:
 ```bash
 mead calc potential-abv --og 1.110 --fg 1.010 --format json
 ```
+
+## Recipe format
+
+`mead must from-recipe <file>` loads a simple, line-oriented recipe and prints the final must volume and gravity.
+
+Rules:
+- One instruction per non-empty line: `<ingredient>=<quantity>`
+- Quantities: fermentables and whole fruit are in grams; fruit juice is in milliliters.
+- Fruit juice lines use the form `<fruit> juice=<ml>` (example: `blueberry juice=500`).
+- `water` may be specified as a fermentable (grams; 1 g = 1 mL).
+- Lines beginning with `#` or blank lines are ignored.
+
+Example:
+```
+# sample recipe
+honey=500
+water=2500
+blueberry juice=1000
+table-sugar=200
+```
+
+Ingredient names are matched case-insensitively against the `FERMENTABLES` and `FRUITS` lists in the codebase.

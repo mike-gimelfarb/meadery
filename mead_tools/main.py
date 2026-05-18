@@ -15,6 +15,7 @@ from mead_tools.core import (
     brix_to_sg,
     original_gravity,
     sg_to_plato,
+    parse_recipe,
 )
 
 
@@ -320,6 +321,22 @@ def must_add_fruit(
     _emit(
         payload if output == OutputFormat.json
         else f"vol={round(result.volume, 2)}ml\nsg={round(result.gravity, 4)}",
+        output,
+    )
+
+
+@must_app.command("from-recipe")
+def must_from_recipe(
+    recipe: str = typer.Argument(..., help="Path to recipe file"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    try:
+        must = parse_recipe(recipe)
+    except Exception as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    payload = {"volume_ml": must.volume, "gravity": must.gravity}
+    _emit(
+        payload if output == OutputFormat.json else f"vol={round(must.volume, 2)}ml\nsg={round(must.gravity, 4)}",
         output,
     )
 
