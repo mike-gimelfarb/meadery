@@ -99,7 +99,8 @@ FERMENTABLES = {
     'agave': Fermentable(ppg=34, density=1.42),
     'molasses': Fermentable(ppg=36, density=1.40),
     'table-sugar': Fermentable(ppg=46, density=1.59),
-    'brown-sugar': Fermentable(ppg=45, density=1.54)
+    'brown-sugar': Fermentable(ppg=45, density=1.54),
+    'liquid-malt-extract': Fermentable(ppg=36, density=1.42),
 }
 
 
