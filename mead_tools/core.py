@@ -2,21 +2,21 @@ from dataclasses import dataclass
 import math
 
 
-def root_find(f, a, b, tol=1e-6):
+def root_find(f, a, b, tol=1e-6, iters=1000):
     '''Finds a root of the function f in the interval [a, b] using the regula falsi method.'''
     fa, fb = f(a), f(b)
-    while True:
-        c = (a * fb - b * fa) / (fb - fa)
+    if fa * fb > 0:
+        raise ValueError('Function values at the endpoints must have opposite signs.')
+    for _ in range(iters):
+        c = (a + b) / 2
         fc = f(c)
-        if abs(fc) < tol or abs(b - a) < tol:
+        if abs(f(c)) < tol or (b - a) / 2 < tol:
             return c
-        elif fc * fb < 0:
-            a, fa = b, fb
-            b, fb = c, fc
+        elif fa * fc < 0:
+            b = c
         else:
-            fa = fa / 2.0  
-            b, fb = c, fc
-
+            a = c
+    raise ValueError('Root not found within the specified number of iterations.')
 
 def root_bracket(f, a, b, expand=2.0, max_bound=1e7):
     '''Returns a bracket [a, b] such that f(a) and f(b) have opposite signs.'''
@@ -298,7 +298,7 @@ class Must:
                 fg=fg_before_of_v(v), spirit_vol_ml=v, spirit_abv=spirit_abv, method=method)
             return post_abv - target_abv
 
-        lo, hi = root_bracket(f_v_to_abv, 0.0, max(V, 1))
+        lo, hi = root_bracket(f_v_to_abv, 0, 1)
         v_needed = root_find(f_v_to_abv, lo, hi, tol=tol)
         if v_needed < 0:
             raise ValueError('Calculated spirit volume is negative.')
@@ -374,6 +374,9 @@ class Must:
         '''
         def f_fg_to_abv(fg):
             return self.potential_abv(fg=fg, method=method) - yeast.abv_limit
+        if f_fg_to_abv(min_fg) * f_fg_to_abv(self.gravity) > 0:
+            raise ValueError("Yeast ABV limit is not between the potential ABV at min_fg "
+                             "and the potential ABV at the must's gravity.")
         return root_find(f_fg_to_abv, min_fg, self.gravity, tol=tol)
      
     def volumes(self, fermentable: Fermentable, base: Fermentable=FERMENTABLES['water']) -> float:
@@ -418,8 +421,7 @@ class Must:
         if abs(f_mass_to_abv(0.0)) < tol:
             return 0.0
         else:
-            a0, b0 = 0.0, 100.0
-            a, b = root_bracket(f_mass_to_abv, a0, b0)
+            a, b = root_bracket(f_mass_to_abv, 0, 1)
             return root_find(f_mass_to_abv, a, b, tol=tol)
     
     def adjust_gravity_with_fruit_juice(self, target_sg: float, fruit: Fruit, tol: float=1e-6) -> float:
@@ -437,8 +439,7 @@ class Must:
         if abs(f_vol_to_abv(0.0)) < tol:
             return 0.0
         else:
-            a0, b0 = 0.0, 1000.0
-            a, b = root_bracket(f_vol_to_abv, a0, b0)
+            a, b = root_bracket(f_vol_to_abv, 0, 1)
             return root_find(f_vol_to_abv, a, b, tol=tol)
 
     # ====================================================================================
@@ -512,6 +513,9 @@ def original_gravity(target_abv: float, fg: float,
     '''
     def f_og_to_abv(og):
         return Must(volume=1, gravity=og, ph=7).potential_abv(fg=fg, method=method) - target_abv
+    if f_og_to_abv(fg) * f_og_to_abv(max_og) > 0:
+        raise ValueError("Target ABV is not between the potential ABV at the final gravity "
+                         "and the potential ABV at max_og.")
     return root_find(f_og_to_abv, fg, max_og, tol=tol)
     
 
