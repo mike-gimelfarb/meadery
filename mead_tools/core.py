@@ -99,8 +99,8 @@ FERMENTABLES = {
     'maple': Fermentable(ppg=30, density=1.33, ph=5.2),
     'agave': Fermentable(ppg=34, density=1.42, ph=4.5),
     'molasses': Fermentable(ppg=36, density=1.40, ph=5.5),
-    'table-sugar': Fermentable(ppg=46, density=1.59, ph=7.0),
-    'brown-sugar': Fermentable(ppg=45, density=1.54, ph=6.0),
+    'table-sugar': Fermentable(ppg=46, density=1.59, ph=6.0),
+    'brown-sugar': Fermentable(ppg=45, density=1.54, ph=5.5),
     'liquid-malt-extract': Fermentable(ppg=36, density=1.42, ph=5.5),
 }
 
@@ -133,6 +133,9 @@ FRUITS = {
     'banana': Fruit(brix=20.0, moisture_content=75.0, ph=4.9),
     'pomegranate': Fruit(brix=16.0, moisture_content=80.0, ph=3.1),
     'watermelon': Fruit(brix=10.0, moisture_content=92.0, ph=5.3),
+    'cantaloupe': Fruit(brix=12.0, moisture_content=90.0, ph=6.3),
+    'fig': Fruit(brix=20.0, moisture_content=80.0, ph=5.5),
+    'mango': Fruit(brix=15.0, moisture_content=83.0, ph=4.0),
 }
 
 
