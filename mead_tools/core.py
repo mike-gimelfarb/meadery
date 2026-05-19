@@ -376,27 +376,30 @@ class Must:
         mass_base_g = total_mass_g - mass_ferment_g
         return mass_ferment_g, mass_base_g
 
-    def dilute_to_sg(self, target_sg: float, fermentable: Fermentable=FERMENTABLES['water'], 
-                     tol: float=1e-6) -> float:
+    def adjust_gravity(self, target_sg: float, fermentable: Fermentable, tol: float=1e-6) -> float:
         '''Compute mass in grams of `fermentable` to add to this must to reach `target_sg`.
         
         :param target_sg: the target specific gravity after dilution
         :param fermentable: the Fermentable to add for dilution
         :param tol: tolerance for the root-finding algorithm
         '''
-        if target_sg >= self.gravity:
-            raise ValueError('target_sg must be lower than current must gravity.')
-        
         def f_mass_to_abv(m):
             return self.add(fermentable, m).gravity - target_sg
-        
-        a0, b0 = 0.0, 100.0
-        if f_mass_to_abv(a0) <= 0:
+
+        if target_sg <= 0.0:
+            raise ValueError('target_sg must be positive.')
+        if abs(f_mass_to_abv(0.0)) < tol:
             return 0.0
-        else:
-            a, b = root_bracket(f_mass_to_abv, a0, b0)
-            return root_find(f_mass_to_abv, a, b, tol=tol)
-        
+        need_increase = (target_sg > self.gravity)
+        if need_increase and fermentable.ppg <= 0:
+            raise ValueError('Selected fermentable cannot raise gravity (ppg <= 0).')
+        if (not need_increase) and fermentable.ppg > 0:
+            raise ValueError('Selected fermentable will not lower gravity; use water or a diluent (ppg=0).')
+
+        a0, b0 = 0.0, 100.0
+        a, b = root_bracket(f_mass_to_abv, a0, b0)
+        return root_find(f_mass_to_abv, a, b, tol=tol)
+
     # ====================================================================================
     #                           Adjustment Calculation Methods    
     # ====================================================================================

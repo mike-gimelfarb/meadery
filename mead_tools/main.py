@@ -564,12 +564,16 @@ def calc_dilution(
     )
 
 
-@calc_app.command("dilution-to-sg")
-def calc_dilute_to_sg(
+# ===================================================
+#                  Adjust Commands
+# ===================================================
+
+@adjust_app.command("gravity")
+def adjust_gravity(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
     target_sg: float = typer.Option(..., "--target-sg", help="Target specific gravity after dilution"),
-    fermentable: str = typer.Option("water", "--fermentable", help="Fermentable name for dilution",
+    fermentable: str = typer.Option(None, "--fermentable", help="Fermentable name for dilution",
         case_sensitive=False, show_choices=True, prompt=True,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
@@ -577,7 +581,7 @@ def calc_dilute_to_sg(
     _validate_must(volume, gravity)
     if target_sg <= 0:
         raise typer.BadParameter("target SG must be > 0")
-    result = Must(volume=volume, gravity=gravity, ph=None).dilute_to_sg(
+    result = Must(volume=volume, gravity=gravity, ph=7).adjust_gravity(
         target_sg=target_sg, 
         fermentable=FERMENTABLES[fermentable.strip().lower()]
     )
@@ -592,11 +596,6 @@ def calc_dilute_to_sg(
         payload if output == OutputFormat.json else f'{round(result, 2)}g',
         output
     )
-
-
-# ===================================================
-#                  Adjust Commands
-# ===================================================
 
 @adjust_app.command("tosna3")
 def adjust_tosna3(
