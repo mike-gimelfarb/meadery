@@ -51,11 +51,11 @@ mead --help
 - `calc fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]`
 - `calc potential-abv --og [--fg] [--method]`
 - `calc attenuation --og --fg`
-- `calc stalled-gravity --og --max-abv [--method] [--tol] [--min-fg]`
+- `calc stalled-gravity --og --yeast [--method] [--tol] [--min-fg]`
 - `calc original-gravity --abv [--fg] [--method] [--tol] [--max-og]`
 - `calc dilution --vol --og [--fermentable] [--base]`
 - `calc dilution-to-sg --vol --og --target-sg [--fermentable]`
-- `adjust tosna3 --vol --og [--yeast-demand]`
+- `adjust tosna3 --vol --og --yeast`
 - `adjust so2-target --vol --og [--target-ppm]`
 - `adjust so2-ph --vol --og --ph [--target-mol-so2]`
 

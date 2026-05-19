@@ -6,6 +6,7 @@ from typing import Optional, List
 from mead_tools.core import (
     FERMENTABLES,
     FRUITS,
+    YEAST_STRAINS,
     Hydrometer,
     Must,
     Refractometer,
@@ -41,12 +42,6 @@ class AbvMethod(str, Enum):
     cutaia = "cutaia"
 
 
-class YeastDemand(str, Enum):
-    low = "low"
-    medium = "medium"
-    high = "high"
-
-
 # Helper functions for dynamic choices
 def get_fermentable_choices() -> List[str]:
     return list(FERMENTABLES.keys())
@@ -54,6 +49,10 @@ def get_fermentable_choices() -> List[str]:
 
 def get_fruit_choices() -> List[str]:
     return list(FRUITS.keys())
+
+
+def get_yeast_choices() -> List[str]:
+    return list(YEAST_STRAINS.keys())
 
 
 def _validate_must(volume: float, gravity: float, ph: Optional[float] = None) -> None:
@@ -473,7 +472,9 @@ def calc_attenuation(
 @calc_app.command("stalled-gravity")
 def calc_stalled_gravity(
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
-    yeast_abv_limit: float = typer.Option(..., "--max-abv", help="Yeast ABV limit in percent"),
+    yeast: str = typer.Option(..., "--yeast", help="Yeast strain name",
+        case_sensitive=False, show_choices=True, prompt=True,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_yeast_choices() if k.startswith(incomplete)]),
     method: AbvMethod = typer.Option(AbvMethod.cutaia, "--method", help="ABV calculation method"),
     tol: float = typer.Option(1e-6, "--tol", help="Root finding tolerance"),
     min_fg: float = typer.Option(0.9, "--min-fg", help="Minimum FG for root finding"),
@@ -481,15 +482,19 @@ def calc_stalled_gravity(
 ) -> None:
     volume = 3785.41
     _validate_must(volume, gravity)
+    yeast_obj = YEAST_STRAINS.get(yeast.strip().lower(), None)
+    if yeast_obj is None:
+        choices = ", ".join(sorted(YEAST_STRAINS.keys()))
+        raise typer.BadParameter(f"Invalid yeast strain: {yeast}, choose from: {choices}")
     result = Must(volume=volume, gravity=gravity, ph=None).stalled_final_gravity(
-        yeast_abv_limit=yeast_abv_limit,
+        yeast=yeast_obj,
         method=method.value,
         tol=tol,
         min_fg=min_fg,
     )
     payload = {
         "og": gravity,
-        "yeast_abv_limit_percent": yeast_abv_limit,
+        "yeast_abv_limit_percent": yeast_obj.abv_limit,
         "method": method.value,
         "stalled_fg": result,
     }
@@ -597,12 +602,19 @@ def calc_dilute_to_sg(
 def adjust_tosna3(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
-    yeast_demand: YeastDemand = typer.Option(YeastDemand.medium, "--yeast-demand", help="Yeast nutrient demand"),
+    yeast: str = typer.Option(..., "--yeast", help="Yeast strain name",
+        case_sensitive=False, show_choices=True, prompt=True,
+        autocompletion=lambda ctx, args, incomplete: [k for k in YEAST_STRAINS.keys() if k.startswith(incomplete)]),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity)
-    result = Must(volume=volume, gravity=gravity, ph=None).tosna_3(yeast_demand=yeast_demand.value)
+    yeast_obj = YEAST_STRAINS.get(yeast.strip().lower(), None)
+    if yeast_obj is None:
+        choices = ", ".join(sorted(YEAST_STRAINS.keys()))
+        raise typer.BadParameter(f"Invalid yeast strain: {yeast}, choose from: {choices}")
+    result = Must(volume=volume, gravity=gravity, ph=None).tosna_3(yeast=yeast_obj)
     _emit(result, output)
+    print('Add this amount at 24h, 48h, 72h after pitch, and at 1/3 sugar depletion.')
 
 
 @adjust_app.command("so2-target")

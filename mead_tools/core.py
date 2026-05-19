@@ -137,6 +137,25 @@ FRUITS = {
 
 
 @dataclass
+class Yeast:
+    abv_limit: float
+    nitrogen_requirement: str
+
+
+# common yeast profiles for recipe planning
+YEAST_STRAINS = {
+    '71b': Yeast(abv_limit=14.5, nitrogen_requirement='low'),
+    'ec1118': Yeast(abv_limit=18.0, nitrogen_requirement='low'),
+    'k1v1116': Yeast(abv_limit=18.0, nitrogen_requirement='low'),
+    'qa23': Yeast(abv_limit=16.0, nitrogen_requirement='low'),
+    'd47': Yeast(abv_limit=15.0, nitrogen_requirement='medium'),
+    's04': Yeast(abv_limit=11.0, nitrogen_requirement='high'),
+    'm05': Yeast(abv_limit=18.0, nitrogen_requirement='medium'),
+    'rc212': Yeast(abv_limit=16.0, nitrogen_requirement='medium'),
+}
+
+
+@dataclass
 class Must:
     '''Represents a must, a mixture of water and fermentable sugars before fermentation.'''
     volume: float
@@ -327,18 +346,18 @@ class Must:
         else:
             return ((og - fg) / (og - 1.0)) * 100.0
 
-    def stalled_final_gravity(self, yeast_abv_limit: float, method: str='cutaia', 
+    def stalled_final_gravity(self, yeast: Yeast, method: str='cutaia', 
                               tol: float=1e-6, min_fg: float=0.9) -> float:
         '''Returns the final gravity at which fermentation will stall given a yeast ABV 
         limit and method.
         
-        :param yeast_abv_limit: ABV limit of the yeast in percent
+        :param yeast: Yeast object
         :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
         :param tol: tolerance for the root-finding algorithm
         :param min_fg: minimum final gravity to consider for root-finding
         '''
         def f_fg_to_abv(fg):
-            return self.potential_abv(fg=fg, method=method) - yeast_abv_limit
+            return self.potential_abv(fg=fg, method=method) - yeast.abv_limit
         return root_find(f_fg_to_abv, min_fg, self.gravity, tol=tol)
      
     def dilution(self, fermentable: Fermentable, base: Fermentable=FERMENTABLES['water']) -> float:
@@ -380,12 +399,12 @@ class Must:
     #                           Adjustment Calculation Methods    
     # ====================================================================================
     
-    def tosna_3(self, yeast_demand: str='medium') -> dict:
+    def tosna_3(self, yeast: Yeast) -> dict:
         '''Returns the TOSNA 3.0 schedule for nutrient additions using fermaid O.'''
         og = self.gravity
         plato = sg_to_plato(og)
         demand_map = { 'low': 0.75, 'medium': 0.9, 'high': 1.25 }
-        total_fermaid_o_g = (plato * 10) * demand_map[yeast_demand.lower().strip()] / 50
+        total_fermaid_o_g = (plato * 10) * demand_map[yeast.nitrogen_requirement] / 50
         total_grams = total_fermaid_o_g * (self.volume / 3785.41)
         return {
             'total_grams':          total_grams,
