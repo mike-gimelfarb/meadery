@@ -112,6 +112,20 @@ class Fruit:
     moisture_content: float
     ph: float
 
+    def to_fermentable(self, density: float) -> Fermentable:
+        '''Returns a Fermentable representation of this fruit for dilution calculations.'''
+        if density is None:
+            raise ValueError('density is required to convert fruit to a fermentable')
+        if density <= 0:
+            raise ValueError('density must be positive (g/mL)')
+        if self.brix is None:
+            raise ValueError('fruit brix is required to estimate ppg')
+        if self.brix < 0 or self.brix >= 100:
+            raise ValueError('fruit brix must be between 0 and 100 (exclusive upper bound)')
+
+        ppg_est = 0.46 * self.brix
+        return Fermentable(ppg=ppg_est, density=density, ph=self.ph)
+
 
 # Common whole-fruit profiles for recipe planning.
 FRUITS = {
@@ -399,6 +413,25 @@ class Must:
         a0, b0 = 0.0, 100.0
         a, b = root_bracket(f_mass_to_abv, a0, b0)
         return root_find(f_mass_to_abv, a, b, tol=tol)
+    
+    def adjust_gravity_with_fruit_juice(self, target_sg: float, fruit: Fruit, tol: float=1e-6) -> float:
+        '''Compute volume in mL of fruit juice to add to this must to reach `target_sg`.
+        
+        :param target_sg: the target specific gravity after dilution
+        :param fruit: the Fruit profile to use for the juice
+        :param tol: tolerance for the root-finding algorithm
+        '''
+        def f_vol_to_abv(v):
+            return self.add_fruit_juice(fruit, v).gravity - target_sg
+
+        if target_sg <= 0.0:
+            raise ValueError('target_sg must be positive.')
+        if abs(f_vol_to_abv(0.0)) < tol:
+            return 0.0
+
+        a0, b0 = 0.0, 1000.0
+        a, b = root_bracket(f_vol_to_abv, a0, b0)
+        return root_find(f_vol_to_abv, a, b, tol=tol)
 
     # ====================================================================================
     #                           Adjustment Calculation Methods    

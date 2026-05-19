@@ -533,19 +533,28 @@ def calc_dilution(
     fermentable: str = typer.Option("honey", "--fermentable", help="Fermentable name",
         case_sensitive=False, show_choices=True, prompt=True,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
-    base: str = typer.Option("water", "--base", help="Base fermentable name",
+    base: str = typer.Option("water", "--base", help="Base fermentable or fruit name",
         case_sensitive=False, show_choices=True, prompt=True,
-        autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
+        autocompletion=lambda ctx, args, incomplete: [
+            k for k in get_fermentable_choices() + get_fruit_choices() if k.startswith(incomplete)]),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity)
     fermentable_key = fermentable.strip().lower()
     base_key = base.strip().lower()
-    if fermentable_key not in FERMENTABLES or base_key not in FERMENTABLES:
+    if fermentable_key not in FERMENTABLES:
         choices = ", ".join(sorted(FERMENTABLES.keys()))
         raise typer.BadParameter(f"unknown fermentable or base. Choose from: {choices}")
+    if base_key in FERMENTABLES:
+        base_obj = FERMENTABLES[base_key]
+    elif base_key in FRUITS:
+        base_obj = FRUITS[base_key].to_fermentable(density=1)
+    else:
+        choices = ", ".join(sorted(get_fermentable_choices() + get_fruit_choices()))
+        raise typer.BadParameter(f"unknown base '{base}'. Choose from: {choices}")
+        
     result = Must(volume=volume, gravity=gravity, ph=None).dilution(
-        FERMENTABLES[fermentable_key], base=FERMENTABLES[base_key])
+        FERMENTABLES[fermentable_key], base=base_obj)
     masses = {
         "fermentable": round(result[0], 2),
         "base": round(result[1], 2),
@@ -574,26 +583,40 @@ def adjust_gravity(
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
     target_sg: float = typer.Option(..., "--target-sg", help="Target specific gravity after dilution"),
     fermentable: str = typer.Option(None, "--fermentable", help="Fermentable name for dilution",
-        case_sensitive=False, show_choices=True, prompt=True,
+        case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
+    fruit: Optional[str] = typer.Option(None, "--fruit", help="Fruit name for dilution",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity)
     if target_sg <= 0:
         raise typer.BadParameter("target SG must be > 0")
-    result = Must(volume=volume, gravity=gravity, ph=7).adjust_gravity(
-        target_sg=target_sg, 
-        fermentable=FERMENTABLES[fermentable.strip().lower()]
-    )
+    if fermentable is None:
+        result = Must(volume=volume, gravity=gravity, ph=7).adjust_gravity_with_fruit_juice(
+            target_sg=target_sg, 
+            fruit=FRUITS[fruit.strip().lower()]
+        )
+    else:
+        result = Must(volume=volume, gravity=gravity, ph=7).adjust_gravity(
+            target_sg=target_sg, 
+            fermentable=FERMENTABLES[fermentable.strip().lower()]
+        )
     payload = {
         "current_volume_ml": volume,
         "current_gravity": gravity,
         "target_gravity": target_sg,
-        "fermentable": fermentable.strip().lower(),
+        "fermentable_g": fermentable.strip().lower() if fermentable else None,
+        'fruit_juice_ml': fruit.strip().lower() if fruit else None,
         "added_fermentable_g": round(result, 2),
     }
+    if fruit:
+        result = f'{round(result, 2)}ml'
+    else:
+        result = f'{round(result, 2)}g'
     _emit(
-        payload if output == OutputFormat.json else f'{round(result, 2)}g',
+        payload if output == OutputFormat.json else result,
         output
     )
 

@@ -54,7 +54,7 @@ mead --help
 - `calc stalled-gravity --og --yeast [--method] [--tol] [--min-fg]`
 - `calc original-gravity --abv [--fg] [--method] [--tol] [--max-og]`
 - `calc dilution --vol --og [--fermentable] [--base]`
-- `adjust gravity --vol --og --target-sg --fermentable`
+- `adjust gravity --vol --og --target-sg (--fermentable | --fruit)`
 - `adjust tosna3 --vol --og --yeast`
 - `adjust so2-target --vol --og [--target-ppm]`
 - `adjust so2-ph --vol --og --ph [--target-mol-so2]`
