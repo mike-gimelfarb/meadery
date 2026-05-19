@@ -669,5 +669,25 @@ def adjust_so2_ph(
     _emit(result, output)
 
 
+@adjust_app.command("priming-sugar")
+def adjust_priming_sugar(
+    volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
+    target_co2_vol: float = typer.Option(..., "--co2", help="Target CO2 volumes"),
+    temp: float = typer.Option(..., "--temp", help="Fermentation temperature in C for temperature correction"),
+    fermentable: str = typer.Option(None, "--fermentable", help="Fermentable for priming sugar",
+        case_sensitive=False, show_choices=True, prompt=True,
+        autocompletion=lambda ctx, args, incomplete: [k for k in FERMENTABLES.keys() if k.startswith(incomplete)]),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    _validate_must(volume, 1.0)
+    fermentable_obj = FERMENTABLES.get(fermentable.strip().lower(), None)
+    if fermentable_obj is None:
+        choices = ", ".join(sorted(FERMENTABLES.keys()))
+        raise typer.BadParameter(f"Invalid fermentable: {fermentable}, choose from: {choices}")
+    result = Must(volume=volume, gravity=1.0, ph=None).priming_sugar(
+        fermentable=fermentable_obj, target_volumes=target_co2_vol, temp=temp)
+    _emit(f'{round(result, 2)}g', output)
+
+
 if __name__ == "__main__":
     app()

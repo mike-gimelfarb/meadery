@@ -58,6 +58,7 @@ mead --help
 - `adjust tosna3 --vol --og --yeast`
 - `adjust so2-target --vol --og [--target-ppm]`
 - `adjust so2-ph --vol --og --ph [--target-mol-so2]`
+- `adjust priming-sugar --vol --co2 --temp --fermentable`
 
 All commands support `--format text|json`.
 `--spirit-vol` value is 40 by default.

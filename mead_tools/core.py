@@ -472,7 +472,23 @@ class Must:
         '''
         target_ppm = target_mol_so2 * (1.0 + (10.0 ** (self.ph - 1.81)))
         return self.so2_from_target_ppm(target_ppm=target_ppm)
-    
+
+    def priming_sugar(self, fermentable: Fermentable, target_volumes: float, temp: float) -> float:
+        '''Return mass in grams of priming fermentable to reach `target_volumes` CO2.
+
+        :param fermentable: the Fermentable to use for priming
+        :param target_volumes: the target CO2 volumes for carbonation
+        :param temp: the max post-ferment temperature of the liquid in degrees Celsius
+        '''
+        temp_f = (temp * 9.0 / 5.0) + 32.0
+        volume_l = self.volume / 1000.0
+        wine_co2 = 3.0378 - (0.050062 * temp_f) + (0.00026555 * temp_f ** 2)
+        sucrose_g = ((target_volumes * 2) - (wine_co2 * 2)) * 2 * volume_l
+        if fermentable.ppg <= 0:
+            raise ValueError('Selected fermentable cannot be used for priming (ppg <= 0).')
+        multiplier = FERMENTABLES['table-sugar'].ppg / fermentable.ppg
+        return max(0, sucrose_g * multiplier)
+        
     def __str__(self):
         if self.ph is None:
             return f"Must(volume={self.volume:.2f}ml, gravity={self.gravity:.4f})"
