@@ -618,6 +618,8 @@ def adjust_gravity(
     if target_sg <= 0:
         raise typer.BadParameter("target SG must be > 0")
     if fermentable is None:
+        if fruit is None:
+            raise typer.BadParameter("Either --fermentable or --fruit must be provided")
         result = Must(volume=volume, gravity=gravity, ph=7).adjust_gravity_with_fruit_juice(
             target_sg=target_sg, 
             fruit=FRUITS[fruit.strip().lower()]
