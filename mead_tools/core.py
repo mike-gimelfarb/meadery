@@ -384,14 +384,12 @@ class Must:
         '''Returns the TOSNA 3.0 schedule for nutrient additions using fermaid O.'''
         og = self.gravity
         plato = sg_to_plato(og)
-        demand_map = { 'low': 7.5, 'medium': 9.0, 'high': 12.5 }
-        target_yan = plato * demand_map[yeast_demand.lower().strip()]
-        grams_per_liter = target_yan / 152.0
-        total_grams = grams_per_liter * self.volume / 1000.0
+        demand_map = { 'low': 0.75, 'medium': 0.9, 'high': 1.25 }
+        total_fermaid_o_g = (plato * 10) * demand_map[yeast_demand.lower().strip()] / 50
+        total_grams = total_fermaid_o_g * (self.volume / 3785.41)
         return {
             'total_grams':          total_grams,
             'staggered_dose_grams': total_grams / 4,
-            'target_yan_ppm':       target_yan,
             'sugar_break_gravity':  1.0 + ((og - 1.0) * (2.0 / 3.0))
         }
         

@@ -71,6 +71,8 @@ def _emit(value, output: OutputFormat) -> None:
         return
     if isinstance(value, dict):
         for key, val in value.items():
+            if isinstance(val, float):
+                val = round(val, 4)
             typer.echo(f"{key}: {val}")
         return
     typer.echo(str(value))
