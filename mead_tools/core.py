@@ -163,6 +163,7 @@ YEAST_STRAINS = {
     's04': Yeast(abv_limit=11.0, nitrogen_requirement='high'),
     'm05': Yeast(abv_limit=18.0, nitrogen_requirement='medium'),
     'rc212': Yeast(abv_limit=16.0, nitrogen_requirement='medium'),
+    'voss-kveik': Yeast(abv_limit=12.0, nitrogen_requirement='high'),
 }
 
 
