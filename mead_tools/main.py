@@ -545,16 +545,19 @@ def calc_dilution(
     if fermentable_key not in FERMENTABLES:
         choices = ", ".join(sorted(FERMENTABLES.keys()))
         raise typer.BadParameter(f"unknown fermentable or base. Choose from: {choices}")
+    
     if base_key in FERMENTABLES:
-        base_obj = FERMENTABLES[base_key]
+        result = Must(volume=volume, gravity=gravity, ph=None).dilution(
+            FERMENTABLES[fermentable_key], base=FERMENTABLES[base_key])
+        fruit = False
     elif base_key in FRUITS:
-        base_obj = FRUITS[base_key].to_fermentable(density=1)
+        result = Must(volume=volume, gravity=gravity, ph=None).dilution_with_fruit_juice(
+            FERMENTABLES[fermentable_key], fruit=FRUITS[base_key])
+        fruit = True
     else:
         choices = ", ".join(sorted(get_fermentable_choices() + get_fruit_choices()))
         raise typer.BadParameter(f"unknown base '{base}'. Choose from: {choices}")
         
-    result = Must(volume=volume, gravity=gravity, ph=None).dilution(
-        FERMENTABLES[fermentable_key], base=base_obj)
     masses = {
         "fermentable": round(result[0], 2),
         "base": round(result[1], 2),
@@ -566,9 +569,10 @@ def calc_dilution(
         "base": base_key,
         "mass_g": masses,
     }
+    base_units = "ml" if fruit else "g"
     _emit(
         payload if output == OutputFormat.json 
-        else f'{fermentable_key}={masses["fermentable"]}g\nbase={masses["base"]}g', 
+        else f'{fermentable_key}={masses["fermentable"]}g\nbase={masses["base"]}{base_units}', 
         output
     )
 

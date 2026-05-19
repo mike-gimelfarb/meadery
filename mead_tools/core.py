@@ -112,19 +112,11 @@ class Fruit:
     moisture_content: float
     ph: float
 
-    def to_fermentable(self, density: float) -> Fermentable:
+    def to_fermentable(self, density: float | None=None) -> Fermentable:
         '''Returns a Fermentable representation of this fruit for dilution calculations.'''
-        if density is None:
-            raise ValueError('density is required to convert fruit to a fermentable')
-        if density <= 0:
-            raise ValueError('density must be positive (g/mL)')
-        if self.brix is None:
-            raise ValueError('fruit brix is required to estimate ppg')
-        if self.brix < 0 or self.brix >= 100:
-            raise ValueError('fruit brix must be between 0 and 100 (exclusive upper bound)')
-
         ppg_est = 0.46 * self.brix
-        return Fermentable(ppg=ppg_est, density=density, ph=self.ph)
+        density_est = brix_to_sg(self.brix) if density is None else density
+        return Fermentable(ppg=ppg_est, density=density_est, ph=self.ph)
 
 
 # Common whole-fruit profiles for recipe planning.
@@ -389,6 +381,18 @@ class Must:
         mass_ferment_g = (required_combined_points - (total_mass_g * base.ppg)) / denominator
         mass_base_g = total_mass_g - mass_ferment_g
         return mass_ferment_g, mass_base_g
+
+    def dilution_with_fruit_juice(self, fermentable: Fermentable, fruit: Fruit) -> float:
+        '''Returns the volume of fruit juice in ml required to dilute the fermentable 
+        to create this must.
+        
+        :param fermentable: the Fermentable to dilute with fruit juice
+        :param fruit: the Fruit profile to use for the juice
+        '''
+        base = fruit.to_fermentable()
+        mass_ferment_g, mass_base_g = self.dilution(fermentable=fermentable, base=base)
+        vol_base_ml = mass_base_g / base.density
+        return mass_ferment_g, vol_base_ml
 
     def adjust_gravity(self, target_sg: float, fermentable: Fermentable, tol: float=1e-6) -> float:
         '''Compute mass in grams of `fermentable` to add to this must to reach `target_sg`.
