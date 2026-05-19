@@ -187,6 +187,7 @@ class Must:
             raise ValueError('pH values must be between 0 and 14.')
         if vol1 + vol2 <= 0:
             raise ValueError('Total volume must be positive to calculate pH of mixture.')
+        
         total_h_conc = (10 ** (-ph1) * vol1 + 10 ** (-ph2) * vol2) / (vol1 + vol2)
         return -math.log10(total_h_conc)
     
@@ -402,22 +403,21 @@ class Must:
         :param fermentable: the Fermentable to add for dilution
         :param tol: tolerance for the root-finding algorithm
         '''
-        def f_mass_to_abv(m):
-            return self.add(fermentable, m).gravity - target_sg
-
         if target_sg <= 0.0:
             raise ValueError('target_sg must be positive.')
-        if abs(f_mass_to_abv(0.0)) < tol:
-            return 0.0
-        need_increase = (target_sg > self.gravity)
-        if need_increase and fermentable.ppg <= 0:
+        if target_sg > self.gravity and fermentable.ppg <= 0:
             raise ValueError('Selected fermentable cannot raise gravity (ppg <= 0).')
-        if (not need_increase) and fermentable.ppg > 0:
+        if target_sg <= self.gravity and fermentable.ppg > 0:
             raise ValueError('Selected fermentable will not lower gravity; use water or a diluent (ppg=0).')
 
-        a0, b0 = 0.0, 100.0
-        a, b = root_bracket(f_mass_to_abv, a0, b0)
-        return root_find(f_mass_to_abv, a, b, tol=tol)
+        def f_mass_to_abv(m):
+            return self.add(fermentable, m).gravity - target_sg
+        if abs(f_mass_to_abv(0.0)) < tol:
+            return 0.0
+        else:
+            a0, b0 = 0.0, 100.0
+            a, b = root_bracket(f_mass_to_abv, a0, b0)
+            return root_find(f_mass_to_abv, a, b, tol=tol)
     
     def adjust_gravity_with_fruit_juice(self, target_sg: float, fruit: Fruit, tol: float=1e-6) -> float:
         '''Compute volume in mL of fruit juice to add to this must to reach `target_sg`.
@@ -426,17 +426,17 @@ class Must:
         :param fruit: the Fruit profile to use for the juice
         :param tol: tolerance for the root-finding algorithm
         '''
-        def f_vol_to_abv(v):
-            return self.add_fruit_juice(fruit, v).gravity - target_sg
-
         if target_sg <= 0.0:
             raise ValueError('target_sg must be positive.')
+        
+        def f_vol_to_abv(v):
+            return self.add_fruit_juice(fruit, v).gravity - target_sg
         if abs(f_vol_to_abv(0.0)) < tol:
             return 0.0
-
-        a0, b0 = 0.0, 1000.0
-        a, b = root_bracket(f_vol_to_abv, a0, b0)
-        return root_find(f_vol_to_abv, a, b, tol=tol)
+        else:
+            a0, b0 = 0.0, 1000.0
+            a, b = root_bracket(f_vol_to_abv, a0, b0)
+            return root_find(f_vol_to_abv, a, b, tol=tol)
 
     # ====================================================================================
     #                           Adjustment Calculation Methods    
