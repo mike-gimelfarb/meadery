@@ -372,7 +372,7 @@ class Must:
             return self.potential_abv(fg=fg, method=method) - yeast.abv_limit
         return root_find(f_fg_to_abv, min_fg, self.gravity, tol=tol)
      
-    def dilution(self, fermentable: Fermentable, base: Fermentable=FERMENTABLES['water']) -> float:
+    def volumes(self, fermentable: Fermentable, base: Fermentable=FERMENTABLES['water']) -> float:
         '''Returns the mass of a fermentable and base required to create this must.'''
         target_points = (self.gravity - 1.0) * 1000.0
         total_mass_g = self.gravity * self.volume
@@ -383,7 +383,7 @@ class Must:
         mass_base_g = total_mass_g - mass_ferment_g
         return mass_ferment_g, mass_base_g
 
-    def dilution_with_fruit_juice(self, fermentable: Fermentable, fruit: Fruit) -> float:
+    def volumes_with_fruit_juice(self, fermentable: Fermentable, fruit: Fruit) -> float:
         '''Returns the volume of fruit juice in ml required to dilute the fermentable 
         to create this must.
         
@@ -391,7 +391,7 @@ class Must:
         :param fruit: the Fruit profile to use for the juice
         '''
         base = fruit.to_fermentable()
-        mass_ferment_g, mass_base_g = self.dilution(fermentable=fermentable, base=base)
+        mass_ferment_g, mass_base_g = self.volumes(fermentable=fermentable, base=base)
         vol_base_ml = mass_base_g / base.density
         return mass_ferment_g, vol_base_ml
 

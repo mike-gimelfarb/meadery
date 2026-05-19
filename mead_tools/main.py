@@ -526,8 +526,8 @@ def calc_original_gravity(
     _emit(payload if output == OutputFormat.json else round(result, 4), output)
 
 
-@calc_app.command("dilution")
-def calc_dilution(
+@calc_app.command("volumes")
+def calc_volumes(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
     fermentable: str = typer.Option("honey", "--fermentable", help="Fermentable name",
@@ -547,11 +547,11 @@ def calc_dilution(
         raise typer.BadParameter(f"unknown fermentable or base. Choose from: {choices}")
     
     if base_key in FERMENTABLES:
-        result = Must(volume=volume, gravity=gravity, ph=None).dilution(
+        result = Must(volume=volume, gravity=gravity, ph=None).volumes(
             FERMENTABLES[fermentable_key], base=FERMENTABLES[base_key])
         fruit = False
     elif base_key in FRUITS:
-        result = Must(volume=volume, gravity=gravity, ph=None).dilution_with_fruit_juice(
+        result = Must(volume=volume, gravity=gravity, ph=None).volumes_with_fruit_juice(
             FERMENTABLES[fermentable_key], fruit=FRUITS[base_key])
         fruit = True
     else:
@@ -575,6 +575,26 @@ def calc_dilution(
         else f'{fermentable_key}={masses["fermentable"]}g\nbase={masses["base"]}{base_units}', 
         output
     )
+
+
+@calc_app.command("priming-sugar")
+def calc_priming_sugar(
+    volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
+    target_co2_vol: float = typer.Option(..., "--co2", help="Target CO2 volumes"),
+    temp: float = typer.Option(..., "--temp", help="Fermentation temperature in C for temperature correction"),
+    fermentable: str = typer.Option(None, "--fermentable", help="Fermentable for priming sugar",
+        case_sensitive=False, show_choices=True, prompt=True,
+        autocompletion=lambda ctx, args, incomplete: [k for k in FERMENTABLES.keys() if k.startswith(incomplete)]),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    _validate_must(volume, 1.0)
+    fermentable_obj = FERMENTABLES.get(fermentable.strip().lower(), None)
+    if fermentable_obj is None:
+        choices = ", ".join(sorted(FERMENTABLES.keys()))
+        raise typer.BadParameter(f"Invalid fermentable: {fermentable}, choose from: {choices}")
+    result = Must(volume=volume, gravity=1.0, ph=None).priming_sugar(
+        fermentable=fermentable_obj, target_volumes=target_co2_vol, temp=temp)
+    _emit(f'{round(result, 2)}g', output)
 
 
 # ===================================================
@@ -667,26 +687,6 @@ def adjust_so2_ph(
     result = Must(volume=volume, gravity=gravity, ph=ph).so2_from_ph(
         target_mol_so2=target_mol_so2)
     _emit(result, output)
-
-
-@adjust_app.command("priming-sugar")
-def adjust_priming_sugar(
-    volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
-    target_co2_vol: float = typer.Option(..., "--co2", help="Target CO2 volumes"),
-    temp: float = typer.Option(..., "--temp", help="Fermentation temperature in C for temperature correction"),
-    fermentable: str = typer.Option(None, "--fermentable", help="Fermentable for priming sugar",
-        case_sensitive=False, show_choices=True, prompt=True,
-        autocompletion=lambda ctx, args, incomplete: [k for k in FERMENTABLES.keys() if k.startswith(incomplete)]),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
-) -> None:
-    _validate_must(volume, 1.0)
-    fermentable_obj = FERMENTABLES.get(fermentable.strip().lower(), None)
-    if fermentable_obj is None:
-        choices = ", ".join(sorted(FERMENTABLES.keys()))
-        raise typer.BadParameter(f"Invalid fermentable: {fermentable}, choose from: {choices}")
-    result = Must(volume=volume, gravity=1.0, ph=None).priming_sugar(
-        fermentable=fermentable_obj, target_volumes=target_co2_vol, temp=temp)
-    _emit(f'{round(result, 2)}g', output)
 
 
 if __name__ == "__main__":

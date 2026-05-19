@@ -53,12 +53,12 @@ mead --help
 - `calc attenuation --og --fg`
 - `calc stalled-gravity --og --yeast [--method] [--tol] [--min-fg]`
 - `calc original-gravity --abv [--fg] [--method] [--tol] [--max-og]`
-- `calc dilution --vol --og [--fermentable] [--base]`
+- `calc volumes --vol --og [--fermentable] [--base]`
+- `calc priming-sugar --vol --co2 --temp --fermentable`
 - `adjust gravity --vol --og --target-sg (--fermentable | --fruit)`
 - `adjust tosna3 --vol --og --yeast`
 - `adjust so2-target --vol --og [--target-ppm]`
 - `adjust so2-ph --vol --og --ph [--target-mol-so2]`
-- `adjust priming-sugar --vol --co2 --temp --fermentable`
 
 All commands support `--format text|json`.
 `--spirit-vol` value is 40 by default.
