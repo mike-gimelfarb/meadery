@@ -161,9 +161,12 @@ YEAST_STRAINS = {
     'qa23': Yeast(abv_limit=16.0, nitrogen_requirement='low'),
     'd47': Yeast(abv_limit=15.0, nitrogen_requirement='medium'),
     's04': Yeast(abv_limit=11.0, nitrogen_requirement='high'),
+    'us05': Yeast(abv_limit=11.0, nitrogen_requirement='medium'),
     'm05': Yeast(abv_limit=18.0, nitrogen_requirement='medium'),
     'rc212': Yeast(abv_limit=16.0, nitrogen_requirement='medium'),
     'voss-kveik': Yeast(abv_limit=12.0, nitrogen_requirement='high'),
+    'montrachet': Yeast(abv_limit=15.0, nitrogen_requirement='medium'),
+    'bread': Yeast(abv_limit=12.0, nitrogen_requirement='low'),
 }
 
 
