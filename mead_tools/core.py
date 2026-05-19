@@ -367,15 +367,12 @@ class Must:
      
     def dilution(self, fermentable: Fermentable, base: Fermentable=FERMENTABLES['water']) -> float:
         '''Returns the mass of a fermentable and base required to create this must.'''
-        og = self.gravity
-        target_points = (og - 1.0) * 1000.0
-        total_mass_g = og * self.volume
+        target_points = (self.gravity - 1.0) * 1000.0
+        total_mass_g = self.gravity * self.volume
         conversion_factor = 453.592 / 3785.41
         required_combined_points = target_points * conversion_factor * self.volume
-        ppg_f = fermentable.ppg
-        ppg_b = base.ppg
-        denominator = ppg_f - ppg_b
-        mass_ferment_g = (required_combined_points - (total_mass_g * ppg_b)) / denominator
+        denominator = fermentable.ppg - base.ppg
+        mass_ferment_g = (required_combined_points - (total_mass_g * base.ppg)) / denominator
         mass_base_g = total_mass_g - mass_ferment_g
         return mass_ferment_g, mass_base_g
 
@@ -406,15 +403,14 @@ class Must:
     
     def tosna_3(self, yeast: Yeast) -> dict:
         '''Returns the TOSNA 3.0 schedule for nutrient additions using fermaid O.'''
-        og = self.gravity
-        plato = sg_to_plato(og)
+        plato = sg_to_plato(self.gravity)
         demand_map = { 'low': 0.75, 'medium': 0.9, 'high': 1.25 }
         total_fermaid_o_g = (plato * 10) * demand_map[yeast.nitrogen_requirement] / 50
         total_grams = total_fermaid_o_g * (self.volume / 3785.41)
         return {
             'total_grams':          total_grams,
             'staggered_dose_grams': total_grams / 4,
-            'sugar_break_gravity':  1.0 + ((og - 1.0) * (2.0 / 3.0))
+            'sugar_break_gravity':  1.0 + ((self.gravity - 1.0) * (2.0 / 3.0))
         }
         
     def so2_from_target_ppm(self, target_ppm: float=50.0) -> dict:
