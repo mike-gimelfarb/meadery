@@ -481,8 +481,8 @@ class Must:
     def residual_co2(self, temp: float) -> float:
         '''Returns the residual CO2 given the temperature of the liquid in Celsius.'''
         temp_f = (temp * 9.0 / 5.0) + 32.0
-        return 3.0378 - (0.050062 * temp_f) + (0.00026555 * temp_f ** 2
-                                               )
+        return 3.0378 - (0.050062 * temp_f) + (0.00026555 * temp_f ** 2)
+        
     def priming_sugar(self, fermentable: Fermentable, target_volumes: float, temp: float) -> float:
         '''Return mass in grams of priming fermentable to reach `target_volumes` CO2.
 

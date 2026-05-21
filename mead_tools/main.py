@@ -532,7 +532,7 @@ def calc_residual_co2(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     result = Must(volume=1.0, gravity=1.0, ph=None).residual_co2(temp)
-    _emit(f'{round(result, 2)} volumes', output)
+    _emit(f'{round(result, 2)} volumes, {round(result * 1.92, 3)} g/L', output)
 
 
 @calc_app.command("volumes")
