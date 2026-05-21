@@ -10,7 +10,7 @@ def root_find(f, a, b, tol=1e-6, iters=1000):
     for _ in range(iters):
         c = (a + b) / 2
         fc = f(c)
-        if abs(f(c)) < tol or (b - a) / 2 < tol:
+        if abs(fc) < tol or abs(b - a) < tol:
             return c
         elif fa * fc < 0:
             b = c
