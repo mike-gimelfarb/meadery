@@ -526,6 +526,15 @@ def calc_original_gravity(
     _emit(payload if output == OutputFormat.json else round(result, 4), output)
 
 
+@calc_app.command("residual-co2")
+def calc_residual_co2(
+    temp: float = typer.Option(..., "--temp", help="Temperature in Celsius"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    result = Must(volume=1.0, gravity=1.0, ph=None).residual_co2(temp)
+    _emit(f'{round(result, 2)} volumes', output)
+
+
 @calc_app.command("volumes")
 def calc_volumes(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
