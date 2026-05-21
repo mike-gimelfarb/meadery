@@ -447,6 +447,23 @@ class Must:
     #                           Adjustment Calculation Methods    
     # ====================================================================================
     
+    def pitch_rate(self) -> dict:
+        '''Returns the recommended yeast and Go-Ferm amounts in grams for this must.'''
+        if self.gravity > 1.16:
+            pitch_rate = 4
+        elif self.gravity >= 1.13:
+            pitch_rate = 3
+        elif self.gravity >= 1.10:
+            pitch_rate = 2
+        else:
+            pitch_rate = 1
+        yeast_g = pitch_rate * (self.volume / 3785.41)
+        go_ferm_g = 1.25 * yeast_g
+        return {
+            'yeast_g': yeast_g,
+            'goferm_g': go_ferm_g
+        }
+
     def tosna_3(self, yeast: Yeast) -> dict:
         '''Returns the TOSNA 3.0 schedule for nutrient additions using fermaid O.'''
         plato = sg_to_plato(self.gravity)

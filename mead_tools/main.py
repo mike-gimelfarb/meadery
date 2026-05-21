@@ -655,6 +655,22 @@ def adjust_gravity(
         output
     )
 
+
+@adjust_app.command("pitching")
+def adjust_pitching_rate(
+    volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
+    gravity: float = typer.Option(..., "--og", help="Must original gravity"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    _validate_must(volume, gravity)
+    result = Must(volume=volume, gravity=gravity, ph=None).pitch_rate()
+    _emit(
+        result if output == OutputFormat.json else 
+        f"Yeast: {round(result['yeast_g'], 2)}g\nGo-Ferm: {round(result['goferm_g'], 2)}g",
+        output
+    )
+
+
 @adjust_app.command("tosna3")
 def adjust_tosna3(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
