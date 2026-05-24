@@ -135,6 +135,7 @@ FRUITS = {
     'blueberry': Fruit(brix=12.0, moisture_content=85.0, ph=3.2),
     'cranberry': Fruit(brix=8.0, moisture_content=87.0, ph=2.5),
     'elderberry': Fruit(brix=11.0, moisture_content=80.0, ph=4.9),
+    'blackcurrant': Fruit(brix=15.0, moisture_content=80.0, ph=3.0),
     'grape-niagara': Fruit(brix=16.0, moisture_content=82.0, ph=3.2),
     'grape-concord': Fruit(brix=17.0, moisture_content=82.0, ph=3.4),
     'grape-cabernet': Fruit(brix=24.0, moisture_content=73.0, ph=3.4),
