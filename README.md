@@ -49,7 +49,7 @@ mead attenuation --og 1.110 --fg 1.010
 | `residual-co2 --temp` | Compute residual dissolved CO2 by temperature. |
 | `volumes --vol --og [--fermentable] [--base]` | Compute fermentable/base amounts for a target must. |
 | `priming-sugar --vol --co2 --temp --fermentable` | Compute priming sugar for target carbonation. |
-| `gravity --vol --og --target-sg (--fermentable | --fruit)` | Compute additions to reach target gravity. |
+| `gravity --vol --og --target-sg (--fermentable \| --fruit)` | Compute additions to reach target gravity. |
 | `ta --vol --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
 | `pitching --vol --og` | Compute yeast and Go-Ferm pitch amounts. |
 | `tosna3 --vol --og --yeast` | Compute TOSNA 3.0 nutrient schedule. |
