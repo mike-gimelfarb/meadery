@@ -83,18 +83,21 @@ Current fruits are defined in `FRUITS`:
 - `peach`
 - `plum`
 - `apricot`
-- `cherry-bing`
-- `cherry-montmorency`
+- cherry (`cherry-bing`, `cherry-montmorency`)
 - `strawberry`
 - `raspberry`
 - `blackberry`
 - `blueberry`
 - `cranberry`
 - `elderberry`
-- `grape-wine`
-- `grape-late-harvest`
+- `blackcurrant`
+- grape (`grape-niagara`, `grape-concord`, `grape-cabernet`, `grape-late-harvest`)
 - `banana`
 - `pomegranate`
+- `watermelon`
+- `canteloupe`
+- `fig`
+- `mango`
 
 
 ## JSON Output
@@ -107,7 +110,7 @@ mead calc potential-abv --og 1.110 --fg 1.010 --format json
 
 ## Recipe format
 
-`mead must from-recipe <file>` loads a simple, line-oriented recipe and prints the final must volume and gravity.
+`mead must from-recipe <file>` loads a simple, line-oriented recipe and prints the must volume, gravity and estimated ph.
 
 Rules:
 - One instruction per non-empty line: `<ingredient>=<quantity>`
