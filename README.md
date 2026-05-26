@@ -26,33 +26,35 @@ mead attenuation --og 1.110 --fg 1.010
 
 ## Supported Functions
 
-- `sg-to-plato --sg`: convert specific gravity to plato
-- `brix-to-sg --brix`: convert brix to specific gravity
-- `hydrometer --sg --temp --calib-temp`: calibrate hydrometer for temperature
-- `refractometer --brix --og`: calubrate refractometer for alcohol
-- `combine --vol1 --sg1 --ph1 --vol2 --sg2 --ph2`: combine two musts
-- `add --vol --sg --ph --fermentable --mass`: add a fermentable to must
-- `add-water --vol --sg --ph --mass`: add water to must
-- `add-honey --vol --sg --ph --mass`: add honey to must
-- `add-sugar --vol --sg --ph --mass`: add sugar to must
-- `add-fruit --vol --sg --ph --fruit --mass [--extract-yield]`: add solid fruit to must
-- `add-fruit-juice --vol --sg --ph --fruit --juice-vol`: add fruit juice to must
-- `from-recipe <file>`: load must from recipe file
-- `fortify-volume --vol --og --abv --fg [--spirit-abv] [--method]`: calculate spirit volume to fortify
-- `fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]`: calculate abv after fortification
-- `potential-abv --og [--fg] [--method]`: calculate potential abv
-- `attenuation --og --fg`: calculate attenuation
-- `stalled-gravity --og --yeast [--method] [--tol] [--min-fg]`: calculate potential final gravity from yeast strain
-- `original-gravity --abv [--fg] [--method] [--tol] [--max-og]`: calculate original gravity from final gravity and abv
-- `residual-co2 --temp`: calculate residual CO2
-- `volumes --vol --og [--fermentable] [--base]`: calculate volumes from gravity
-- `priming-sugar --vol --co2 --temp --fermentable`: calculate priming sugar
-- `gravity --vol --og --target-sg (--fermentable | --fruit)`: calculate volume to change gravity
-- `ta --vol --current-ta --target-ta [--acid]`: calculate acid adjustment
-- `pitching --vol --og`: calculate yeast pitch rate
-- `tosna3 --vol --og --yeast`: calculate nutrient rate
-- `so2-target --vol --og [--target-ppm]`: calculate sulfite rate
-- `so2-ph --vol --og --ph [--target-mol-so2]`: calculate sulfite rate from ph
+| Command | Description |
+| --- | --- |
+| `sg-to-plato --sg` | Convert specific gravity to Plato. |
+| `brix-to-sg --brix` | Convert Brix to specific gravity. |
+| `hydrometer --sg --temp --calib-temp` | Correct hydrometer SG for sample temperature. |
+| `refractometer --brix --og` | Correct refractometer reading for alcohol. |
+| `combine --vol1 --sg1 --ph1 --vol2 --sg2 --ph2` | Combine two musts into one. |
+| `add --vol --sg --ph --fermentable --mass` | Add a fermentable to a must. |
+| `add-water --vol --sg --ph --mass` | Add water to a must. |
+| `add-honey --vol --sg --ph --mass` | Add honey to a must. |
+| `add-sugar --vol --sg --ph --mass` | Add table sugar to a must. |
+| `add-fruit --vol --sg --ph --fruit --mass [--extract-yield]` | Add solid fruit to a must. |
+| `add-fruit-juice --vol --sg --ph --fruit --juice-vol` | Add fruit juice to a must. |
+| `from-recipe <file>` | Build must stats from a recipe file. |
+| `fortify-volume --vol --og --abv --fg [--spirit-abv] [--method]` | Compute spirit volume needed for fortification. |
+| `fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]` | Compute ABV after fortification. |
+| `potential-abv --og [--fg] [--method]` | Compute potential ABV from OG and FG. |
+| `attenuation --og --fg` | Compute apparent attenuation. |
+| `stalled-gravity --og --yeast [--method] [--tol] [--min-fg]` | Estimate stall gravity from yeast ABV tolerance. |
+| `original-gravity --abv [--fg] [--method] [--tol] [--max-og]` | Compute OG needed for a target ABV. |
+| `residual-co2 --temp` | Compute residual dissolved CO2 by temperature. |
+| `volumes --vol --og [--fermentable] [--base]` | Compute fermentable/base amounts for a target must. |
+| `priming-sugar --vol --co2 --temp --fermentable` | Compute priming sugar for target carbonation. |
+| `gravity --vol --og --target-sg (--fermentable | --fruit)` | Compute additions to reach target gravity. |
+| `ta --vol --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
+| `pitching --vol --og` | Compute yeast and Go-Ferm pitch amounts. |
+| `tosna3 --vol --og --yeast` | Compute TOSNA 3.0 nutrient schedule. |
+| `so2-target --vol --og [--target-ppm]` | Compute sulfite additions from target ppm. |
+| `so2-ph --vol --og --ph [--target-mol-so2]` | Compute sulfite additions from pH and molecular SO2 target. |
 
 All commands support `--format text|json`.
 `--spirit-vol` value is 40 by default.
