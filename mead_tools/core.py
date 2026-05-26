@@ -155,6 +155,19 @@ class Yeast:
     nitrogen_requirement: str
 
 
+@dataclass
+class AcidAddition:
+    ta_effect: float
+
+
+# Acid additions expressed as g/L tartaric-equivalent TA increase per g/L additive.
+ACID_ADJUSTMENTS = {
+    'tartaric': AcidAddition(ta_effect=1.0),
+    'malic': AcidAddition(ta_effect=75.04 / 67.05),
+    'citric': AcidAddition(ta_effect=75.04 / 64.04),
+}
+
+
 # common yeast profiles for recipe planning
 YEAST_STRAINS = {
     '71b': Yeast(abv_limit=14.5, nitrogen_requirement='low'),
@@ -443,6 +456,35 @@ class Must:
         else:
             a, b = root_bracket(f_vol_to_abv, 0, 1)
             return root_find(f_vol_to_abv, a, b, tol=tol)
+
+    def adjust_ta(self, current_ta: float, target_ta: float, acid: AcidAddition) -> dict:
+        '''Return the acid addition required to raise TA to `target_ta`.
+
+        TA values are expressed in g/L as tartaric acid equivalent.
+
+        :param current_ta: current titratable acidity in g/L tartaric equivalent
+        :param target_ta: desired titratable acidity in g/L tartaric equivalent
+        :param acid: acid profile used for the addition
+        '''
+        if self.volume <= 0:
+            raise ValueError('Must volume must be positive.')
+        if current_ta < 0 or target_ta < 0:
+            raise ValueError('TA values must be non-negative.')
+        if target_ta < current_ta:
+            raise ValueError('target_ta must be >= current_ta for acid additions.')
+        if acid.ta_effect <= 0:
+            raise ValueError('Acid TA effect must be positive.')
+
+        ta_increase = target_ta - current_ta
+        acid_g_per_l = ta_increase / acid.ta_effect
+        total_grams = acid_g_per_l * (self.volume / 1000.0)
+        return {
+            'current_ta_g_per_l': current_ta,
+            'target_ta_g_per_l': target_ta,
+            'ta_increase_g_per_l': ta_increase,
+            'acid_addition_g_per_l': acid_g_per_l,
+            'acid_addition_grams': total_grams,
+        }
 
     # ====================================================================================
     #                           Adjustment Calculation Methods    

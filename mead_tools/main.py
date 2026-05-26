@@ -4,6 +4,7 @@ import typer
 from typing import Optional, List
 
 from mead_tools.core import (
+    ACID_ADJUSTMENTS,
     FERMENTABLES,
     FRUITS,
     YEAST_STRAINS,
@@ -53,6 +54,10 @@ def get_fruit_choices() -> List[str]:
 
 def get_yeast_choices() -> List[str]:
     return list(YEAST_STRAINS.keys())
+
+
+def get_acid_choices() -> List[str]:
+    return list(ACID_ADJUSTMENTS.keys())
 
 
 def _validate_must(volume: float, gravity: float, ph: Optional[float] = None) -> None:
@@ -653,6 +658,46 @@ def adjust_gravity(
     _emit(
         payload if output == OutputFormat.json else result,
         output
+    )
+
+
+@adjust_app.command("ta")
+def adjust_ta(
+    volume: float = typer.Option(..., "--vol", help="Batch volume in mL"),
+    current_ta: float = typer.Option(..., "--current-ta", help="Current TA in g/L as tartaric equivalent"),
+    target_ta: float = typer.Option(..., "--target-ta", help="Target TA in g/L as tartaric equivalent"),
+    acid: str = typer.Option("tartaric", "--acid", help="Acid to add",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    if volume <= 0:
+        raise typer.BadParameter("volume must be > 0")
+    if current_ta < 0 or target_ta < 0:
+        raise typer.BadParameter("TA values must be >= 0")
+
+    acid_key = acid.strip().lower()
+    acid_obj = ACID_ADJUSTMENTS.get(acid_key)
+    if acid_obj is None:
+        choices = ", ".join(sorted(ACID_ADJUSTMENTS.keys()))
+        raise typer.BadParameter(f"unknown acid '{acid}'. Choose one of: {choices}")
+
+    try:
+        result = Must(volume=volume, gravity=1.0, ph=None).adjust_ta(
+            current_ta=current_ta,
+            target_ta=target_ta,
+            acid=acid_obj,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    payload = {"acid": acid_key, "volume_ml": volume, **result}
+    _emit(
+        payload if output == OutputFormat.json else (
+            f"Total: {round(result['acid_addition_grams'], 2)}g {acid_key}\n"
+            f"Rate: {round(result['acid_addition_g_per_l'], 3)}g/L"
+        ),
+        output,
     )
 
 

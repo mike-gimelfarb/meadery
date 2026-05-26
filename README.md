@@ -25,7 +25,7 @@ mead --help
 - `correct`: Hydrometer and refractometer corrections
 - `must`: Must combining and additions
 - `calc`: ABV, attenuation, original gravity, dilution, stalled gravity, fortification
-- `adjust`: TOSNA and SO2 adjustment calculations
+- `adjust`: Gravity, TA, pitching, TOSNA, and SO2 adjustments
 
 ## ABV Calculation Methods
 
@@ -45,7 +45,7 @@ mead --help
 - `must add-honey --vol --sg --ph --mass`
 - `must add-sugar --vol --sg --ph --mass`
 - `must add-fruit --vol --sg --ph --fruit --mass [--extract-yield]`
-- `must add-fruit-juice --vol --sg --ph --fruit --fruit-vol`
+- `must add-fruit-juice --vol --sg --ph --fruit --juice-vol`
 - `must from-recipe <file>`
 - `calc fortify-volume --vol --og --abv --fg [--spirit-abv] [--method]`
 - `calc fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]`
@@ -53,9 +53,12 @@ mead --help
 - `calc attenuation --og --fg`
 - `calc stalled-gravity --og --yeast [--method] [--tol] [--min-fg]`
 - `calc original-gravity --abv [--fg] [--method] [--tol] [--max-og]`
+- `calc residual-co2 --temp`
 - `calc volumes --vol --og [--fermentable] [--base]`
 - `calc priming-sugar --vol --co2 --temp --fermentable`
 - `adjust gravity --vol --og --target-sg (--fermentable | --fruit)`
+- `adjust ta --vol --current-ta --target-ta [--acid]`
+- `adjust pitching --vol --og`
 - `adjust tosna3 --vol --og --yeast`
 - `adjust so2-target --vol --og [--target-ppm]`
 - `adjust so2-ph --vol --og --ph [--target-mol-so2]`
@@ -63,9 +66,10 @@ mead --help
 All commands support `--format text|json`.
 `--spirit-vol` value is 40 by default.
 
+
 ## Dynamic Fermentables And Fruits
 
-`must add`, `must add-fruit`, and `calc dilution` use values from `mead_tools.core` at runtime.
+`must add`, `must add-fruit`, and `calc volumes` use values from `mead_tools.core` at runtime.
 
 Current fermentables are defined in `FERMENTABLES`:
 - `water`
