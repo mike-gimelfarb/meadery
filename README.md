@@ -18,14 +18,45 @@ Installed console script:
 mead --help
 ```
 
+Commands are available directly at the top level, for example:
 
-## Command Groups
+```bash
+mead attenuation --og 1.110 --fg 1.010
+```
 
-- `convert`: SG/Brix/Plato conversions
-- `correct`: Hydrometer and refractometer corrections
-- `must`: Must combining and additions
-- `calc`: ABV, attenuation, original gravity, dilution, stalled gravity, fortification
-- `adjust`: Gravity, TA, pitching, TOSNA, and SO2 adjustments
+## Supported Functions
+
+- `sg-to-plato --sg`
+- `brix-to-sg --brix`
+- `hydrometer --sg --temp --calib-temp`
+- `refractometer --brix --og`
+- `combine --vol1 --sg1 --ph1 --vol2 --sg2 --ph2`
+- `add --vol --sg --ph --fermentable --mass`
+- `add-water --vol --sg --ph --mass`
+- `add-honey --vol --sg --ph --mass`
+- `add-sugar --vol --sg --ph --mass`
+- `add-fruit --vol --sg --ph --fruit --mass [--extract-yield]`
+- `add-fruit-juice --vol --sg --ph --fruit --juice-vol`
+- `from-recipe <file>`
+- `fortify-volume --vol --og --abv --fg [--spirit-abv] [--method]`
+- `fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]`
+- `potential-abv --og [--fg] [--method]`
+- `attenuation --og --fg`
+- `stalled-gravity --og --yeast [--method] [--tol] [--min-fg]`
+- `original-gravity --abv [--fg] [--method] [--tol] [--max-og]`
+- `residual-co2 --temp`
+- `volumes --vol --og [--fermentable] [--base]`
+- `priming-sugar --vol --co2 --temp --fermentable`
+- `gravity --vol --og --target-sg (--fermentable | --fruit)`
+- `ta --vol --current-ta --target-ta [--acid]`
+- `pitching --vol --og`
+- `tosna3 --vol --og --yeast`
+- `so2-target --vol --og [--target-ppm]`
+- `so2-ph --vol --og --ph [--target-mol-so2]`
+
+All commands support `--format text|json`.
+`--spirit-vol` value is 40 by default.
+
 
 ## ABV Calculation Methods
 
@@ -33,43 +64,10 @@ mead --help
 - `alternate`: non-linear Hall formula, more accurate for higher gravities
 - `cutaia`: Cutaia-Reid-Speers formula, most accurate and currently the default
 
-## Supported Functions
-
-- `convert sg-to-plato --sg`
-- `convert brix-to-sg --brix`
-- `correct hydrometer --sg --temp --calib-temp`
-- `correct refractometer --brix --og`
-- `must combine --vol1 --sg1 --ph1 --vol2 --sg2 --ph2`
-- `must add --vol --sg --ph --fermentable --mass`
-- `must add-water --vol --sg --ph --mass`
-- `must add-honey --vol --sg --ph --mass`
-- `must add-sugar --vol --sg --ph --mass`
-- `must add-fruit --vol --sg --ph --fruit --mass [--extract-yield]`
-- `must add-fruit-juice --vol --sg --ph --fruit --juice-vol`
-- `must from-recipe <file>`
-- `calc fortify-volume --vol --og --abv --fg [--spirit-abv] [--method]`
-- `calc fortify-abv --vol --og --fg --spirit-vol [--spirit-abv] [--method]`
-- `calc potential-abv --og [--fg] [--method]`
-- `calc attenuation --og --fg`
-- `calc stalled-gravity --og --yeast [--method] [--tol] [--min-fg]`
-- `calc original-gravity --abv [--fg] [--method] [--tol] [--max-og]`
-- `calc residual-co2 --temp`
-- `calc volumes --vol --og [--fermentable] [--base]`
-- `calc priming-sugar --vol --co2 --temp --fermentable`
-- `adjust gravity --vol --og --target-sg (--fermentable | --fruit)`
-- `adjust ta --vol --current-ta --target-ta [--acid]`
-- `adjust pitching --vol --og`
-- `adjust tosna3 --vol --og --yeast`
-- `adjust so2-target --vol --og [--target-ppm]`
-- `adjust so2-ph --vol --og --ph [--target-mol-so2]`
-
-All commands support `--format text|json`.
-`--spirit-vol` value is 40 by default.
-
 
 ## Dynamic Fermentables And Fruits
 
-`must add`, `must add-fruit`, and `calc volumes` use values from `mead_tools.core` at runtime.
+`add`, `add-fruit`, and `volumes` use values from `mead_tools.core` at runtime.
 
 Current fermentables are defined in `FERMENTABLES`:
 - `water`
@@ -109,12 +107,12 @@ Current fruits are defined in `FRUITS`:
 Use `--format json` for machine-friendly output:
 
 ```bash
-mead calc potential-abv --og 1.110 --fg 1.010 --format json
+mead potential-abv --og 1.110 --fg 1.010 --format json
 ```
 
 ## Recipe format
 
-`mead must from-recipe <file>` loads a simple, line-oriented recipe and prints the must volume, gravity and estimated ph.
+`mead from-recipe <file>` loads a simple, line-oriented recipe and prints the must volume, gravity and estimated ph.
 
 Rules:
 - One instruction per non-empty line: `<ingredient>=<quantity>`

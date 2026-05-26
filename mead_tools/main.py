@@ -19,17 +19,6 @@ from mead_tools.core import (
 
 
 app = typer.Typer(help="Mead tools command-line app")
-convert_app = typer.Typer(help="Unit and gravity conversions")
-correct_app = typer.Typer(help="Hydrometer and refractometer corrections")
-must_app = typer.Typer(help="Must manipulation commands")
-calc_app = typer.Typer(help="Brewing calculations")
-adjust_app = typer.Typer(help="Adjustment schedules and additions")
-
-app.add_typer(convert_app, name="convert")
-app.add_typer(correct_app, name="correct")
-app.add_typer(must_app, name="must")
-app.add_typer(calc_app, name="calc")
-app.add_typer(adjust_app, name="adjust")
 
 
 class OutputFormat(str, Enum):
@@ -86,7 +75,7 @@ def _emit(value, output: OutputFormat) -> None:
 #                Conversion Commands
 # ===================================================
 
-@convert_app.command("sg-to-plato")
+@app.command("sg-to-plato")
 def convert_sg_to_plato(
     gravity: float = typer.Option(..., "--sg", help="Specific gravity"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
@@ -98,7 +87,7 @@ def convert_sg_to_plato(
     )
 
 
-@convert_app.command("brix-to-sg")
+@app.command("brix-to-sg")
 def convert_brix_to_sg(
     brix: float = typer.Option(..., "--brix", help="Brix value"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
@@ -114,7 +103,7 @@ def convert_brix_to_sg(
 #                Correction Commands
 # ===================================================
 
-@correct_app.command("hydrometer")
+@app.command("hydrometer")
 def correct_hydrometer(
     gravity: float = typer.Option(..., "--sg", help="Measured specific gravity"),
     temperature: float = typer.Option(..., "--temp", help="Measured temperature in C"),
@@ -137,7 +126,7 @@ def correct_hydrometer(
     )
 
 
-@correct_app.command("refractometer")
+@app.command("refractometer")
 def correct_refractometer(
     current_brix: float = typer.Option(..., "--brix", help="Current measured Brix"),
     original_gravity: float = typer.Option(..., "--og", help="Original gravity before fermentation"),
@@ -162,7 +151,7 @@ def correct_refractometer(
 #                  Must Commands
 # ===================================================
 
-@must_app.command("combine")
+@app.command("combine")
 def must_combine(
     volume_a: float = typer.Option(..., "--vol1", help="Must A volume in mL"),
     gravity_a: float = typer.Option(..., "--sg1", help="Must A specific gravity"),
@@ -183,7 +172,7 @@ def must_combine(
     )
 
 
-@must_app.command("add")
+@app.command("add")
 def must_add(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
@@ -216,7 +205,7 @@ def must_add(
     )
 
 
-@must_app.command("add-water")
+@app.command("add-water")
 def must_add_water(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
@@ -237,7 +226,7 @@ def must_add_water(
     )
 
 
-@must_app.command("add-honey")
+@app.command("add-honey")
 def must_add_honey(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
@@ -258,7 +247,7 @@ def must_add_honey(
     )
 
 
-@must_app.command("add-sugar")
+@app.command("add-sugar")
 def must_add_sugar(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
@@ -279,7 +268,7 @@ def must_add_sugar(
     )
 
 
-@must_app.command("add-fruit")
+@app.command("add-fruit")
 def must_add_fruit(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
@@ -326,7 +315,7 @@ def must_add_fruit(
     )
 
 
-@must_app.command("add-fruit-juice")
+@app.command("add-fruit-juice")
 def must_add_fruit_juice(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--sg", help="Must specific gravity"),
@@ -368,7 +357,7 @@ def must_add_fruit_juice(
     )
 
 
-@must_app.command("from-recipe")
+@app.command("from-recipe")
 def must_from_recipe(
     recipe: str = typer.Argument(..., help="Path to recipe file"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
@@ -388,7 +377,7 @@ def must_from_recipe(
 #                  Calc Commands
 # ===================================================
 
-@calc_app.command("fortify-volume")
+@app.command("fortify-volume")
 def calc_fortify_volume(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
@@ -422,7 +411,7 @@ def calc_fortify_volume(
     )
 
 
-@calc_app.command("fortify-abv")
+@app.command("fortify-abv")
 def calc_fortify_abv(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
@@ -447,7 +436,7 @@ def calc_fortify_abv(
     )
 
 
-@calc_app.command("potential-abv")
+@app.command("potential-abv")
 def calc_potential_abv(
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
     fg: float = typer.Option(1.0, "--fg", help="Final gravity"),
@@ -461,7 +450,7 @@ def calc_potential_abv(
     _emit(payload if output == OutputFormat.json else f'{round(result, 2)}%', output)
 
 
-@calc_app.command("attenuation")
+@app.command("attenuation")
 def calc_attenuation(
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
     fg: float = typer.Option(..., "--fg", help="Final gravity"),
@@ -474,7 +463,7 @@ def calc_attenuation(
     _emit(payload if output == OutputFormat.json else f'{round(result, 2)}%', output)
 
 
-@calc_app.command("stalled-gravity")
+@app.command("stalled-gravity")
 def calc_stalled_gravity(
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
     yeast: str = typer.Option(..., "--yeast", help="Yeast strain name",
@@ -506,7 +495,7 @@ def calc_stalled_gravity(
     _emit(payload if output == OutputFormat.json else round(result, 4), output)
 
 
-@calc_app.command("original-gravity")
+@app.command("original-gravity")
 def calc_original_gravity(
     target_abv: float = typer.Option(..., "--abv", help="Target ABV in percent"),
     fg: float = typer.Option(1.0, "--fg", help="Final gravity"),
@@ -531,7 +520,7 @@ def calc_original_gravity(
     _emit(payload if output == OutputFormat.json else round(result, 4), output)
 
 
-@calc_app.command("residual-co2")
+@app.command("residual-co2")
 def calc_residual_co2(
     temp: float = typer.Option(..., "--temp", help="Temperature in Celsius"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
@@ -540,7 +529,7 @@ def calc_residual_co2(
     _emit(f'{round(result, 2)} volumes, {round(result * 1.96, 3)} g/L', output)
 
 
-@calc_app.command("volumes")
+@app.command("volumes")
 def calc_volumes(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
@@ -591,7 +580,7 @@ def calc_volumes(
     )
 
 
-@calc_app.command("priming-sugar")
+@app.command("priming-sugar")
 def calc_priming_sugar(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     target_co2_vol: float = typer.Option(..., "--co2", help="Target CO2 volumes"),
@@ -615,7 +604,7 @@ def calc_priming_sugar(
 #                  Adjust Commands
 # ===================================================
 
-@adjust_app.command("gravity")
+@app.command("gravity")
 def adjust_gravity(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must specific gravity"),
@@ -661,7 +650,7 @@ def adjust_gravity(
     )
 
 
-@adjust_app.command("ta")
+@app.command("ta")
 def adjust_ta(
     volume: float = typer.Option(..., "--vol", help="Batch volume in mL"),
     current_ta: float = typer.Option(..., "--current-ta", help="Current TA in g/L as tartaric equivalent"),
@@ -701,7 +690,7 @@ def adjust_ta(
     )
 
 
-@adjust_app.command("pitching")
+@app.command("pitching")
 def adjust_pitching_rate(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Must original gravity"),
@@ -716,7 +705,7 @@ def adjust_pitching_rate(
     )
 
 
-@adjust_app.command("tosna3")
+@app.command("tosna3")
 def adjust_tosna3(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
@@ -735,7 +724,7 @@ def adjust_tosna3(
     print('Add this amount at 24h, 48h, 72h after pitch, and at 1/3 sugar depletion.')
 
 
-@adjust_app.command("so2-target")
+@app.command("so2-target")
 def adjust_so2_target(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
@@ -747,7 +736,7 @@ def adjust_so2_target(
     _emit(result, output)
 
 
-@adjust_app.command("so2-ph")
+@app.command("so2-ph")
 def adjust_so2_ph(
     volume: float = typer.Option(..., "--vol", help="Must volume in mL"),
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
