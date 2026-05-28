@@ -41,7 +41,7 @@ List of supported functions for must blending and additions:
 | Command | Description |
 | --- | --- |
 | `add [--vol --sg --ph \| --recipe] --fermentable --mass` | Add a fermentable to a must. |
-| `add-fruit [--vol --sg --ph \| --recipe] --fruit --mass [--extract-yield]` | Add solid fruit |
+| `add-fruit [--vol --sg --ph \| --recipe] --fruit --mass [--extract-yield]` | Add solid fruit to a must. |
 | `add-fruit-juice [--vol --sg --ph \| --recipe] --fruit --juice-vol` | Add fruit juice to a must. |
 | `add-honey [--vol --sg --ph \| --recipe] --mass` | Add honey to a must. |
 | `add-sugar [--vol --sg --ph \| --recipe] --mass` | Add table sugar to a must. |
