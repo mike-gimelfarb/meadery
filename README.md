@@ -107,6 +107,14 @@ Current fruits are defined in `FRUITS` (`mead_tools/data/fruits.json`):
 Current yeast strains are defined in `YEAST_STRAINS` (`mead_tools/data/yeasts.json`):
 - `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`
 
+Functions `new-fermentable`, `new-fruit` and `new-yeast` allow adding new fermentable, fruit and yeast strains permanently, which can be referred in any calculations. Example:
+
+```bash
+mead new-fruit --name tulaberry --brix 18 --moisture 84 --ph 3.5
+```
+
+will add the `tulaberry` to the `fruits.json` so it can be referred in calculations involving fruit additions.
+
 
 ## JSON Output
 
