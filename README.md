@@ -46,7 +46,6 @@ List of supported functions for must blending and additions:
 | `add-honey [--vol --sg --ph \| --recipe] --mass` | Add honey to a must. |
 | `add-sugar [--vol --sg --ph \| --recipe] --mass` | Add table sugar to a must. |
 | `add-water [--vol --sg --ph \| --recipe] --mass` | Add water to a must. |
-to a must. |
 | `combine [--vol1 --sg1 --ph1 \| --recipe1] [--vol2 --sg2 --ph2 \| --recipe2]` | Combine two musts into one. |
 | `volumes [--vol --og \| --recipe] [--fermentable] [--base]` | Compute fermentable/base amounts for a must. |
 
