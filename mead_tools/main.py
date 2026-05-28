@@ -700,6 +700,51 @@ def adjust_gravity(
     )
 
 
+@app.command("backsweeten")
+def backsweeten(
+    volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
+    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
+    final_sg: float = typer.Option(..., "--final-sg", help="Final gravity before backsweetening"),
+    target_sg: float = typer.Option(..., "--target-sg", help="Target gravity after backsweetening"),
+    fermentable: str = typer.Option(None, "--fermentable", help="Fermentable name for backsweetening",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
+    fruit: Optional[str] = typer.Option(None, "--fruit", help="Fruit name for backsweetening",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    base_must = _must_from_args(
+        label="Base must", recipe=recipe, volume=volume, gravity=final_sg, ph=7, require_ph=False)
+    if fermentable is None:
+        if fruit is None:
+            raise typer.BadParameter("Either --fermentable or --fruit must be provided")
+        result = base_must.backsweeten_with_fruit_juice(
+            final_sg=final_sg, target_sg=target_sg,
+            fruit=FRUITS[fruit.strip().lower()])
+    else:
+        result = base_must.backsweeten(
+            final_sg=final_sg, target_sg=target_sg,
+            sweetener=FERMENTABLES[fermentable.strip().lower()])
+        
+    payload = {
+        "current_volume_ml": base_must.volume,
+        "final_gravity": final_sg,
+        "target_gravity": target_sg,
+        "fermentable_g": fermentable.strip().lower() if fermentable else None,
+        'fruit_juice_ml': fruit.strip().lower() if fruit else None,
+        "added_fermentable_g": round(result, 2),
+    }
+    if fruit:
+        result = f'{round(result, 2)}ml'
+    else:
+        result = f'{round(result, 2)}g'
+    _emit(
+        payload if output == OutputFormat.json else result,
+        output
+    )
+    
+
 @app.command("adjust-ta")
 def adjust_ta(
     volume: Optional[float] = typer.Option(None, "--vol", help="Batch volume in mL"),

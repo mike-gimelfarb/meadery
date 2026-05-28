@@ -641,6 +641,32 @@ class Must:
             a, b = root_bracket(f_vol_to_abv, 0, 1)
             return root_find(f_vol_to_abv, a, b, tol=tol)
 
+    def backsweeten(self, final_sg: float, target_sg: float, 
+                    sweetener: Fermentable, tol: float=1e-6) -> float:
+        '''Returns the mass in grams of `sweetener` to add to this must to reach `final_sg'
+        after fermentation.
+        
+        :param final_sg: the target specific gravity after fermentation and backsweetening
+        :param target_sg: the specific gravity after fermentation but before backsweetening
+        :param sweetener: the Fermentable to add for backsweetening
+        :param tol: tolerance for the root-finding algorithm
+        '''
+        fermented_must = Must(volume=self.volume, gravity=final_sg, ph=self.ph)
+        return fermented_must.adjust_gravity(target_sg, sweetener, tol=tol)
+
+    def backsweeten_with_fruit_juice(self, final_sg: float, target_sg: float, 
+                                     fruit: Fruit, tol: float=1e-6) -> float:
+        '''Returns the volume in mL of fruit juice to add to this must to reach `final_sg' 
+        after fermentation.
+        
+        :param final_sg: the target specific gravity after fermentation and backsweetening
+        :param target_sg: the specific gravity after fermentation but before backsweetening
+        :param fruit: the Fruit profile to use for the juice
+        :param tol: tolerance for the root-finding algorithm
+        '''
+        fermented_must = Must(volume=self.volume, gravity=final_sg, ph=self.ph)
+        return fermented_must.adjust_gravity_with_fruit_juice(target_sg, fruit, tol=tol)
+    
     def adjust_ta(self, current_ta: float, target_ta: float, acid: AcidAddition) -> dict:
         '''Return the acid addition required to raise TA to `target_ta`.
 

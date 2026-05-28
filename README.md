@@ -48,6 +48,7 @@ mead attenuation --og 1.110 --fg 1.010
 | `volumes [--vol --og \| --recipe] [--fermentable] [--base]` | Compute fermentable/base amounts for a must. |
 | `priming [--vol \| --recipe] --co2 --temp --fermentable` | Compute priming sugar. |
 | `adjust-gravity [--vol --og \| --recipe] --target-sg (--fermentable \| --fruit)` | Compute additions to reach target gravity. |
+| `backsweeten [--vol \| --recipe ] --final-sg --target-sg (--fermentable \| --fruit)` | Compute additions to backsweeten. |
 | `ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
 | `pitching [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. |
 | `tosna [--vol --og \| --recipe] --yeast` | Compute TOSNA 3.0 nutrient schedule. |
