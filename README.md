@@ -25,38 +25,73 @@ mead attenuation --og 1.110 --fg 1.010
 ```
 
 ## Supported Functions
+
+List of supported functions for conversions and calibration:
+
 | Command | Description |
 | --- | --- |
-| `sg-to-plato --sg` | Convert specific gravity to Plato. |
 | `brix-to-sg --brix` | Convert Brix to specific gravity. |
+| `sg-to-plato --sg` | Convert specific gravity to Plato. |
 | `hydrometer --sg --temp --calib-temp` | Correct hydrometer for sample temperature. |
 | `refractometer --brix --og` | Correct refractometer reading for alcohol. |
-| `combine [--vol1 --sg1 --ph1 \| --recipe1] [--vol2 --sg2 --ph2 \| --recipe2]` | Combine two musts into one. |
+
+
+List of supported functions for must blending and additions:
+
+| Command | Description |
+| --- | --- |
 | `add [--vol --sg --ph \| --recipe] --fermentable --mass` | Add a fermentable to a must. |
-| `add-water [--vol --sg --ph \| --recipe] --mass` | Add water to a must. |
+| `add-fruit [--vol --sg --ph \| --recipe] --fruit --mass [--extract-yield]` | Add solid fruit |
+| `add-fruit-juice [--vol --sg --ph \| --recipe] --fruit --juice-vol` | Add fruit juice to a must. |
 | `add-honey [--vol --sg --ph \| --recipe] --mass` | Add honey to a must. |
 | `add-sugar [--vol --sg --ph \| --recipe] --mass` | Add table sugar to a must. |
-| `add-fruit [--vol --sg --ph \| --recipe] --fruit --mass [--extract-yield]` | Add solid fruit to a must. |
-| `add-fruit-juice [--vol --sg --ph \| --recipe] --fruit --juice-vol` | Add fruit juice to a must. |
-| `fortify-volume [--vol --og \| --recipe] --abv --fg [--spirit-abv] [--method]` | Compute spirit volume for fortification. |
-| `fortify-abv [--vol --og \| --recipe] --fg --spirit-vol [--spirit-abv] [--method]` | Compute ABV after fortification. |
-| `potential-abv [--og \| --recipe] [--fg] [--method]` | Compute potential ABV from OG and FG. |
-| `attenuation [--og \| --recipe] --fg` | Compute apparent attenuation. |
-| `stalled-gravity [--og \| --recipe] --yeast [--method] [--tol] [--min-fg]` | Estimate stall gravity from yeast tolerance. |
-| `original-gravity --abv [--fg] [--method] [--tol] [--max-og]` | Compute OG needed for target ABV. |
-| `residual-co2 --temp` | Compute residual dissolved CO2. |
+| `add-water [--vol --sg --ph \| --recipe] --mass` | Add water to a must. |
+to a must. |
+| `combine [--vol1 --sg1 --ph1 \| --recipe1] [--vol2 --sg2 --ph2 \| --recipe2]` | Combine two musts into one. |
 | `volumes [--vol --og \| --recipe] [--fermentable] [--base]` | Compute fermentable/base amounts for a must. |
-| `priming [--vol \| --recipe] --co2 --temp --fermentable` | Compute priming sugar. |
+
+
+List of supported functions for backsweetening and fortification:
+
+| Command | Description |
+| --- | --- |
 | `adjust-gravity [--vol --og \| --recipe] --target-sg (--fermentable \| --fruit)` | Compute additions to reach target gravity. |
-| `backsweeten [--vol \| --recipe ] --final-sg --target-sg (--fermentable \| --fruit)` | Compute additions to backsweeten. |
-| `ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
+| `backsweeten [--vol \| --recipe ] --final-sg --target-sg (--fermentable \| --fruit)` | Backsweeten amount to target gravity. |
+| `fortify-abv [--vol --og \| --recipe] --fg --spirit-vol [--spirit-abv] [--method]` | Compute ABV after fortification. |
+| `fortify-volume [--vol --og \| --recipe] --abv --fg [--spirit-abv] [--method]` | Compute spirit volume for fortification. |
+
+
+List of supported functions for adjuncts and adjustments:
+
+| Command | Description |
+| --- | --- |
 | `pitching [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. |
-| `tosna [--vol --og \| --recipe] --yeast` | Compute TOSNA 3.0 nutrient schedule. |
+| `priming [--vol \| --recipe] --co2 --temp --fermentable` | Compute priming sugar. |
 | `so2-target [--vol --og \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. |
 | `so2-ph [--vol --og \| --recipe] --ph [--target-mol-so2]` | Compute sulfite additions from pH. |
+| `ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
+| `tosna [--vol --og \| --recipe] --yeast` | Compute TOSNA 3.0 nutrient schedule. |
+
+
+List of supported functions for must planning and miscellaneous calculations:
+
+| Command | Description |
+| --- | --- |
+| `attenuation [--og \| --recipe] --fg` | Compute apparent attenuation. |
+| `original-gravity --abv [--fg] [--method] [--tol] [--max-og]` | Compute OG needed for target ABV. |
+| `potential-abv [--og \| --recipe] [--fg] [--method]` | Compute potential ABV from OG and FG. |
+| `residual-co2 --temp` | Compute residual dissolved CO2. |
+| `stalled-gravity [--og \| --recipe] --yeast [--method] [--tol] [--min-fg]` | Estimate stall gravity from yeast tolerance. |
+
+
+List of supported functions for adding fermentables, fruit and yeast types to the database:
+
+| Command | Description |
+| --- | --- |
 | `new-fermentable --name --ppg --density --ph` | Add a fermentable entry. |
 | `new-fruit --name --brix --moisture --ph` | Add a fruit profile entry. |
 | `new-yeast --name --abv-limit --nitrogen` | Add a yeast strain entry. |
+
 
 All commands support `--format text|json`.
 `--spirit-vol` value is 40 by default.
