@@ -14,3 +14,6 @@ dependencies = [
 
 [project.scripts]
 mead = "mead_tools.main:app"
+
+[tool.setuptools.package-data]
+mead_tools = ["data/*.json"]

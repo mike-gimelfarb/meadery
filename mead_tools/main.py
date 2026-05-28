@@ -111,8 +111,7 @@ def correct_hydrometer(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     corrected = Hydrometer(calibration_temperature=calibration_temperature).corrected_gravity(
-        gravity=gravity,
-        temperature=temperature,
+        gravity=gravity, temperature=temperature,
     )
     _emit(
         {
@@ -184,8 +183,6 @@ def must_add(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity, ph)
-    if mass < 0:
-        raise typer.BadParameter("mass must be >= 0")
     fermentable_key = fermentable.strip().lower()
     if fermentable_key not in FERMENTABLES:
         choices = ", ".join(sorted(FERMENTABLES.keys()))
@@ -214,9 +211,6 @@ def must_add_water(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity, ph)
-    if mass < 0:
-        raise typer.BadParameter("mass must be >= 0")
-
     result = Must(volume=volume, gravity=gravity, ph=ph).add_water(mass=mass)
     payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity, 
                "ph": result.ph}
@@ -235,9 +229,6 @@ def must_add_honey(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity, ph)
-    if mass < 0:
-        raise typer.BadParameter("mass must be >= 0")
-
     result = Must(volume=volume, gravity=gravity, ph=ph).add_honey(mass=mass)
     payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity, 
                "ph": result.ph}
@@ -256,9 +247,6 @@ def must_add_sugar(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity, ph)
-    if mass < 0:
-        raise typer.BadParameter("mass must be >= 0")
-
     result = Must(volume=volume, gravity=gravity, ph=ph).add_sugar(mass=mass)
     payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity, 
                "ph": result.ph}
@@ -281,11 +269,6 @@ def must_add_fruit(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity, ph)
-    if mass < 0:
-        raise typer.BadParameter("mass must be >= 0")
-    if extract_yield < 0 or extract_yield > 1:
-        raise typer.BadParameter("extract-yield must be between 0 and 1")
-
     fruit_key = fruit.strip().lower()
     selected_fruit = FRUITS.get(fruit_key)
     if selected_fruit is None:
@@ -326,10 +309,7 @@ def must_add_fruit_juice(
     juice_volume: float = typer.Option(..., "--juice-vol", help="Fruit juice volume in mL"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
-    _validate_must(volume, gravity, ph)
-    if juice_volume < 0:
-        raise typer.BadParameter("juice-vol must be >= 0")
-   
+    _validate_must(volume, gravity, ph)   
     fruit_key = fruit.strip().lower()
     selected_fruit = FRUITS.get(fruit_key)
     if selected_fruit is None:
@@ -388,13 +368,6 @@ def calc_fortify_volume(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity)
-    if target_gravity <= 0:
-        raise typer.BadParameter("target gravity must be > 0")
-    if target_abv is not None and target_abv <= 0:
-        raise typer.BadParameter("target ABV must be > 0")
-    if spirit_abv <= 0:
-        raise typer.BadParameter("spirit ABV must be > 0")
-
     try:
         result = Must(volume=volume, gravity=gravity, ph=None).fortify_volume(
             target_abv=target_abv, target_fg=target_gravity, spirit_abv=spirit_abv, 
@@ -422,11 +395,6 @@ def calc_fortify_abv(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity)
-    if fg <= 0:
-        raise typer.BadParameter("final gravity must be > 0")
-    if spirit_abv <= 0:
-        raise typer.BadParameter("spirit ABV must be > 0")
-
     result = Must(volume=volume, gravity=gravity, ph=None).fortify_abv(
         fg=fg, spirit_vol_ml=spirit_vol, spirit_abv=spirit_abv, method=method.value)
     payload = {"fg": fg, "fortified_abv_percent": result}
@@ -618,8 +586,6 @@ def adjust_gravity(
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     _validate_must(volume, gravity)
-    if target_sg <= 0:
-        raise typer.BadParameter("target SG must be > 0")
     if fermentable is None:
         if fruit is None:
             raise typer.BadParameter("Either --fermentable or --fruit must be provided")
@@ -660,11 +626,6 @@ def adjust_ta(
         autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
-    if volume <= 0:
-        raise typer.BadParameter("volume must be > 0")
-    if current_ta < 0 or target_ta < 0:
-        raise typer.BadParameter("TA values must be >= 0")
-
     acid_key = acid.strip().lower()
     acid_obj = ACID_ADJUSTMENTS.get(acid_key)
     if acid_obj is None:

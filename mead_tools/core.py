@@ -1,6 +1,12 @@
 from dataclasses import dataclass
+import json
+from importlib import resources
 import math
 
+
+# ===================================================
+#                  HELPER FUNCTIONS
+# ===================================================
 
 def root_find(f, a, b, tol=1e-6, iters=1000):
     '''Finds a root of the function f in the interval [a, b] using the regula falsi method.'''
@@ -34,13 +40,30 @@ def root_bracket(f, a, b, expand=2.0, max_bound=1e7):
 
 def sg_to_plato(sg: float) -> float:
     '''Converts specific gravity to Plato using the polynomial approximation.'''
+    if sg <= 0.0:
+        raise ValueError('Specific gravity must be positive.')
     return -616.868 + (1111.14 * sg) - (630.272 * sg ** 2) + (135.997 * sg ** 3)
 
 
 def brix_to_sg(brix: float) -> float:
     '''Converts Brix to specific gravity using polynomial approximation.'''
+    if brix < 0.0:
+        raise ValueError('Brix must be non-negative.')
     return 1.0 + (brix / (258.6 - (brix / 258.2) * 227.1))
 
+
+def _load_data_json(filename: str) -> dict:
+    path = resources.files('mead_tools').joinpath('data', filename)
+    with path.open('r', encoding='utf-8') as fh:
+        data = json.load(fh)
+    if not isinstance(data, dict):
+        raise ValueError(f'Expected a JSON object in {filename}.')
+    return data
+
+
+# ===================================================
+#                  MEASUREMENT TOOLS
+# ===================================================
 
 @dataclass
 class Hydrometer:
@@ -53,6 +76,8 @@ class Hydrometer:
         :param gravity: the measured specific gravity
         :param temperature: the temperature of the liquid in degrees Celsius
         '''
+        if gravity <= 0.0:
+            raise ValueError('Gravity must be positive.')
         t_m = (temperature * 1.8) + 32.0
         t_c = (self.calibration_temperature * 1.8) + 32.0
         c1, c2, c3, c4 = 1.00130346, -0.000134722124, 0.00000204052596, -0.00000000232820948
@@ -71,6 +96,11 @@ class Refractometer:
         :param current_brix: the measured Brix value
         :param original_gravity: the original gravity of the must before fermentation
         '''
+        if current_brix < 0.0:
+            raise ValueError('Current Brix must be non-negative.')
+        if original_gravity <= 0.0:
+            raise ValueError('Original gravity must be positive.')
+        
         original_brix = sg_to_plato(original_gravity)
         return (1.001843
             - (0.002318474 * original_brix)
@@ -81,6 +111,10 @@ class Refractometer:
             + (0.000000086 * current_brix**3))
 
 
+# ===================================================
+#                  FERMENTABLES
+# ===================================================
+
 @dataclass
 class Fermentable:
     '''Represents a fermentable that can be added to a must, such as water or honey.'''
@@ -90,21 +124,37 @@ class Fermentable:
 
     def volume(self, mass: float) -> float:
         '''Returns the volume of the additive given a mass in grams.'''
+        if mass < 0.0:
+            raise ValueError('Mass must be non-negative.')
+        
         return mass / self.density
+    
+
+def _load_fermentables() -> dict[str, Fermentable]:
+    raw = _load_data_json('fermentables.json')
+    loaded = {}
+    for name, values in raw.items():
+        if not isinstance(name, str):
+            raise ValueError('Fermentable names must be strings.')
+        if not isinstance(values, dict):
+            raise ValueError(f'Fermentable values for {name} must be a JSON object.')
+        try:
+            loaded[name] = Fermentable(
+                ppg=values['ppg'],
+                density=values['density'],
+                ph=values['ph'],
+            )
+        except KeyError as exc:
+            raise ValueError(f'Missing fermentable field {exc} for {name}.') from exc
+    return loaded
 
 
-# Define some common additives with their PPG and density in g/mL.
-FERMENTABLES = {
-    'water': Fermentable(ppg=0,  density=1.00, ph=7.0),
-    'honey': Fermentable(ppg=35, density=1.42, ph=3.9),
-    'maple': Fermentable(ppg=30, density=1.33, ph=5.2),
-    'agave': Fermentable(ppg=34, density=1.42, ph=4.5),
-    'molasses': Fermentable(ppg=36, density=1.40, ph=5.5),
-    'table-sugar': Fermentable(ppg=46, density=1.59, ph=6.0),
-    'brown-sugar': Fermentable(ppg=45, density=1.54, ph=5.5),
-    'liquid-malt-extract': Fermentable(ppg=36, density=1.42, ph=5.5),
-}
+FERMENTABLES = _load_fermentables()
 
+
+# ===================================================
+#                  FRUIT ADDITIONS
+# ===================================================
 
 @dataclass
 class Fruit:
@@ -115,45 +165,70 @@ class Fruit:
 
     def to_fermentable(self, density: float | None=None) -> Fermentable:
         '''Returns a Fermentable representation of this fruit for dilution calculations.'''
+        if density is not None and density <= 0.0:
+            raise ValueError('Density must be positive if provided.')
+        
         ppg_est = 0.46 * self.brix
         density_est = brix_to_sg(self.brix) if density is None else density
         return Fermentable(ppg=ppg_est, density=density_est, ph=self.ph)
 
 
-# Common whole-fruit profiles for recipe planning.
-FRUITS = {
-    'apple': Fruit(brix=12.0, moisture_content=86.0, ph=3.5),
-    'pear': Fruit(brix=13.0, moisture_content=84.0, ph=3.6),
-    'peach': Fruit(brix=11.0, moisture_content=88.0, ph=3.7),
-    'plum': Fruit(brix=12.0, moisture_content=86.0, ph=3.5),
-    'apricot': Fruit(brix=13.0, moisture_content=84.0, ph=3.8),
-    'cherry-bing': Fruit(brix=18.0, moisture_content=80.0, ph=4.0),
-    'cherry-montmorency': Fruit(brix=13.0, moisture_content=82.0, ph=3.5),
-    'strawberry': Fruit(brix=8.0, moisture_content=90.0, ph=3.5),
-    'raspberry': Fruit(brix=9.0, moisture_content=86.0, ph=3.5),
-    'blackberry': Fruit(brix=10.0, moisture_content=88.0, ph=3.5),
-    'blueberry': Fruit(brix=12.0, moisture_content=85.0, ph=3.2),
-    'cranberry': Fruit(brix=8.0, moisture_content=87.0, ph=2.5),
-    'elderberry': Fruit(brix=11.0, moisture_content=80.0, ph=4.9),
-    'blackcurrant': Fruit(brix=15.0, moisture_content=80.0, ph=3.0),
-    'grape-niagara': Fruit(brix=16.0, moisture_content=82.0, ph=3.2),
-    'grape-concord': Fruit(brix=17.0, moisture_content=82.0, ph=3.4),
-    'grape-cabernet': Fruit(brix=24.0, moisture_content=73.0, ph=3.4),
-    'grape-late-harvest': Fruit(brix=28.0, moisture_content=65.0, ph=3.6),
-    'banana': Fruit(brix=20.0, moisture_content=75.0, ph=4.9),
-    'pomegranate': Fruit(brix=16.0, moisture_content=80.0, ph=3.1),
-    'watermelon': Fruit(brix=10.0, moisture_content=92.0, ph=5.3),
-    'cantaloupe': Fruit(brix=12.0, moisture_content=90.0, ph=6.3),
-    'fig': Fruit(brix=20.0, moisture_content=80.0, ph=5.5),
-    'mango': Fruit(brix=15.0, moisture_content=83.0, ph=4.0),
-}
+def _load_fruits() -> dict[str, Fruit]:
+    raw = _load_data_json('fruits.json')
+    loaded = {}
+    for name, values in raw.items():
+        if not isinstance(name, str):
+            raise ValueError('Fruit names must be strings.')
+        if not isinstance(values, dict):
+            raise ValueError(f'Fruit values for {name} must be a JSON object.')
+        try:
+            loaded[name] = Fruit(
+                brix=values['brix'],
+                moisture_content=values['moisture_content'],
+                ph=values['ph'],
+            )
+        except KeyError as exc:
+            raise ValueError(f'Missing fruit field {exc} for {name}.') from exc
+    return loaded
 
+
+FRUITS = _load_fruits()
+
+
+# ===================================================
+#                  YEAST STRAINS
+# ===================================================
 
 @dataclass
 class Yeast:
     abv_limit: float
     nitrogen_requirement: str
 
+
+def _load_yeasts() -> dict[str, Yeast]:
+    raw = _load_data_json('yeasts.json')
+    loaded = {}
+    for name, values in raw.items():
+        if not isinstance(name, str):
+            raise ValueError('Yeast names must be strings.')
+        if not isinstance(values, dict):
+            raise ValueError(f'Yeast values for {name} must be a JSON object.')
+        try:
+            loaded[name] = Yeast(
+                abv_limit=values['abv_limit'],
+                nitrogen_requirement=values['nitrogen_requirement'],
+            )
+        except KeyError as exc:
+            raise ValueError(f'Missing yeast field {exc} for {name}.') from exc
+    return loaded
+
+
+YEAST_STRAINS = _load_yeasts()
+
+
+# ===================================================
+#                  OTHER ADJUNCTS
+# ===================================================
 
 @dataclass
 class AcidAddition:
@@ -168,22 +243,9 @@ ACID_ADJUSTMENTS = {
 }
 
 
-# common yeast profiles for recipe planning
-YEAST_STRAINS = {
-    '71b': Yeast(abv_limit=14.5, nitrogen_requirement='low'),
-    'ec1118': Yeast(abv_limit=18.0, nitrogen_requirement='low'),
-    'k1v1116': Yeast(abv_limit=18.0, nitrogen_requirement='low'),
-    'qa23': Yeast(abv_limit=16.0, nitrogen_requirement='low'),
-    'd47': Yeast(abv_limit=15.0, nitrogen_requirement='medium'),
-    's04': Yeast(abv_limit=11.0, nitrogen_requirement='high'),
-    'us05': Yeast(abv_limit=11.0, nitrogen_requirement='medium'),
-    'm05': Yeast(abv_limit=18.0, nitrogen_requirement='medium'),
-    'rc212': Yeast(abv_limit=16.0, nitrogen_requirement='medium'),
-    'voss-kveik': Yeast(abv_limit=12.0, nitrogen_requirement='high'),
-    'montrachet': Yeast(abv_limit=15.0, nitrogen_requirement='medium'),
-    'bread': Yeast(abv_limit=12.0, nitrogen_requirement='low'),
-}
-
+# ===================================================
+#                  MUST FUNCTIONS
+# ===================================================
 
 @dataclass
 class Must:
@@ -298,8 +360,10 @@ class Must:
         :param tol: tolerance for root finding
         '''
         V = self.volume
-        if spirit_abv <= target_abv:
-            raise ValueError("Spirit ABV must be strictly higher than the target ABV.")
+        if target_abv < 0 or target_abv > 100:
+            raise ValueError('target_abv must be between 0 and 100.')
+        if spirit_abv <= target_abv or spirit_abv > 100:
+            raise ValueError("Spirit ABV must be between target ABV and 100.")
         if target_fg < 1.0:
             raise ValueError('target_fg must be >= 1.0.')
         if self.potential_abv(fg=target_fg, method=method) >= target_abv:
@@ -334,6 +398,8 @@ class Must:
             raise ValueError('spirit_vol_ml must be non-negative')
         if spirit_abv < 0 or spirit_abv > 100:
             raise ValueError('spirit_abv must be between 0 and 100')
+        if fg < 0.0:
+            raise ValueError('Final gravity must be non-negative.')
 
         produced_abv = self.potential_abv(fg=fg, method=method)
         ethanol_from_must_ml = self.volume * (produced_abv / 100.0)
@@ -354,6 +420,9 @@ class Must:
         :param fg: final gravity to use for the ABV calculation
         :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
         '''
+        if fg <= 0.0:
+            raise ValueError('Final gravity must be positive.')
+        
         og = self.gravity
         if fg >= og:
             return 0.0
@@ -371,6 +440,9 @@ class Must:
     
     def attenuation(self, fg: float) -> float:
         '''Returns the apparent attenuation percentage.'''
+        if fg <= 0.0:
+            raise ValueError('Final gravity must be positive.')
+        
         og = self.gravity
         if og <= 1.0:
             return 0.0
@@ -387,8 +459,12 @@ class Must:
         :param tol: tolerance for the root-finding algorithm
         :param min_fg: minimum final gravity to consider for root-finding
         '''
+        if min_fg <= 0.0:
+            raise ValueError('min_fg must be positive.')
+        
         def f_fg_to_abv(fg):
             return self.potential_abv(fg=fg, method=method) - yeast.abv_limit
+        
         if f_fg_to_abv(min_fg) * f_fg_to_abv(self.gravity) > 0:
             raise ValueError("Yeast ABV limit is not between the potential ABV at min_fg "
                              "and the potential ABV at the must's gravity.")
@@ -431,8 +507,9 @@ class Must:
         if target_sg <= self.gravity and fermentable.ppg > 0:
             raise ValueError('Selected fermentable will not lower gravity; use water or a diluent (ppg=0).')
 
-        def f_mass_to_abv(m):
+        def f_mass_to_abv(m): 
             return self.add(fermentable, m).gravity - target_sg
+        
         if abs(f_mass_to_abv(0.0)) < tol:
             return 0.0
         else:
@@ -451,6 +528,7 @@ class Must:
         
         def f_vol_to_abv(v):
             return self.add_fruit_juice(fruit, v).gravity - target_sg
+        
         if abs(f_vol_to_abv(0.0)) < tol:
             return 0.0
         else:
@@ -466,8 +544,6 @@ class Must:
         :param target_ta: desired titratable acidity in g/L tartaric equivalent
         :param acid: acid profile used for the addition
         '''
-        if self.volume <= 0:
-            raise ValueError('Must volume must be positive.')
         if current_ta < 0 or target_ta < 0:
             raise ValueError('TA values must be non-negative.')
         if target_ta < current_ta:
@@ -521,6 +597,9 @@ class Must:
         
     def so2_from_target_ppm(self, target_ppm: float=50.0) -> dict:
         '''Calculates SO2 additions needed for must/wine preservation.'''
+        if target_ppm < 0:
+            raise ValueError('target_ppm must be non-negative.')
+        
         volume_L = self.volume / 1000.0
         so2_grams = (volume_L * target_ppm) / 1000.0
         return {
@@ -550,6 +629,9 @@ class Must:
         :param target_volumes: the target CO2 volumes for carbonation
         :param temp: the max post-ferment temperature of the liquid in degrees Celsius
         '''
+        if target_volumes < 0:
+            raise ValueError('target_volumes must be non-negative.')
+        
         volume_l = self.volume / 1000.0
         wine_co2 = self.residual_co2(temp)
         sucrose_g = ((target_volumes * 2) - (wine_co2 * 2)) * 2 * volume_l
@@ -576,8 +658,16 @@ def original_gravity(target_abv: float, fg: float,
     :param tol: tolerance for the root-finding algorithm
     :param max_og: maximum original gravity to consider for root-finding
     '''
+    if target_abv < 0 or target_abv > 100:
+        raise ValueError('target_abv must be between 0 and 100.')
+    if fg <= 0.0:
+        raise ValueError('Final gravity must be positive.')
+    if max_og <= fg:
+        raise ValueError('max_og must be greater than final gravity.')
+    
     def f_og_to_abv(og):
         return Must(volume=1, gravity=og, ph=7).potential_abv(fg=fg, method=method) - target_abv
+    
     if f_og_to_abv(fg) * f_og_to_abv(max_og) > 0:
         raise ValueError("Target ABV is not between the potential ABV at the final gravity "
                          "and the potential ABV at max_og.")
@@ -601,6 +691,8 @@ def parse_recipe(path: str) -> Must:
                 continue
             if '=' not in line:
                 raise ValueError(f"Line {lineno}: missing '=' separator.")
+            
+            # strip statement of the form lhs = rhs
             lhs, rhs = [s.strip() for s in line.split('=', 1)]
             if not lhs:
                 raise ValueError(f"Line {lineno}: empty ingredient.")
@@ -608,6 +700,8 @@ def parse_recipe(path: str) -> Must:
                 qty = float(rhs)
             except Exception:
                 raise ValueError(f"Line {lineno}: invalid quantity '{rhs}'.")
+            
+            # convert ingredient name to lowercase for consistent lookup
             key = lhs.lower()
             if key.endswith(' juice'):
                 fruit_name = key[:-6].strip()

@@ -69,9 +69,7 @@ All commands support `--format text|json`.
 
 ## Dynamic Fermentables And Fruits
 
-`add`, `add-fruit`, and `volumes` use values from `mead_tools.core` at runtime.
-
-Current fermentables are defined in `FERMENTABLES`:
+Current fermentables are defined in `FERMENTABLES` (`mead_tools/data/fermentables.json`):
 - `water`
 - `honey`
 - `maple`
@@ -81,7 +79,7 @@ Current fermentables are defined in `FERMENTABLES`:
 - `brown-sugar`
 - `liquid-malt-extract`
 
-Current fruits are defined in `FRUITS`:
+Current fruits are defined in `FRUITS` (`mead_tools/data/fruits.json`):
 - `apple`
 - `pear`
 - `peach`
@@ -102,6 +100,9 @@ Current fruits are defined in `FRUITS`:
 - `canteloupe`
 - `fig`
 - `mango`
+
+Current yeast strains are defined in `YEAST_STRAINS` (`mead_tools/data/yeasts.json`):
+- `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`
 
 
 ## JSON Output

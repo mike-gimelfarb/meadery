@@ -1,0 +1,122 @@
+{
+  "apple": {
+    "brix": 12.0,
+    "moisture_content": 86.0,
+    "ph": 3.5
+  },
+  "pear": {
+    "brix": 13.0,
+    "moisture_content": 84.0,
+    "ph": 3.6
+  },
+  "peach": {
+    "brix": 11.0,
+    "moisture_content": 88.0,
+    "ph": 3.7
+  },
+  "plum": {
+    "brix": 12.0,
+    "moisture_content": 86.0,
+    "ph": 3.5
+  },
+  "apricot": {
+    "brix": 13.0,
+    "moisture_content": 84.0,
+    "ph": 3.8
+  },
+  "cherry-bing": {
+    "brix": 18.0,
+    "moisture_content": 80.0,
+    "ph": 4.0
+  },
+  "cherry-montmorency": {
+    "brix": 13.0,
+    "moisture_content": 82.0,
+    "ph": 3.5
+  },
+  "strawberry": {
+    "brix": 8.0,
+    "moisture_content": 90.0,
+    "ph": 3.5
+  },
+  "raspberry": {
+    "brix": 9.0,
+    "moisture_content": 86.0,
+    "ph": 3.5
+  },
+  "blackberry": {
+    "brix": 10.0,
+    "moisture_content": 88.0,
+    "ph": 3.5
+  },
+  "blueberry": {
+    "brix": 12.0,
+    "moisture_content": 85.0,
+    "ph": 3.2
+  },
+  "cranberry": {
+    "brix": 8.0,
+    "moisture_content": 87.0,
+    "ph": 2.5
+  },
+  "elderberry": {
+    "brix": 11.0,
+    "moisture_content": 80.0,
+    "ph": 4.9
+  },
+  "blackcurrant": {
+    "brix": 15.0,
+    "moisture_content": 80.0,
+    "ph": 3.0
+  },
+  "grape-niagara": {
+    "brix": 16.0,
+    "moisture_content": 82.0,
+    "ph": 3.2
+  },
+  "grape-concord": {
+    "brix": 17.0,
+    "moisture_content": 82.0,
+    "ph": 3.4
+  },
+  "grape-cabernet": {
+    "brix": 24.0,
+    "moisture_content": 73.0,
+    "ph": 3.4
+  },
+  "grape-late-harvest": {
+    "brix": 28.0,
+    "moisture_content": 65.0,
+    "ph": 3.6
+  },
+  "banana": {
+    "brix": 20.0,
+    "moisture_content": 75.0,
+    "ph": 4.9
+  },
+  "pomegranate": {
+    "brix": 16.0,
+    "moisture_content": 80.0,
+    "ph": 3.1
+  },
+  "watermelon": {
+    "brix": 10.0,
+    "moisture_content": 92.0,
+    "ph": 5.3
+  },
+  "cantaloupe": {
+    "brix": 12.0,
+    "moisture_content": 90.0,
+    "ph": 6.3
+  },
+  "fig": {
+    "brix": 20.0,
+    "moisture_content": 80.0,
+    "ph": 5.5
+  },
+  "mango": {
+    "brix": 15.0,
+    "moisture_content": 83.0,
+    "ph": 4.0
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "71b": {
+    "abv_limit": 14.5,
+    "nitrogen_requirement": "low"
+  },
+  "ec1118": {
+    "abv_limit": 18.0,
+    "nitrogen_requirement": "low"
+  },
+  "k1v1116": {
+    "abv_limit": 18.0,
+    "nitrogen_requirement": "low"
+  },
+  "qa23": {
+    "abv_limit": 16.0,
+    "nitrogen_requirement": "low"
+  },
+  "d47": {
+    "abv_limit": 15.0,
+    "nitrogen_requirement": "medium"
+  },
+  "s04": {
+    "abv_limit": 11.0,
+    "nitrogen_requirement": "high"
+  },
+  "us05": {
+    "abv_limit": 11.0,
+    "nitrogen_requirement": "medium"
+  },
+  "m05": {
+    "abv_limit": 18.0,
+    "nitrogen_requirement": "medium"
+  },
+  "rc212": {
+    "abv_limit": 16.0,
+    "nitrogen_requirement": "medium"
+  },
+  "voss-kveik": {
+    "abv_limit": 12.0,
+    "nitrogen_requirement": "high"
+  },
+  "montrachet": {
+    "abv_limit": 15.0,
+    "nitrogen_requirement": "medium"
+  },
+  "bread": {
+    "abv_limit": 12.0,
+    "nitrogen_requirement": "low"
+  }
+}

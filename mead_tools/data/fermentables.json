@@ -1,0 +1,42 @@
+{
+  "water": {
+    "ppg": 0,
+    "density": 1.0,
+    "ph": 7.0
+  },
+  "honey": {
+    "ppg": 35,
+    "density": 1.42,
+    "ph": 3.9
+  },
+  "maple": {
+    "ppg": 30,
+    "density": 1.33,
+    "ph": 5.2
+  },
+  "agave": {
+    "ppg": 34,
+    "density": 1.42,
+    "ph": 4.5
+  },
+  "molasses": {
+    "ppg": 36,
+    "density": 1.4,
+    "ph": 5.5
+  },
+  "table-sugar": {
+    "ppg": 46,
+    "density": 1.59,
+    "ph": 6.0
+  },
+  "brown-sugar": {
+    "ppg": 45,
+    "density": 1.54,
+    "ph": 5.5
+  },
+  "liquid-malt-extract": {
+    "ppg": 36,
+    "density": 1.42,
+    "ph": 5.5
+  }
+}
