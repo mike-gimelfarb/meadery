@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-import json
 from importlib import resources
+import json
 import math
+from pathlib import Path
 
 
 # ===================================================
@@ -152,6 +153,42 @@ def _load_fermentables() -> dict[str, Fermentable]:
 FERMENTABLES = _load_fermentables()
 
 
+def add_fermentable(name: str, ppg: int, density: float, ph: float) -> Fermentable:
+    '''Add a fermentable to the JSON data file and refresh `FERMENTABLES`.
+
+    :param name: fermentable name key
+    :param ppg: points per pound per gallon
+    :param density: density in g/mL
+    :param ph: pH value in [0, 14]
+    '''
+    name_key = name.strip().lower()
+    if not name_key:
+        raise ValueError('Fermentable name must be non-empty.')
+    if ppg < 0:
+        raise ValueError('ppg must be non-negative.')
+    if density <= 0:
+        raise ValueError('density must be positive.')
+    if ph < 0 or ph > 14:
+        raise ValueError('ph must be between 0 and 14.')
+
+    raw = _load_data_json('fermentables.json')
+    if name_key in raw:
+        raise ValueError(f"Fermentable '{name_key}' already exists.")
+    raw[name_key] = {
+        'ppg': int(ppg),
+        'density': float(density),
+        'ph': float(ph),
+    }
+
+    data_path = Path(__file__).resolve().parent / 'data' / 'fermentables.json'
+    with data_path.open('w', encoding='utf-8') as fh:
+        json.dump(raw, fh, indent=2)
+        fh.write('\n')
+
+    FERMENTABLES.clear()
+    FERMENTABLES.update(_load_fermentables())
+
+
 # ===================================================
 #                  FRUIT ADDITIONS
 # ===================================================
@@ -195,6 +232,42 @@ def _load_fruits() -> dict[str, Fruit]:
 FRUITS = _load_fruits()
 
 
+def add_fruit(name: str, brix: float, moisture_content: float, ph: float) -> Fruit:
+    '''Add a fruit to the JSON data file and refresh `FRUITS`.
+
+    :param name: fruit name key
+    :param brix: sugar concentration in Brix
+    :param moisture_content: moisture percentage in [0, 100]
+    :param ph: pH value in [0, 14]
+    '''
+    name_key = name.strip().lower()
+    if not name_key:
+        raise ValueError('Fruit name must be non-empty.')
+    if brix < 0:
+        raise ValueError('brix must be non-negative.')
+    if moisture_content < 0 or moisture_content > 100:
+        raise ValueError('moisture_content must be between 0 and 100.')
+    if ph < 0 or ph > 14:
+        raise ValueError('ph must be between 0 and 14.')
+
+    raw = _load_data_json('fruits.json')
+    if name_key in raw:
+        raise ValueError(f"Fruit '{name_key}' already exists.")
+    raw[name_key] = {
+        'brix': float(brix),
+        'moisture_content': float(moisture_content),
+        'ph': float(ph),
+    }
+
+    data_path = Path(__file__).resolve().parent / 'data' / 'fruits.json'
+    with data_path.open('w', encoding='utf-8') as fh:
+        json.dump(raw, fh, indent=2)
+        fh.write('\n')
+
+    FRUITS.clear()
+    FRUITS.update(_load_fruits())
+
+
 # ===================================================
 #                  YEAST STRAINS
 # ===================================================
@@ -224,6 +297,39 @@ def _load_yeasts() -> dict[str, Yeast]:
 
 
 YEAST_STRAINS = _load_yeasts()
+
+
+def add_yeast_strain(name: str, abv_limit: float, nitrogen_requirement: str) -> Yeast:
+    '''Add a yeast strain to the JSON data file and refresh `YEAST_STRAINS`.
+
+    :param name: yeast strain name key
+    :param abv_limit: alcohol tolerance in percent
+    :param nitrogen_requirement: relative nitrogen demand label
+    '''
+    name_key = name.strip().lower()
+    if not name_key:
+        raise ValueError('Yeast strain name must be non-empty.')
+    if abv_limit < 0:
+        raise ValueError('abv_limit must be non-negative.')
+    requirement = nitrogen_requirement.strip().lower()
+    if not requirement:
+        raise ValueError('nitrogen_requirement must be non-empty.')
+
+    raw = _load_data_json('yeasts.json')
+    if name_key in raw:
+        raise ValueError(f"Yeast strain '{name_key}' already exists.")
+    raw[name_key] = {
+        'abv_limit': float(abv_limit),
+        'nitrogen_requirement': requirement,
+    }
+
+    data_path = Path(__file__).resolve().parent / 'data' / 'yeasts.json'
+    with data_path.open('w', encoding='utf-8') as fh:
+        json.dump(raw, fh, indent=2)
+        fh.write('\n')
+
+    YEAST_STRAINS.clear()
+    YEAST_STRAINS.update(_load_yeasts())
 
 
 # ===================================================

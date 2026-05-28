@@ -11,6 +11,9 @@ from mead_tools.core import (
     Hydrometer,
     Must,
     Refractometer,
+    add_fermentable,
+    add_fruit,
+    add_yeast_strain,
     brix_to_sg,
     original_gravity,
     sg_to_plato,
@@ -70,6 +73,57 @@ def _emit(value, output: OutputFormat) -> None:
         return
     typer.echo(str(value))
 
+
+# ===================================================
+#                  Data Commands
+# ===================================================
+
+@app.command("new-fermentable")
+def data_add_fermentable(
+    name: str = typer.Option(..., "--name", help="Fermentable name key"),
+    ppg: int = typer.Option(..., "--ppg", help="Points per pound per gallon"),
+    density: float = typer.Option(..., "--density", help="Density in g/mL"),
+    ph: float = typer.Option(..., "--ph", help="pH value"),
+) -> None:
+    try:
+        result = add_fermentable(name=name, ppg=ppg, density=density, ph=ph)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    
+
+@app.command("new-fruit")
+def data_add_fruit_profile(
+    name: str = typer.Option(..., "--name", help="Fruit name key"),
+    brix: float = typer.Option(..., "--brix", help="Brix value"),
+    moisture_content: float = typer.Option(..., "--moisture", help="Moisture percentage"),
+    ph: float = typer.Option(..., "--ph", help="pH value"),
+) -> None:
+    try:
+        result = add_fruit(
+            name=name,
+            brix=brix,
+            moisture_content=moisture_content,
+            ph=ph,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    
+
+@app.command("new-yeast")
+def data_add_yeast_strain(
+    name: str = typer.Option(..., "--name", help="Yeast strain name key"),
+    abv_limit: float = typer.Option(..., "--abv-limit", help="Yeast alcohol tolerance in percent"),
+    nitrogen_requirement: str = typer.Option(..., "--nitrogen", help="Nitrogen requirement label"),
+) -> None:
+    try:
+        result = add_yeast_strain(
+            name=name,
+            abv_limit=abv_limit,
+            nitrogen_requirement=nitrogen_requirement,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    
 
 # ===================================================
 #                Conversion Commands

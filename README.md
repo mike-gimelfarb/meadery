@@ -55,6 +55,9 @@ mead attenuation --og 1.110 --fg 1.010
 | `tosna3 --vol --og --yeast` | Compute TOSNA 3.0 nutrient schedule. |
 | `so2-target --vol --og [--target-ppm]` | Compute sulfite additions from target ppm. |
 | `so2-ph --vol --og --ph [--target-mol-so2]` | Compute sulfite additions from pH and molecular SO2 target. |
+| `new-fermentable --name --ppg --density --ph` | Add a fermentable entry to `mead_tools/data/fermentables.json`. |
+| `new-fruit --name --brix --moisture --ph` | Add a fruit profile entry to `mead_tools/data/fruits.json`. |
+| `new-yeast --name --abv-limit --nitrogen` | Add a yeast strain entry to `mead_tools/data/yeasts.json`. |
 
 All commands support `--format text|json`.
 `--spirit-vol` value is 40 by default.
