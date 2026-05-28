@@ -714,8 +714,11 @@ def backsweeten(
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
+    volume = None if recipe is not None else volume
+    gravity = None if recipe is not None else 1.0
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=final_sg, ph=7, require_ph=False)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=7, 
+        require_ph=False)
     if fermentable is None:
         if fruit is None:
             raise typer.BadParameter("Either --fermentable or --fruit must be provided")
