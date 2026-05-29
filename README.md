@@ -160,7 +160,7 @@ mead potential-abv --og 1.110 --fg 1.010 --format json
 
 ## Recipe format
 
-`mead load-recipe <file>` loads a simple, line-oriented recipe and prints the must volume, gravity and estimated ph.
+`mead load-recipe <file>` loads a simple, line-oriented recipe and prints the must volume, gravity and estimated ph. The `<file>` argument is either an absolute path, or a sub-directory relative to the current working directory of the command-line interface.
 
 Rules:
 - One instruction per non-empty line: `<ingredient>=<quantity>`
