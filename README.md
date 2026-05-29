@@ -12,15 +12,10 @@ pip install git+https://github.com/mike-gimelfarb/mead-tools
 
 ## Run
 
-Installed console script:
-
-```bash
-mead --help
-```
-
 Commands are available directly at the top level, for example:
 
 ```bash
+mead --help
 mead attenuation --og 1.110 --fg 1.010
 ```
 
@@ -158,7 +153,8 @@ Use `--format json` for machine-friendly output:
 mead potential-abv --og 1.110 --fg 1.010 --format json
 ```
 
-## Recipe format
+
+## Recipe Format
 
 Many functions accept a `--recipe` argument instead of volume, original graviy and ph, which is either an absolute path to a `.recipe` file, or relative path from the current working sub-directory. Recipe files make it easy to manage existing recipes and musts and perform calculations and determine adjustments to them.
 
