@@ -3,7 +3,7 @@ from importlib import resources
 import json
 import math
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from scipy.optimize import minimize
@@ -905,7 +905,8 @@ def _project_to_simplex(v):
 
 def blend_nearest(abvs: List[float], fgs: List[float], 
                   target_abv: float, target_fg: float, target_vol: float, 
-                  w_abv: float=1.0, w_fg: float=1.0) -> dict:
+                  w_abv: float=1.0, w_fg: float=1.0, 
+                  limits: List[Tuple[float, float]] | None=None) -> dict:
     '''Returns the blending proportions of musts with given ABVs and FGs to achieve a 
     target ABV and FG, giving nearest solutions when exact solutions are infeasible.
     
@@ -920,10 +921,16 @@ def blend_nearest(abvs: List[float], fgs: List[float],
     abvs = np.array(abvs, dtype=float)
     fgs = np.array(fgs, dtype=float)
     N = len(abvs)
+    if limits is None:
+        limits = [(0.0, 1.0) for _ in range(N)]
     if len(fgs) != N:
         raise ValueError('Length of abvs and fgs must be the same.')
+    if len(limits) != N:
+        raise ValueError('Length of limits must match number of musts.')
     if np.any(abvs < 0) or np.any(fgs <= 0):
         raise ValueError('ABV values must be non-negative and FG values must be positive.')
+    if any(lim[0] < 0 or lim[1] > 1 or lim[0] > lim[1] for lim in limits):
+        raise ValueError('Limits must be between 0 and 1 and lower bound must be <= upper bound.')
     if target_abv < 0:
         raise ValueError('target_abv must be non-negative.')
     if target_fg <= 0:
@@ -947,7 +954,7 @@ def blend_nearest(abvs: List[float], fgs: List[float],
     lambdas = quadratic_solve(
         objective,
         x0=np.ones(N) / N,
-        bounds=[(0.0, 1.0) for _ in range(N)],
+        bounds=limits,
         constraints=[{'type': 'eq', 'fun': lambda l: np.sum(l) - 1.0}]
     )
     volumes = lambdas * target_vol

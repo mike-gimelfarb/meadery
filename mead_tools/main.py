@@ -735,15 +735,21 @@ def blend_nearest_cli(
     total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
     w_abv: float = typer.Option(1.0, "--w-abv", help="Weight for ABV in optimization (default 1.0)"),
     w_fg: float = typer.Option(1.0, "--w-fg", help="Weight for FG in optimization (default 1.0)"),
+    extra_limit: float = typer.Option(0.0, "--extra-limit", help="Limit for adding water, 40 abv ethanol and honey as extras to achieve targets"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     try:
         abv_list = [float(x.strip()) for x in abvs.split(",") if x.strip()]
         fg_list = [float(x.strip()) for x in fgs.split(",") if x.strip()]
+        limits = [(0, 1)] * len(abv_list)
+        if extra_limit > 0:
+            abv_list.extend([0, 40, 0])
+            fg_list.extend([1.0, 0.95, 1.415])
+            limits.extend([(0, extra_limit)] * 3)
         result = blend_nearest(
             abvs=abv_list, fgs=fg_list,
             target_abv=target_abv, target_fg=target_fg, target_vol=total_volume,
-            w_abv=w_abv, w_fg=w_fg
+            w_abv=w_abv, w_fg=w_fg, limits=limits
         )
     except Exception as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -760,6 +766,8 @@ def blend_nearest_cli(
             f"Blend FG: {round(result['blend_fg'], 4)}"
         ]
         typer.echo("\n".join(lines))
+        if extra_limit > 0:
+            typer.echo(f'Last three components are extras (water, 40% ethanol, honey).')
 
 
 # ===================================================
