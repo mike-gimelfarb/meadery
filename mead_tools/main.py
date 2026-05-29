@@ -1,5 +1,7 @@
 from enum import Enum
 import json
+import os
+from pathlib import Path
 import typer
 from typing import Optional, List
 
@@ -50,6 +52,13 @@ def _validate_must(volume: float, gravity: float, ph: Optional[float] = None) ->
         raise typer.BadParameter("pH must be between 0 and 14")
 
 
+def _recipe_path(recipe: str) -> str:
+    recipe_path = Path(recipe)
+    if not recipe_path.is_absolute():
+        recipe_path = Path(os.getcwd()) / recipe_path
+    return str(recipe_path)
+
+
 def _must_from_args(*, label: str, recipe: Optional[str], volume: Optional[float],
                     gravity: Optional[float], ph: Optional[float], require_ph: bool=True) -> Must:
     """Build a Must from either a recipe path or explicit volume/gravity/pH arguments."""
@@ -60,7 +69,7 @@ def _must_from_args(*, label: str, recipe: Optional[str], volume: Optional[float
         if has_manual:
             raise typer.BadParameter(f"Do not mix --recipe for {label} with manual inputs.")
         try:
-            return parse_recipe(recipe)
+            return parse_recipe(_recipe_path(recipe))
         except Exception as exc:
             raise typer.BadParameter(str(exc)) from exc
 
@@ -415,8 +424,9 @@ def must_load_recipe(
     recipe: str = typer.Argument(..., help="Path to recipe file"),
     output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
+    recipe_path = _recipe_path(recipe)
     try:
-        must = parse_recipe(recipe)
+        must = parse_recipe(recipe_path)
     except Exception as exc:
         raise typer.BadParameter(str(exc)) from exc
     payload = {"volume_ml": must.volume, "gravity": must.gravity, "ph": must.ph}
