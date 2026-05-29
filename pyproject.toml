@@ -15,5 +15,11 @@ dependencies = [
 [project.scripts]
 mead = "mead_tools.main:app"
 
+[tool.setuptools.packages.find]
+include = ["mead_tools*"]
+exclude = ["recipes*"]
+
 [tool.setuptools.package-data]
 mead_tools = ["data/*.json"]
+
+# recipes/*.recipe files are included as data files via MANIFEST.in
