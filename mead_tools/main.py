@@ -728,8 +728,8 @@ def blend_to_gravity_cli(
 
 @app.command("blend-nearest")
 def blend_nearest_cli(
-    abvs: str = typer.Option(..., "--abvs", help="Comma-separated ABVs of musts (e.g. 12.0,14.5,10.0)"),
-    fgs: str = typer.Option(..., "--fgs", help="Comma-separated FGs of musts (e.g. 1.010,0.998,1.020)"),
+    abvs: str = typer.Option(..., "--abvs", help="Comma-separated ABVs of musts"),
+    fgs: str = typer.Option(..., "--fgs", help="Comma-separated FGs of musts"),
     target_abv: float = typer.Option(..., "--target-abv", help="Target blend ABV (percent)"),
     target_fg: float = typer.Option(..., "--target-fg", help="Target blend FG"),
     total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
