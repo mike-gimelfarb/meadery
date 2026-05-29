@@ -753,7 +753,8 @@ class Must:
         target_ppm = target_mol_so2 * (1.0 + (10.0 ** (self.ph - 1.81)))
         return self.so2_from_target_ppm(target_ppm=target_ppm)
 
-    def residual_co2(self, temp: float) -> float:
+    @staticmethod
+    def residual_co2(temp: float) -> float:
         '''Returns the residual CO2 given the temperature of the liquid in Celsius.'''
         temp_f = (temp * 9.0 / 5.0) + 32.0
         return 3.0378 - (0.050062 * temp_f) + (0.00026555 * temp_f ** 2)
