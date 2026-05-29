@@ -1,5 +1,4 @@
 from enum import Enum
-import json
 import os
 from pathlib import Path
 import typer
@@ -72,8 +71,6 @@ def _must_from_args(*, label: str, recipe: Optional[str], volume: Optional[float
 
     # recipe takes priority
     if recipe is not None:
-        #if has_manual:
-        #    typer.echo(f"Warning: {label} --recipe provided, ignoring manual volume/gravity/pH inputs.", err=True)
         try:
             return parse_recipe(_recipe_path(recipe))
         except Exception as exc:
@@ -91,17 +88,15 @@ def _must_from_args(*, label: str, recipe: Optional[str], volume: Optional[float
     return Must(volume=volume, gravity=gravity, ph=ph)
 
 
-def _emit(value, output: OutputFormat) -> None:
-    if output == OutputFormat.json:
-        typer.echo(json.dumps(value, indent=2, sort_keys=True))
-        return
-    if isinstance(value, dict):
-        for key, val in value.items():
-            if isinstance(val, float):
-                val = round(val, 4)
-            typer.echo(f"{key}: {val}")
-        return
-    typer.echo(str(value))
+def echo_boxed(message: str, color: str=None) -> None:
+    lines = message.splitlines()
+    width = max(len(line) for line in lines)
+    top = f"┌{'─' * (width + 2)}┐"
+    bottom = f"└{'─' * (width + 2)}┘"
+    typer.echo(typer.style(top, fg=color))
+    for line in lines:
+        typer.echo(typer.style(f"│ {line.ljust(width)} │", fg=color))
+    typer.echo(typer.style(bottom, fg=color))
 
 
 # ===================================================
@@ -111,25 +106,17 @@ def _emit(value, output: OutputFormat) -> None:
 @app.command("brix-to-sg")
 def convert_brix_to_sg(
     brix: float = typer.Option(..., "--brix", help="Brix value"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     result = brix_to_sg(brix)
-    _emit(
-        {"brix": brix, "sg": result} if output == OutputFormat.json else round(result, 4), 
-        output
-    )
+    echo_boxed(f'{round(result, 4)}')
 
 
 @app.command("sg-to-plato")
 def convert_sg_to_plato(
     gravity: float = typer.Option(..., "--sg", help="Specific gravity"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     result = sg_to_plato(gravity)
-    _emit(
-        {"sg": gravity, "plato": result} if output == OutputFormat.json else round(result, 2), 
-        output
-    )
+    echo_boxed(f'{round(result, 2)}')
 
 
 @app.command("hydrometer")
@@ -137,36 +124,19 @@ def correct_hydrometer(
     gravity: float = typer.Option(..., "--sg", help="Measured specific gravity"),
     temperature: float = typer.Option(..., "--temp", help="Measured temperature in C"),
     calibration_temp: float = typer.Option(..., "--calib-temp", help="Hydrometer calibration temperature in C"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     corrected = Hydrometer(calibration_temperature=calibration_temp).corrected_gravity(
         gravity=gravity, temperature=temperature)
-    _emit(
-        {
-            "measured_gravity": gravity,
-            "temperature_c": temperature,
-            "calibration_temperature_c": calibration_temp,
-            "corrected_gravity": corrected,
-        } if output == OutputFormat.json else round(corrected, 4),
-        output,
-    )
+    echo_boxed(f'{round(corrected, 4)}')
 
 
 @app.command("refractometer")
 def correct_refractometer(
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
     brix: float = typer.Option(..., "--brix", help="Current measured Brix"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     corrected = Refractometer().corrected_gravity(current_brix=brix, original_gravity=gravity)
-    _emit(
-        {
-            "current_brix": brix,
-            "original_gravity": gravity,
-            "corrected_gravity": corrected,
-        } if output == OutputFormat.json else round(corrected, 4),
-        output,
-    )
+    echo_boxed(f'{round(corrected, 4)}')
 
 
 # ===================================================
@@ -178,27 +148,23 @@ def calc_attenuation(
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     fg: float = typer.Option(..., "--fg", help="Final gravity"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
     result = base_must.attenuation(fg=fg)
-    payload = {"og": base_must.gravity, "fg": fg, "attenuation_percent": result}
-    _emit(payload if output == OutputFormat.json else f'{round(result, 2)}%', output)
+    echo_boxed(f'{round(result, 2)}%')
 
 
 @app.command("load-recipe")
 def must_load_recipe(
     recipe: str = typer.Argument(..., help="Path to recipe file"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     recipe_path = _recipe_path(recipe)
     try:
         must = parse_recipe(recipe_path)
     except Exception as exc:
         raise typer.BadParameter(str(exc)) from exc
-    payload = {"volume_ml": must.volume, "gravity": must.gravity, "ph": must.ph}
-    _emit(payload if output == OutputFormat.json else str(must), output)
+    echo_boxed(str(must))
 
 
 @app.command("original-gravity")
@@ -208,17 +174,10 @@ def calc_original_gravity(
     method: AbvMethod = typer.Option(AbvMethod.cutaia, "--method", help="ABV calculation method"),
     tol: float = typer.Option(1e-6, "--tol", help="Root finding tolerance"),
     max_og: float = typer.Option(1.3, "--max-og", help="Maximum original gravity bound"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     result = original_gravity(
         target_abv=target_abv, fg=fg, method=method.value, tol=tol, max_og=max_og)
-    payload = {
-        "target_abv_percent": target_abv,
-        "fg": fg,
-        "method": method.value,
-        "original_gravity": result,
-    }
-    _emit(payload if output == OutputFormat.json else round(result, 4), output)
+    echo_boxed(f'{round(result, 4)}')
 
 
 @app.command("potential-abv")
@@ -227,22 +186,19 @@ def calc_potential_abv(
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     fg: float = typer.Option(..., "--fg", help="Final gravity"),
     method: AbvMethod = typer.Option(AbvMethod.cutaia, "--method", help="ABV calculation method"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
     result = base_must.potential_abv(fg=fg, method=method.value)
-    payload = {"og": base_must.gravity, "fg": fg, "method": method.value, "abv_percent": result}
-    _emit(payload if output == OutputFormat.json else f'{round(result, 2)}%', output)
+    echo_boxed(f'{round(result, 2)}%')
 
 
 @app.command("residual-co2")
 def calc_residual_co2(
     temp: float = typer.Option(..., "--temp", help="Temperature in C"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     result = Must.residual_co2(temp)
-    _emit(f'{round(result, 2)}volumes, {round(result * 1.96, 3)}g/L', output)
+    echo_boxed(f'{round(result, 2)}volumes, {round(result * 1.96, 3)}g/L')
 
 
 @app.command("stalled-gravity")
@@ -255,7 +211,6 @@ def calc_stalled_gravity(
     method: AbvMethod = typer.Option(AbvMethod.cutaia, "--method", help="ABV calculation method"),
     tol: float = typer.Option(1e-6, "--tol", help="Root finding tolerance"),
     min_fg: float = typer.Option(0.9, "--min-fg", help="Minimum FG for root finding"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
@@ -266,14 +221,7 @@ def calc_stalled_gravity(
     
     result = base_must.stalled_final_gravity(
         yeast=yeast_obj, method=method.value, tol=tol, min_fg=min_fg)
-    payload = {
-        "og": base_must.gravity,
-        "yeast_abv_limit_percent": yeast_obj.abv_limit,
-        "method": method.value,
-        "stalled_fg": result,
-    }
-    _emit(payload if output == OutputFormat.json else round(result, 4), output)
-
+    echo_boxed(f'{round(result, 4)}')
 
 
 # ===================================================
@@ -290,7 +238,6 @@ def must_add(
         case_sensitive=False, show_choices=True, prompt=True, 
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
     mass: float = typer.Option(..., "--mass", help="Fermentable mass in grams"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
@@ -300,14 +247,7 @@ def must_add(
         raise typer.BadParameter(f"unknown fermentable '{fermentable}'. Choose one of: {choices}")
     
     result = base_must.add(FERMENTABLES[fermentable_key], mass=mass)
-    payload = {
-        "fermentable": fermentable_key,
-        "mass_g": mass,
-        "volume_ml": result.volume,
-        "gravity": result.gravity,
-        "ph": result.ph,
-    }
-    _emit(payload if output == OutputFormat.json else str(result), output)
+    echo_boxed(str(result))
 
 
 @app.command("add-fruit")
@@ -321,7 +261,6 @@ def must_add_fruit(
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
     mass: float = typer.Option(..., "--mass", help="Fruit mass in grams"),
     extract_yield: float = typer.Option(1.0, "--extract-yield", help="Extracted juice yield from 0 to 1"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
@@ -332,24 +271,12 @@ def must_add_fruit(
     if selected_fruit is None:
         choices = ", ".join(sorted(FRUITS.keys()))
         raise typer.BadParameter(f"unknown fruit '{fruit}'. Choose one of: {choices}")
-    source = fruit_key
     
     try:
         result = base_must.add_fruit(selected_fruit, mass=mass, extract_yield=extract_yield)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-
-    payload = {
-        "fruit": source,
-        "brix": selected_fruit.brix,
-        "moisture_content": selected_fruit.moisture_content,
-        "extract_yield": extract_yield,
-        "mass_g": mass,
-        "volume_ml": result.volume,
-        "gravity": result.gravity,
-        "ph": result.ph,
-    }
-    _emit(payload if output == OutputFormat.json else str(result), output)
+    echo_boxed(str(result))
 
 
 @app.command("add-fruit-juice")
@@ -362,7 +289,6 @@ def must_add_fruit_juice(
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
     juice_volume: float = typer.Option(..., "--juice-vol", help="Fruit juice volume in mL"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
@@ -373,22 +299,12 @@ def must_add_fruit_juice(
     if selected_fruit is None:
         choices = ", ".join(sorted(FRUITS.keys()))
         raise typer.BadParameter(f"unknown fruit '{fruit}'. Choose one of: {choices}")
-    source = fruit_key
-
+    
     try:
         result = base_must.add_fruit_juice(selected_fruit, volume=juice_volume)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-
-    payload = {
-        "fruit": source,
-        "brix": selected_fruit.brix,
-        "juice_volume_ml": juice_volume,
-        "volume_ml": result.volume,
-        "gravity": result.gravity,
-        "ph": result.ph,
-    }
-    _emit(payload if output == OutputFormat.json else str(result), output)
+    echo_boxed(str(result))
 
 
 @app.command("add-honey")
@@ -398,14 +314,11 @@ def must_add_honey(
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     mass: float = typer.Option(..., "--mass", help="Honey mass in grams"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
     result = base_must.add_honey(mass=mass)
-    payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity, 
-               "ph": result.ph}
-    _emit(payload if output == OutputFormat.json else str(result), output)
+    echo_boxed(str(result))
 
 
 @app.command("add-sugar")
@@ -415,14 +328,11 @@ def must_add_sugar(
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     mass: float = typer.Option(..., "--mass", help="Sugar mass in grams"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
     result = base_must.add_sugar(mass=mass)
-    payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity, 
-               "ph": result.ph}
-    _emit(payload if output == OutputFormat.json else str(result), output)
+    echo_boxed(str(result))
 
 
 @app.command("add-water")
@@ -432,14 +342,11 @@ def must_add_water(
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     mass: float = typer.Option(..., "--mass", help="Water mass in grams"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
     result = base_must.add_water(mass=mass)
-    payload = {"mass_g": mass, "volume_ml": result.volume, "gravity": result.gravity, 
-               "ph": result.ph}
-    _emit(payload if output == OutputFormat.json else str(result), output)
+    echo_boxed(str(result))
 
 
 @app.command("adjust-gravity")
@@ -454,7 +361,6 @@ def adjust_gravity(
     fruit: Optional[str] = typer.Option(None, "--fruit", help="Fruit name for dilution",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
@@ -470,19 +376,11 @@ def adjust_gravity(
             target_sg=target_sg, 
             fermentable=FERMENTABLES[fermentable.strip().lower()]
         )
-    payload = {
-        "current_volume_ml": base_must.volume,
-        "current_gravity": base_must.gravity,
-        "target_gravity": target_sg,
-        "fermentable_g": fermentable.strip().lower() if fermentable else None,
-        'fruit_juice_ml': fruit.strip().lower() if fruit else None,
-        "added_fermentable_g": round(result, 2),
-    }
     if fruit:
         result = f'{round(result, 2)}ml'
     else:
         result = f'{round(result, 2)}g'
-    _emit(payload if output == OutputFormat.json else result, output)
+    echo_boxed(result)
 
 
 @app.command("combine")
@@ -495,7 +393,6 @@ def must_combine(
     gravity_b: Optional[float] = typer.Option(None, "--og2", help="Must B original gravity"),
     ph_b: Optional[float] = typer.Option(None, "--ph2", help="Must B pH"),
     recipe2: Optional[str] = typer.Option(None, "--recipe2", help="Path to recipe for must B"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     must_a = _must_from_args(
         label="Must A", recipe=recipe1, volume=volume_a, gravity=gravity_a, ph=ph_a)
@@ -503,8 +400,7 @@ def must_combine(
         label="Must B", recipe=recipe2, volume=volume_b, gravity=gravity_b, ph=ph_b)
 
     result = must_a.combine(must_b)
-    payload = {"volume_ml": result.volume, "gravity": result.gravity, "ph": result.ph}
-    _emit(payload if output == OutputFormat.json else str(result), output)
+    echo_boxed(str(result))
 
 
 @app.command("volumes")
@@ -518,7 +414,6 @@ def calc_volumes(
         case_sensitive=False, show_choices=True, prompt=True,
         autocompletion=lambda ctx, args, incomplete: [
             k for k in get_fermentable_choices() + get_fruit_choices() if k.startswith(incomplete)]),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = Must(volume=volume, gravity=gravity, ph=None)
     fermentable_key = fermentable.strip().lower()
@@ -542,18 +437,10 @@ def calc_volumes(
         "fermentable": round(result[0], 2),
         "base": round(result[1], 2),
     }
-    payload = {
-        "current_volume_ml": base_must.volume,
-        "current_gravity": base_must.gravity,
-        "fermentable": fermentable_key,
-        "base": base_key,
-        "mass_g": masses,
-    }
     base_units = "ml" if fruit else "g"
-    _emit(
-        payload if output == OutputFormat.json 
-        else f'{fermentable_key}={masses["fermentable"]}g\nbase={masses["base"]}{base_units}', 
-        output
+    echo_boxed(
+        f'{fermentable_key}: {masses["fermentable"]}g\n'
+        f'{base_key}: {masses["base"]}{base_units}'
     )
 
 
@@ -566,15 +453,13 @@ def adjust_pitching_rate(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
     result = base_must.pitch_rate()
-    _emit(
-        result if output == OutputFormat.json else 
-        f"Yeast: {round(result['yeast_g'], 2)}g\nGo-Ferm: {round(result['goferm_g'], 2)}g",
-        output
+    echo_boxed(
+        f'Yeast: {round(result["yeast_g"], 2)}g\n'
+        f'Go-Ferm: {round(result["goferm_g"], 2)}g'
     )
 
 
@@ -584,12 +469,12 @@ def adjust_so2_ph(
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     target_mol_so2: float = typer.Option(0.8, "--target-mol-so2", help="Target molecular SO2 in ppm"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=1.0, ph=ph, require_ph=not recipe)
     result = base_must.so2_from_ph(target_mol_so2=target_mol_so2)
-    _emit(result, output)
+    result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
+    echo_boxed(result_str)
 
 
 @app.command("so2-target")
@@ -597,12 +482,12 @@ def adjust_so2_target(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     target_ppm: float = typer.Option(50.0, "--target-ppm", help="Target SO2 in ppm"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=1.0, ph=None, require_ph=False)
     result = base_must.so2_from_target_ppm(target_ppm=target_ppm)
-    _emit(result, output)
+    result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
+    echo_boxed(result_str)
 
 
 @app.command("ta")
@@ -614,7 +499,6 @@ def adjust_ta(
     acid: str = typer.Option("tartaric", "--acid", help="Acid to add",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     acid_key = acid.strip().lower()
     acid_obj = ACID_ADJUSTMENTS.get(acid_key)
@@ -629,13 +513,9 @@ def adjust_ta(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
-    payload = {"acid": acid_key, "volume_ml": must.volume, **result}
-    _emit(
-        payload if output == OutputFormat.json else (
-            f"Total: {round(result['acid_addition_grams'], 2)}g {acid_key}\n"
-            f"Rate: {round(result['acid_addition_g_per_l'], 3)}g/L"
-        ),
-        output,
+    echo_boxed(
+        f'Mass: {round(result["acid_addition_grams"], 2)}g {acid_key}\n'
+        f'Rate: {round(result["acid_addition_g_per_l"], 3)}g/L'
     )
 
 
@@ -647,7 +527,6 @@ def adjust_tosna3(
     yeast: str = typer.Option(..., "--yeast", help="Yeast strain name",
         case_sensitive=False, show_choices=True, prompt=True,
         autocompletion=lambda ctx, args, incomplete: [k for k in YEAST_STRAINS.keys() if k.startswith(incomplete)]),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
@@ -656,9 +535,9 @@ def adjust_tosna3(
         choices = ", ".join(sorted(YEAST_STRAINS.keys()))
         raise typer.BadParameter(f"Invalid yeast strain: {yeast}, choose from: {choices}")
     result = base_must.tosna_3(yeast=yeast_obj)
-    _emit(result, output)
-    typer.echo('Add this amount at 24h, 48h, 72h after pitch, and at 1/3 sugar depletion.')
-
+    result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
+    echo_boxed(result_str)
+    
 
 # ===================================================
 #                 Wine/Mead Blending
@@ -670,7 +549,6 @@ def blend_to_abv_cli(
     abv_b: float = typer.Option(..., "--abv2", help="ABV of must/wine B (percent)"),
     target_abv: float = typer.Option(..., "--target-abv", help="Target blend ABV (percent)"),
     total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     try:
         p_a = blend_to_abv(abv_a, abv_b, target_abv)
@@ -680,20 +558,10 @@ def blend_to_abv_cli(
     v_a = p_a * total_volume
     v_b = p_b * total_volume
 
-    payload = {
-        "proportion_a": p_a,
-        "proportion_b": p_b,
-        "volume_a": v_a,
-        "volume_b": v_b,
-        "total_volume": total_volume,
-        "abv_a": abv_a,
-        "abv_b": abv_b,
-        "target_abv": target_abv,
-    }
-    _emit(payload if output == OutputFormat.json else (
-        f"Batch 1: {round(p_a*100,2)}%, {round(v_a,2)}mL\nBatch 2: {round(p_b*100,2)}%, {round(v_b,2)}mL"
-    ), output)
-
+    echo_boxed(
+        f'Batch 1: {round(p_a * 100, 2)}%, {round(v_a, 2)}mL\n'
+        f'Batch 2: {round(p_b * 100, 2)}%, {round(v_b, 2)}mL'
+    )
 
 @app.command("blend-to-gravity")
 def blend_to_gravity_cli(
@@ -701,7 +569,6 @@ def blend_to_gravity_cli(
     fg_b: float = typer.Option(..., "--fg2", help="Final gravity of must B"),
     target_fg: float = typer.Option(..., "--target-fg", help="Target blend final gravity"),
     total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     try:
         p_a = blend_to_gravity(fg_a, fg_b, target_fg)
@@ -711,20 +578,10 @@ def blend_to_gravity_cli(
     v_a = p_a * total_volume
     v_b = p_b * total_volume
     
-    payload = {
-        "proportion_a": p_a,
-        "proportion_b": p_b,
-        "volume_a": v_a,
-        "volume_b": v_b,
-        "total_volume": total_volume,
-        "fg_a": fg_a,
-        "fg_b": fg_b,
-        "target_fg": target_fg,
-    }
-    _emit(payload if output == OutputFormat.json else (
-        f"Batch 1: {round(p_a*100,2)}%, {round(v_a,2)}mL\nBatch 2: {round(p_b*100,2)}%, {round(v_b,2)}mL"
-    ), output)
-
+    echo_boxed(
+        f'Batch 1: {round(p_a * 100, 2)}%, {round(v_a, 2)}mL\n'
+        f'Batch 2: {round(p_b * 100, 2)}%, {round(v_b, 2)}mL'
+    )
 
 @app.command("blend-nearest")
 def blend_nearest_cli(
@@ -736,7 +593,6 @@ def blend_nearest_cli(
     w_abv: float = typer.Option(1.0, "--w-abv", help="Weight for ABV in optimization (default 1.0)"),
     w_fg: float = typer.Option(1.0, "--w-fg", help="Weight for FG in optimization (default 1.0)"),
     extra_limit: float = typer.Option(0.0, "--extra-limit", help="Limit for adding water, 40 abv ethanol and honey as extras to achieve targets"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     try:
         abv_list = [float(x.strip()) for x in abvs.split(",") if x.strip()]
@@ -754,21 +610,18 @@ def blend_nearest_cli(
     except Exception as exc:
         raise typer.BadParameter(str(exc)) from exc
     
-    if output == OutputFormat.json:
-        _emit(result, output)
-    else:
-        volumes = ', '.join([f"{round(v, 1)}mL" for v in result['volumes']])
-        proportions = ', '.join([f"{round(100 * p, 2)}%" for p in result['proportions']])
-        lines = [
-            f"Volumes: {volumes}",
-            f"Proportions: {proportions}",
-            f"Blend ABV: {round(result['blend_abv'], 2)}%",
-            f"Blend FG: {round(result['blend_fg'], 4)}"
-        ]
-        typer.echo("\n".join(lines))
-        if extra_limit > 0:
-            typer.echo(f'Last three components are extras (water, 40% ethanol, honey).')
-
+    volumes = ', '.join([f"{round(v, 1)}mL" for v in result['volumes']])
+    proportions = ', '.join([f"{round(100 * p, 2)}%" for p in result['proportions']])
+    lines = [
+        f"Volumes: {volumes}",
+        f"Proportions: {proportions}",
+        f"Blend ABV: {round(result['blend_abv'], 2)}%",
+        f"Blend FG: {round(result['blend_fg'], 4)}"
+    ]
+    if extra_limit > 0:
+        lines.append(f'Last three components are extras (water, 40% ethanol, honey).')
+    echo_boxed("\n".join(lines))
+    
 
 # ===================================================
 #           Fortification and Backsweetening
@@ -786,7 +639,6 @@ def backsweeten(
     fruit: Optional[str] = typer.Option(None, "--fruit", help="Fruit name for backsweetening",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=1.0, ph=7, require_ph=False)
@@ -801,19 +653,11 @@ def backsweeten(
             final_sg=final_sg, target_sg=target_sg,
             sweetener=FERMENTABLES[fermentable.strip().lower()])
         
-    payload = {
-        "current_volume_ml": base_must.volume,
-        "final_gravity": final_sg,
-        "target_gravity": target_sg,
-        "fermentable_g": fermentable.strip().lower() if fermentable else None,
-        'fruit_juice_ml': fruit.strip().lower() if fruit else None,
-        "added_fermentable_g": round(result, 2),
-    }
     if fruit:
         result = f'{round(result, 2)}ml'
     else:
         result = f'{round(result, 2)}g'
-    _emit(payload if output == OutputFormat.json else result, output)
+    echo_boxed(result)
 
 
 @app.command("fortify")
@@ -825,7 +669,6 @@ def calc_fortify_volume(
     target_gravity: float = typer.Option(..., "--target-fg", help="Target final gravity after fortification"),
     spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
     method: AbvMethod = typer.Option(AbvMethod.cutaia, "--method", help="ABV calculation method"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
@@ -835,13 +678,11 @@ def calc_fortify_volume(
             method=method.value)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    payload = {"target_abv": target_abv, "target_gravity": target_gravity, **result}
     spirit_vol = round(result["spirit_volume"], 2)
     fortify_gravity = round(result["fortify_gravity"], 4)
-    _emit(
-        payload if output == OutputFormat.json 
-        else f'spirit_volume={spirit_vol}ml\nfortify_gravity={fortify_gravity}',
-        output
+    echo_boxed(
+        f'Spirit volume: {spirit_vol}ml\n'
+        f'Fortify gravity: {fortify_gravity}'
     )
 
 
@@ -854,14 +695,12 @@ def calc_fortify_abv(
     spirit_vol: float = typer.Option(..., "--spirit-vol", help="Volume of fortifying spirit in mL"),
     spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
     method: AbvMethod = typer.Option(AbvMethod.cutaia, "--method", help="ABV calculation method"),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
     result = base_must.fortify_abv(
         fg=fg, spirit_vol_ml=spirit_vol, spirit_abv=spirit_abv, method=method.value)
-    payload = {"fg": fg, "fortified_abv_percent": result}
-    _emit(payload if output == OutputFormat.json else f'{round(result, 2)}%', output)
+    echo_boxed(f'{round(result, 2)}%')
 
 
 @app.command("prime")
@@ -873,7 +712,6 @@ def calc_priming_sugar(
     fermentable: str = typer.Option(None, "--fermentable", help="Fermentable for priming",
         case_sensitive=False, show_choices=True, prompt=True,
         autocompletion=lambda ctx, args, incomplete: [k for k in FERMENTABLES.keys() if k.startswith(incomplete)]),
-    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
 ) -> None:
     must = _must_from_args(
         label="Must", recipe=recipe, volume=volume, gravity=1.0, ph=None, require_ph=False)
@@ -883,7 +721,7 @@ def calc_priming_sugar(
         raise typer.BadParameter(f"Invalid fermentable: {fermentable}, choose from: {choices}")
     result = must.priming_sugar(
         fermentable=fermentable_obj, target_volumes=target_co2_vol, temp=temp)
-    _emit(f'{round(result, 2)}g', output)
+    echo_boxed(f'{round(result, 2)}g')
 
 
 # ===================================================
@@ -901,7 +739,7 @@ def data_add_fermentable(
         result = add_fermentable(name=name, ppg=ppg, density=density, ph=ph)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    
+
 
 @app.command("new-fruit")
 def data_add_fruit_profile(

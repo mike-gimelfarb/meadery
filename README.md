@@ -155,15 +155,6 @@ mead new-fruit --name tulaberry --brix 18 --moisture 84 --ph 3.5
 will add the `tulaberry` to the `fruits.json` so it can be referred in calculations involving fruit additions.
 
 
-## JSON Output
-
-Use `--format json` for machine-friendly output:
-
-```bash
-mead potential-abv --og 1.110 --fg 1.010 --format json
-```
-
-
 ## Recipe Files
 
 Many functions accept a `--recipe` argument instead of volume, original graviy and ph, which is either an absolute path to a `.recipe` file, or relative path from the current working sub-directory. Recipe files make it easy to manage existing recipes and musts, and perform calculations or determine adjustments for them.
