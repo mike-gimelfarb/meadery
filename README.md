@@ -81,6 +81,7 @@ List of supported functions for must planning and miscellaneous calculations:
 | `potential-abv [--og \| --recipe] [--fg] [--method]` | Compute potential ABV from OG and FG. |
 | `residual-co2 --temp` | Compute residual dissolved CO2. |
 | `stalled-gravity [--og \| --recipe] --yeast [--method] [--tol] [--min-fg]` | Estimate stall gravity from yeast tolerance. |
+| `load-recipe <file>` | Print summary of must from a recipe file. |
 
 
 List of supported functions for adding fermentables, fruit and yeast types to the database:
@@ -159,7 +160,7 @@ mead potential-abv --og 1.110 --fg 1.010 --format json
 
 ## Recipe format
 
-`mead from-recipe <file>` loads a simple, line-oriented recipe and prints the must volume, gravity and estimated ph.
+`mead load-recipe <file>` loads a simple, line-oriented recipe and prints the must volume, gravity and estimated ph.
 
 Rules:
 - One instruction per non-empty line: `<ingredient>=<quantity>`
