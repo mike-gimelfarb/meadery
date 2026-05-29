@@ -41,9 +41,11 @@ List of supported functions for must blending and additions:
 | `add-honey [--vol --sg --ph \| --recipe] --mass` | Add honey to a must. |
 | `add-sugar [--vol --sg --ph \| --recipe] --mass` | Add table sugar to a must. |
 | `add-water [--vol --sg --ph \| --recipe] --mass` | Add water to a must. |
+| `blend-to-gravity --sg1 --sg2 --target-sg --target-vol` | Blend two musts to achieve a target gravity. |
+| `blend-to-abv --abv1 --abv2 --target-abv --target-vol` | Blend two musts to achieve a target ABV. |
+| `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg]` | Blend any number of musts to achieve a target ABV and FG as close as possible. |
 | `combine [--vol1 --sg1 --ph1 \| --recipe1] [--vol2 --sg2 --ph2 \| --recipe2]` | Combine two musts into one. |
 | `volumes [--vol --og \| --recipe] [--fermentable] [--base]` | Compute fermentable/base amounts for a must. |
-
 
 List of supported functions for backsweetening and fortification:
 

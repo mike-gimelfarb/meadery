@@ -10,6 +10,7 @@ from mead_tools.core import (
     Hydrometer, Must, Refractometer,
     add_fermentable, add_fruit, add_yeast_strain,
     brix_to_sg, original_gravity, sg_to_plato, parse_recipe,
+    blend_to_gravity, blend_to_abv, blend_nearest
 )
 
 
@@ -434,6 +435,104 @@ def must_load_recipe(
         payload if output == OutputFormat.json else str(must),
         output,
     )
+
+
+@app.command("blend-to-gravity")
+def blend_to_gravity_cli(
+    gravity_a: float = typer.Option(..., "--sg1", help="Gravity of must A"),
+    gravity_b: float = typer.Option(..., "--sg2", help="Gravity of must B"),
+    target_gravity: float = typer.Option(..., "--target-sg", help="Target blend gravity"),
+    total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    try:
+        p_a = blend_to_gravity(gravity_a, gravity_b, target_gravity)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    p_b = 1 - p_a
+    v_a = p_a * total_volume
+    v_b = p_b * total_volume
+    
+    payload = {
+        "proportion_a": p_a,
+        "proportion_b": p_b,
+        "volume_a": v_a,
+        "volume_b": v_b,
+        "total_volume": total_volume,
+        "sg_a": gravity_a,
+        "sg_b": gravity_b,
+        "target_sg": target_gravity,
+    }
+    _emit(payload if output == OutputFormat.json else (
+        f"A: {round(p_a*100,2)}% ({round(v_a,2)} mL), B: {round(p_b*100,2)}% ({round(v_b,2)} mL)"
+    ), output)
+
+
+@app.command("blend-to-abv")
+def blend_to_abv_cli(
+    abv_a: float = typer.Option(..., "--abv1", help="ABV of must/wine A (percent)"),
+    abv_b: float = typer.Option(..., "--abv2", help="ABV of must/wine B (percent)"),
+    target_abv: float = typer.Option(..., "--target-abv", help="Target blend ABV (percent)"),
+    total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    try:
+        p_a = blend_to_abv(abv_a, abv_b, target_abv)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    p_b = 1 - p_a
+    v_a = p_a * total_volume
+    v_b = p_b * total_volume
+
+    payload = {
+        "proportion_a": p_a,
+        "proportion_b": p_b,
+        "volume_a": v_a,
+        "volume_b": v_b,
+        "total_volume": total_volume,
+        "abv_a": abv_a,
+        "abv_b": abv_b,
+        "target_abv": target_abv,
+    }
+    _emit(payload if output == OutputFormat.json else (
+        f"A: {round(p_a*100,2)}% ({round(v_a,2)} mL), B: {round(p_b*100,2)}% ({round(v_b,2)} mL)"
+    ), output)
+
+
+@app.command("blend-nearest")
+def blend_nearest_cli(
+    abvs: str = typer.Option(..., "--abvs", help="Comma-separated ABVs of musts (e.g. 12.0,14.5,10.0)"),
+    fgs: str = typer.Option(..., "--fgs", help="Comma-separated FGs of musts (e.g. 1.010,0.998,1.020)"),
+    target_abv: float = typer.Option(..., "--target-abv", help="Target blend ABV (percent)"),
+    target_fg: float = typer.Option(..., "--target-fg", help="Target blend FG"),
+    total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
+    w_abv: float = typer.Option(1.0, "--w-abv", help="Weight for ABV in optimization (default 1.0)"),
+    w_fg: float = typer.Option(1.0, "--w-fg", help="Weight for FG in optimization (default 1.0)"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Output format"),
+) -> None:
+    try:
+        abv_list = [float(x.strip()) for x in abvs.split(",") if x.strip()]
+        fg_list = [float(x.strip()) for x in fgs.split(",") if x.strip()]
+        result = blend_nearest(
+            abvs=abv_list, fgs=fg_list,
+            target_abv=target_abv, target_fg=target_fg, target_vol=total_volume,
+            w_abv=w_abv, w_fg=w_fg
+        )
+    except Exception as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    
+    if output == OutputFormat.json:
+        _emit(result, output)
+    else:
+        volumes = ', '.join([f"{round(v, 1)}mL" for v in result['volumes']])
+        proportions = ', '.join([f"{round(100*p, 2)}%" for p in result['proportions']])
+        lines = [
+            f"Volumes: {volumes}",
+            f"Proportions: {proportions}",
+            f"Blend ABV: {round(result['blend_abv'], 2)}%",
+            f"Blend FG: {round(result['blend_fg'], 4)}"
+        ]
+        typer.echo("\n".join(lines))
 
 
 # ===================================================
@@ -873,3 +972,5 @@ def adjust_so2_ph(
 
 if __name__ == "__main__":
     app()
+
+

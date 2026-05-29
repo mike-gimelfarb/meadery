@@ -3,27 +3,23 @@ from importlib import resources
 import json
 import math
 from pathlib import Path
+from typing import List
 
+import numpy as np
+from scipy.optimize import minimize
+from scipy.optimize import root_scalar
+    
 
 # ===================================================
 #                  HELPER FUNCTIONS
 # ===================================================
 
-def root_find(f, a, b, tol=1e-6, iters=1000):
-    '''Finds a root of the function f in the interval [a, b] using the regula falsi method.'''
-    fa, fb = f(a), f(b)
-    if fa * fb > 0:
-        raise ValueError('Function values at the endpoints must have opposite signs.')
-    for _ in range(iters):
-        c = (a + b) / 2
-        fc = f(c)
-        if abs(fc) < tol or abs(b - a) < tol:
-            return c
-        elif fa * fc < 0:
-            b = c
-        else:
-            a = c
-    raise ValueError('Root not found within the specified number of iterations.')
+def root_find(f, a, b, tol=1e-6):
+    '''Finds a root of the function f in the interval [a, b] using scipys.'''
+    sol = root_scalar(f, bracket=[a, b], method='brentq', xtol=tol)
+    if not sol.converged:
+        raise ValueError('Root finding did not converge.')
+    return sol.root
 
 
 def root_bracket(f, a, b, expand=2.0, max_bound=1e7):
@@ -37,6 +33,14 @@ def root_bracket(f, a, b, expand=2.0, max_bound=1e7):
     if fa * fb > 0:
         raise ValueError('Unable to bracket root.')
     return a, b
+
+
+def quadratic_solve(f, x0, bounds, constraints):
+    '''Solves a quadratic optimization problem using scipy's minimize function.'''
+    result = minimize(f, x0, bounds=bounds, constraints=constraints)
+    if not result.success:
+        raise RuntimeError(f'Quadratic optimization failed: {result.message}.')
+    return result.x
 
 
 def sg_to_plato(sg: float) -> float:
@@ -387,7 +391,7 @@ class Must:
         new_gravity = 1.0 + (points_a + points_b) / total_volume
         new_ph = self.ph_of_mixture(self.volume, self.ph, other.volume, other.ph)
         return Must(volume=total_volume, gravity=new_gravity, ph=new_ph)
-    
+
     def add(self, fermentable: Fermentable, mass: float) -> 'Must':
         '''Returns a new Must with the given fermentable added.
         
@@ -779,33 +783,6 @@ class Must:
             return f"Must(volume={self.volume:.2f}ml, gravity={self.gravity:.4f}, ph={self.ph:.2f})"
 
 
-def original_gravity(target_abv: float, fg: float, 
-                     method: str='cutaia', tol: float=1e-6, max_og: float=1.3) -> float:
-    '''Returns the original gravity needed to achieve a target ABV given a final gravity 
-    and method.
-    
-    :param target_abv: the target ABV in percent
-    :param fg: the final gravity to use for the ABV calculation
-    :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
-    :param tol: tolerance for the root-finding algorithm
-    :param max_og: maximum original gravity to consider for root-finding
-    '''
-    if target_abv < 0 or target_abv > 100:
-        raise ValueError('target_abv must be between 0 and 100.')
-    if fg <= 0.0:
-        raise ValueError('Final gravity must be positive.')
-    if max_og <= fg:
-        raise ValueError('max_og must be greater than final gravity.')
-    
-    def f_og_to_abv(og):
-        return Must(volume=1, gravity=og, ph=7).potential_abv(fg=fg, method=method) - target_abv
-    
-    if f_og_to_abv(fg) * f_og_to_abv(max_og) > 0:
-        raise ValueError("Target ABV is not between the potential ABV at the final gravity "
-                         "and the potential ABV at max_og.")
-    return root_find(f_og_to_abv, fg, max_og, tol=tol)
-    
-
 def parse_recipe(path: str) -> Must:
     """Parse a simple recipe file and return the resulting Must.
 
@@ -850,3 +827,134 @@ def parse_recipe(path: str) -> Must:
             else:
                 raise ValueError(f"Line {lineno}: unknown ingredient '{lhs}'.")
     return must
+
+
+def original_gravity(target_abv: float, fg: float, 
+                     method: str='cutaia', tol: float=1e-6, max_og: float=1.3) -> float:
+    '''Returns the original gravity needed to achieve a target ABV given a final gravity 
+    and method.
+    
+    :param target_abv: the target ABV in percent
+    :param fg: the final gravity to use for the ABV calculation
+    :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
+    :param tol: tolerance for the root-finding algorithm
+    :param max_og: maximum original gravity to consider for root-finding
+    '''
+    if target_abv < 0 or target_abv > 100:
+        raise ValueError('target_abv must be between 0 and 100.')
+    if fg <= 0.0:
+        raise ValueError('Final gravity must be positive.')
+    if max_og <= fg:
+        raise ValueError('max_og must be greater than final gravity.')
+    
+    def f_og_to_abv(og):
+        return Must(volume=1, gravity=og, ph=7).potential_abv(fg=fg, method=method) - target_abv
+    
+    if f_og_to_abv(fg) * f_og_to_abv(max_og) > 0:
+        raise ValueError("Target ABV is not between the potential ABV at the final gravity "
+                         "and the potential ABV at max_og.")
+    return root_find(f_og_to_abv, fg, max_og, tol=tol)
+    
+
+def blend_to_gravity(fg1: float, fg2: float, target_fg: float) -> float:
+    '''Returns the proportion of wine/mead 1 needed to blend to a target gravity.
+    
+    :param fg1: final gravity of the first must in specific gravity
+    :param fg2: final gravity of the second must in specific gravity
+    :param target_fg: the target specific gravity after blending
+    '''
+    if fg1 <= 0 or fg2 <= 0 or target_fg <= 0:
+        raise ValueError('Gravities must be positive.')
+    if (target_fg - fg1) * (target_fg - fg2) >= 0:
+        raise ValueError('Target gravity must be between the two input gravities.')
+    if abs(fg1 - fg2) < 1e-12:
+        raise ValueError('Input gravities must be different for blending.')
+    
+    return (target_fg - fg2) / (fg1 - fg2)
+
+
+def blend_to_abv(abv1: float, abv2: float, target_abv: float) -> float:
+    '''Returns the proportion of wine/mead 1 needed to blend to a target ABV.
+    
+    :param abv1: ABV of the first must in percent
+    :param abv2: ABV of the second must in percent
+    :param target_abv: the target ABV after blending in percent
+    '''
+    if abv1 < 0 or abv2 < 0 or target_abv < 0:
+        raise ValueError('ABV values must be non-negative.')
+    if (target_abv - abv1) * (target_abv - abv2) >= 0:
+        raise ValueError('Target ABV must be between the two input ABVs.')
+    if abs(abv1 - abv2) < 1e-12:
+        raise ValueError('Input ABVs must be different for blending.')
+    
+    return (target_abv - abv2) / (abv1 - abv2)
+
+
+def _project_to_simplex(v):
+    u = sorted(v, reverse=True)
+    cssv = 0.0
+    rho = -1
+    for i in range(len(u)):
+        cssv += u[i]
+        if u[i] > (cssv - 1) / (i + 1):
+            rho = i
+    theta = (sum(u[:rho + 1]) - 1) / (rho + 1)
+    return [max(v_i - theta, 0) for v_i in v]
+
+
+def blend_nearest(abvs: List[float], fgs: List[float], 
+                  target_abv: float, target_fg: float, target_vol: float, 
+                  w_abv: float=1.0, w_fg: float=1.0) -> dict:
+    '''Returns the blending proportions of musts with given ABVs and FGs to achieve a 
+    target ABV and FG, giving nearest solutions when exact solutions are infeasible.
+    
+    :param abvs: list of ABVs of the musts to blend in percent
+    :param fgs: list of final gravities of the musts to blend in specific gravity
+    :param target_abv: the target ABV after blending in percent
+    :param target_fg: the target final gravity after blending in specific gravity
+    :param target_vol: the target total volume of the blend in milliliters
+    :param w_abv: weight for ABV in the optimization
+    :param w_fg: weight for FG in the optimization
+    '''
+    abvs = np.array(abvs, dtype=float)
+    fgs = np.array(fgs, dtype=float)
+    N = len(abvs)
+    if len(fgs) != N:
+        raise ValueError('Length of abvs and fgs must be the same.')
+    if np.any(abvs < 0) or np.any(fgs <= 0):
+        raise ValueError('ABV values must be non-negative and FG values must be positive.')
+    if target_abv < 0:
+        raise ValueError('target_abv must be non-negative.')
+    if target_fg <= 0:
+        raise ValueError('target_fg must be positive.')
+
+    # Min-max normalization for ABV and FG
+    abv_min = min(np.min(abvs), target_abv)
+    abv_max = max(np.max(abvs), target_abv)
+    fg_min = min(np.min(fgs), target_fg)
+    fg_max = max(np.max(fgs), target_fg)
+    abvs_norm = (abvs - abv_min) / (abv_max - abv_min) if abv_max > abv_min else abvs * 0
+    fgs_norm = (fgs - fg_min) / (fg_max - fg_min) if fg_max > fg_min else fgs * 0
+    target_abv_norm = (target_abv - abv_min) / (abv_max - abv_min) if abv_max > abv_min else 0
+    target_fg_norm = (target_fg - fg_min) / (fg_max - fg_min) if fg_max > fg_min else 0
+
+    def objective(lambdas):
+        blend_abv = np.dot(lambdas, abvs_norm)
+        blend_fg = np.dot(lambdas, fgs_norm)
+        return w_abv * (blend_abv - target_abv_norm) ** 2 + w_fg * (blend_fg - target_fg_norm) ** 2
+
+    lambdas = quadratic_solve(
+        objective,
+        x0=np.ones(N) / N,
+        bounds=[(0.0, 1.0) for _ in range(N)],
+        constraints=[{'type': 'eq', 'fun': lambda l: np.sum(l) - 1.0}]
+    )
+    volumes = lambdas * target_vol
+    blend_abv = np.dot(lambdas, abvs)
+    blend_fg = np.dot(lambdas, fgs)
+    return {
+        'volumes': volumes.tolist(),
+        'proportions': lambdas.tolist(),
+        'blend_abv': float(blend_abv),
+        'blend_fg': float(blend_fg)
+    }
