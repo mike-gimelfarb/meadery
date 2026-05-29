@@ -12,7 +12,7 @@ pip install git+https://github.com/mike-gimelfarb/mead-tools
 
 ## Run
 
-Commands are available directly at the top level, for example:
+Commands are provided using the keyword `mead` followed by the name of the command, for example to list all commands and calculate the attenuation:
 
 ```bash
 mead --help
@@ -154,9 +154,9 @@ mead potential-abv --og 1.110 --fg 1.010 --format json
 ```
 
 
-## Recipe Format
+## Recipe Files
 
-Many functions accept a `--recipe` argument instead of volume, original graviy and ph, which is either an absolute path to a `.recipe` file, or relative path from the current working sub-directory. Recipe files make it easy to manage existing recipes and musts and perform calculations and determine adjustments to them.
+Many functions accept a `--recipe` argument instead of volume, original graviy and ph, which is either an absolute path to a `.recipe` file, or relative path from the current working sub-directory. Recipe files make it easy to manage existing recipes and musts, and perform calculations or determine adjustments for them.
 
 Rules:
 - One instruction per non-empty line: `<ingredient>=<quantity>`
