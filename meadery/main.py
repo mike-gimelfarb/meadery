@@ -9,7 +9,7 @@ from meadery.core import (
     Hydrometer, Must, Refractometer,
     add_fermentable, add_fruit, add_yeast_strain,
     brix_to_sg, original_gravity, sg_to_plato, parse_recipe,
-    blend_to_gravity, blend_to_abv, blend_nearest
+    blend_to_gravity, blend_to_abv, blend_nearest, spirit_abv_to_sg
 )
 
 
@@ -144,6 +144,14 @@ def convert_sg_to_plato(
 ) -> None:
     result = sg_to_plato(gravity)
     echo_boxed(f'{round(result, 2)}')
+
+
+@app.command("spirit-gravity")
+def convert_spirit_abv_to_sg(
+    abv: float = typer.Option(..., "--abv", help="Spirit ABV in percent"),
+) -> None:
+    result = spirit_abv_to_sg(abv)
+    echo_boxed(f'{round(result, 4)}')
 
 
 @app.command("hydrometer")

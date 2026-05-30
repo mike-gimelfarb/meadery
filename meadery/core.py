@@ -65,7 +65,8 @@ def spirit_abv_to_sg(abv: float) -> float:
     if abv < 0 or abv > 100:
         raise ValueError('ABV must be between 0 and 100.')
     x = abv / 100
-    return 1.0001 - 0.0431 * x - 0.4524 * x ** 2 + 0.4352 * x ** 3 - 0.1506 * x ** 4 
+    sg = 1.0001 - 0.0431 * x - 0.4524 * x ** 2 + 0.4352 * x ** 3 - 0.1506 * x ** 4 
+    return min(max(0, sg), 1)
     
 
 def _load_data_json(filename: str) -> dict:
