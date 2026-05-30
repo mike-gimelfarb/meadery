@@ -32,6 +32,7 @@ List of supported functions for conversions and calibration:
 | --- | --- |
 | `brix-to-sg --brix` | Convert Brix to specific gravity. |
 | `sg-to-plato --sg` | Convert specific gravity to Plato. |
+| `spirit-gravity --abv`  | Estimate gravity of neutral spirit. |
 | `hydrometer --sg --temp --calib-temp` | Correct hydrometer for sample temperature. |
 | `refractometer --og --brix` | Correct refractometer reading for alcohol. |
 
