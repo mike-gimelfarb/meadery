@@ -58,7 +58,7 @@ def brix_to_sg(brix: float) -> float:
 
 
 def _load_data_json(filename: str) -> dict:
-    path = resources.files('mead_tools').joinpath('data', filename)
+    path = resources.files('meadery').joinpath('data', filename)
     with path.open('r', encoding='utf-8') as fh:
         data = json.load(fh)
     if not isinstance(data, dict):

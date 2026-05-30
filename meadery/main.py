@@ -4,7 +4,7 @@ from pathlib import Path
 import typer
 from typing import Optional, List
 
-from mead_tools.core import (
+from meadery.core import (
     ACID_ADJUSTMENTS, FERMENTABLES, FRUITS, YEAST_STRAINS,
     Hydrometer, Must, Refractometer,
     add_fermentable, add_fruit, add_yeast_strain,
@@ -17,7 +17,7 @@ from mead_tools.core import (
 #                  Application Base
 # ===================================================
 
-app = typer.Typer(help="Mead tools command-line app")
+app = typer.Typer(help="Meadery tools command-line app")
 
 
 class OutputFormat(str, Enum):

@@ -1,4 +1,4 @@
-# mead-tools
+# meadery
 
 A command-line toolkit for mead-making calculations and must planning.
 
@@ -12,11 +12,11 @@ pip install git+https://github.com/mike-gimelfarb/mead-tools
 
 ## Run
 
-Commands are provided using the keyword `mead` followed by the name of the command, for example to list all commands and calculate the attenuation:
+Commands are provided using the keyword `meadery` followed by the name of the command, for example to list all commands and calculate the attenuation:
 
 ```bash
-mead --help
-mead attenuation --og 1.110 --fg 1.010
+meadery --help
+meadery attenuation --og 1.110 --fg 1.010
 ```
 
 ## Supported Functions
@@ -111,7 +111,7 @@ List of supported functions for adding fermentables, fruit and yeast types to th
 
 ## Dynamic Fermentables And Fruits
 
-Current fermentables are defined in `FERMENTABLES` (`mead_tools/data/fermentables.json`):
+Current fermentables are defined in `FERMENTABLES` (`meadery/data/fermentables.json`):
 - `water`
 - `honey`
 - `maple`
@@ -121,7 +121,7 @@ Current fermentables are defined in `FERMENTABLES` (`mead_tools/data/fermentable
 - `brown-sugar`
 - `liquid-malt-extract`
 
-Current fruits are defined in `FRUITS` (`mead_tools/data/fruits.json`):
+Current fruits are defined in `FRUITS` (`meadery/data/fruits.json`):
 - `apple`
 - `pear`
 - `peach`
@@ -143,13 +143,13 @@ Current fruits are defined in `FRUITS` (`mead_tools/data/fruits.json`):
 - `fig`
 - `mango`
 
-Current yeast strains are defined in `YEAST_STRAINS` (`mead_tools/data/yeasts.json`):
+Current yeast strains are defined in `YEAST_STRAINS` (`meadery/data/yeasts.json`):
 - `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`
 
 Functions `new-fermentable`, `new-fruit` and `new-yeast` allow adding new fermentable, fruit and yeast strains permanently, which can be referred in any calculations, for instance
 
 ```bash
-mead new-fruit --name tulaberry --brix 18 --moisture 84 --ph 3.5
+meadery new-fruit --name tulaberry --brix 18 --moisture 84 --ph 3.5
 ```
 
 will add the `tulaberry` to the `fruits.json` so it can be referred in calculations involving fruit additions.
