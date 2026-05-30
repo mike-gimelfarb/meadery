@@ -99,6 +99,33 @@ def echo_boxed(message: str, color: str=None) -> None:
     typer.echo(typer.style(bottom, fg=color))
 
 
+def get_yeast_obj(yeast: str) -> object:
+    yeast_key = yeast.strip().lower()
+    yeast_obj = YEAST_STRAINS.get(yeast_key, None)
+    if yeast_obj is None:
+        choices = ", ".join(sorted(YEAST_STRAINS.keys()))
+        raise typer.BadParameter(f"Invalid yeast strain: {yeast_key}, choose from: {choices}")
+    return yeast_obj
+
+
+def get_fermentable_object(fermentable: str) -> object:
+    fermentable_key = fermentable.strip().lower()
+    fermentable_obj = FERMENTABLES.get(fermentable_key)
+    if fermentable_obj is None:
+        choices = ", ".join(sorted(FERMENTABLES.keys()))
+        raise typer.BadParameter(f"Unknown fermentable: {fermentable_key}, choose from: {choices}")
+    return fermentable_obj
+
+
+def get_fruit_object(fruit: str) -> object:
+    fruit_key = fruit.strip().lower()
+    fruit_obj = FRUITS.get(fruit_key)
+    if fruit_obj is None:
+        choices = ", ".join(sorted(FRUITS.keys()))
+        raise typer.BadParameter(f"Unknown fruit: {fruit_key}, choose from: {choices}")
+    return fruit_obj
+
+
 # ===================================================
 #              Conversion and Calibration
 # ===================================================
@@ -214,11 +241,7 @@ def calc_stalled_gravity(
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
-    yeast_obj = YEAST_STRAINS.get(yeast.strip().lower(), None)
-    if yeast_obj is None:
-        choices = ", ".join(sorted(YEAST_STRAINS.keys()))
-        raise typer.BadParameter(f"Invalid yeast strain: {yeast}, choose from: {choices}")
-    
+    yeast_obj = get_yeast_obj(yeast)
     result = base_must.stalled_final_gravity(
         yeast=yeast_obj, method=method.value, tol=tol, min_fg=min_fg)
     echo_boxed(f'{round(result, 4)}')
@@ -241,12 +264,8 @@ def must_add(
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
-    fermentable_key = fermentable.strip().lower()
-    if fermentable_key not in FERMENTABLES:
-        choices = ", ".join(sorted(FERMENTABLES.keys()))
-        raise typer.BadParameter(f"unknown fermentable '{fermentable}'. Choose one of: {choices}")
-    
-    result = base_must.add(FERMENTABLES[fermentable_key], mass=mass)
+    fermentable_obj = get_fermentable_object(fermentable)
+    result = base_must.add(fermentable_obj, mass=mass)
     echo_boxed(str(result))
 
 
@@ -266,12 +285,7 @@ def must_add_fruit(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
     if fruit is None:
         raise typer.BadParameter("--fruit is required")
-    fruit_key = fruit.strip().lower()
-    selected_fruit = FRUITS.get(fruit_key)
-    if selected_fruit is None:
-        choices = ", ".join(sorted(FRUITS.keys()))
-        raise typer.BadParameter(f"unknown fruit '{fruit}'. Choose one of: {choices}")
-    
+    selected_fruit = get_fruit_object(fruit)
     try:
         result = base_must.add_fruit(selected_fruit, mass=mass, extract_yield=extract_yield)
     except ValueError as exc:
@@ -294,12 +308,7 @@ def must_add_fruit_juice(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
     if fruit is None:
         raise typer.BadParameter("--fruit is required")
-    fruit_key = fruit.strip().lower()
-    selected_fruit = FRUITS.get(fruit_key)
-    if selected_fruit is None:
-        choices = ", ".join(sorted(FRUITS.keys()))
-        raise typer.BadParameter(f"unknown fruit '{fruit}'. Choose one of: {choices}")
-    
+    selected_fruit = get_fruit_object(fruit)    
     try:
         result = base_must.add_fruit_juice(selected_fruit, volume=juice_volume)
     except ValueError as exc:
@@ -367,15 +376,11 @@ def adjust_gravity(
     if fermentable is None:
         if fruit is None:
             raise typer.BadParameter("Either --fermentable or --fruit must be provided")
-        result = base_must.adjust_gravity_with_fruit_juice(
-            target_sg=target_sg, 
-            fruit=FRUITS[fruit.strip().lower()]
-        )
+        fruit_obj = get_fruit_object(fruit)
+        result = base_must.adjust_gravity_with_fruit_juice(target_sg=target_sg, fruit=fruit_obj)
     else:
-        result = base_must.adjust_gravity(
-            target_sg=target_sg, 
-            fermentable=FERMENTABLES[fermentable.strip().lower()]
-        )
+        fermentable_obj = get_fermentable_object(fermentable)
+        result = base_must.adjust_gravity(target_sg=target_sg, fermentable=fermentable_obj)
     if fruit:
         result = f'{round(result, 2)}ml'
     else:
@@ -415,32 +420,26 @@ def calc_volumes(
         autocompletion=lambda ctx, args, incomplete: [
             k for k in get_fermentable_choices() + get_fruit_choices() if k.startswith(incomplete)]),
 ) -> None:
-    base_must = Must(volume=volume, gravity=gravity, ph=None)
+    base_must = _must_from_args(
+        label="Base must", recipe=None, volume=volume, gravity=gravity, ph=None, require_ph=False)
     fermentable_key = fermentable.strip().lower()
-    base_key = base.strip().lower()
-    if fermentable_key not in FERMENTABLES:
-        choices = ", ".join(sorted(FERMENTABLES.keys()))
-        raise typer.BadParameter(f"unknown fermentable or base. Choose from: {choices}")
+    fermentable_obj = get_fermentable_object(fermentable)
     
+    base_key = base.strip().lower()
     if base_key in FERMENTABLES:
-        result = base_must.volumes(FERMENTABLES[fermentable_key], base=FERMENTABLES[base_key])
+        result = base_must.volumes(fermentable_obj, base=FERMENTABLES[base_key])
         fruit = False
     elif base_key in FRUITS:
-        result = base_must.volumes_with_fruit_juice(
-            FERMENTABLES[fermentable_key], fruit=FRUITS[base_key])
+        result = base_must.volumes_with_fruit_juice(fermentable_obj, fruit=FRUITS[base_key])
         fruit = True
     else:
         choices = ", ".join(sorted(get_fermentable_choices() + get_fruit_choices()))
-        raise typer.BadParameter(f"unknown base '{base}'. Choose from: {choices}")
-        
-    masses = {
-        "fermentable": round(result[0], 2),
-        "base": round(result[1], 2),
-    }
+        raise typer.BadParameter(f"Unknown base: {base}, choose from: {choices}")
+     
     base_units = "ml" if fruit else "g"
     echo_boxed(
-        f'{fermentable_key}: {masses["fermentable"]}g\n'
-        f'{base_key}: {masses["base"]}{base_units}'
+        f'{fermentable_key}: {round(result[0], 2)}g\n'
+        f'{base_key}: {round(result[1], 2)}{base_units}'
     )
 
 
@@ -530,10 +529,7 @@ def adjust_tosna3(
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
-    yeast_obj = YEAST_STRAINS.get(yeast.strip().lower(), None)
-    if yeast_obj is None:
-        choices = ", ".join(sorted(YEAST_STRAINS.keys()))
-        raise typer.BadParameter(f"Invalid yeast strain: {yeast}, choose from: {choices}")
+    yeast_obj = get_yeast_obj(yeast)
     result = base_must.tosna_3(yeast=yeast_obj)
     result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
     echo_boxed(result_str)
@@ -645,13 +641,13 @@ def backsweeten(
     if fermentable is None:
         if fruit is None:
             raise typer.BadParameter("Either --fermentable or --fruit must be provided")
+        fruit_obj = get_fruit_object(fruit_key)
         result = base_must.backsweeten_with_fruit_juice(
-            final_sg=final_sg, target_sg=target_sg,
-            fruit=FRUITS[fruit.strip().lower()])
+            final_sg=final_sg, target_sg=target_sg, fruit=fruit_obj)
     else:
+        fermentable_obj = get_fermentable_object(fermentable)
         result = base_must.backsweeten(
-            final_sg=final_sg, target_sg=target_sg,
-            sweetener=FERMENTABLES[fermentable.strip().lower()])
+            final_sg=final_sg, target_sg=target_sg, sweetener=fermentable_obj)
         
     if fruit:
         result = f'{round(result, 2)}ml'
@@ -715,10 +711,7 @@ def calc_priming_sugar(
 ) -> None:
     must = _must_from_args(
         label="Must", recipe=recipe, volume=volume, gravity=1.0, ph=None, require_ph=False)
-    fermentable_obj = FERMENTABLES.get(fermentable.strip().lower(), None)
-    if fermentable_obj is None:
-        choices = ", ".join(sorted(FERMENTABLES.keys()))
-        raise typer.BadParameter(f"Invalid fermentable: {fermentable}, choose from: {choices}")
+    fermentable_obj = get_fermentable_object(fermentable)
     result = must.priming_sugar(
         fermentable=fermentable_obj, target_volumes=target_co2_vol, temp=temp)
     echo_boxed(f'{round(result, 2)}g')
@@ -768,5 +761,4 @@ def data_add_yeast_strain(
 
 if __name__ == "__main__":
     app()
-
 
