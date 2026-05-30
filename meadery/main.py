@@ -641,7 +641,7 @@ def backsweeten(
     if fermentable is None:
         if fruit is None:
             raise typer.BadParameter("Either --fermentable or --fruit must be provided")
-        fruit_obj = get_fruit_object(fruit_key)
+        fruit_obj = get_fruit_object(fruit)
         result = base_must.backsweeten_with_fruit_juice(
             final_sg=final_sg, target_sg=target_sg, fruit=fruit_obj)
     else:
@@ -705,7 +705,7 @@ def calc_priming_sugar(
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
     target_co2_vol: float = typer.Option(..., "--co2", help="Target CO2 volumes"),
     temp: float = typer.Option(..., "--temp", help="Fermentation temperature in C"),
-    fermentable: str = typer.Option(None, "--fermentable", help="Fermentable for priming",
+    fermentable: str = typer.Option(..., "--fermentable", help="Fermentable for priming",
         case_sensitive=False, show_choices=True, prompt=True,
         autocompletion=lambda ctx, args, incomplete: [k for k in FERMENTABLES.keys() if k.startswith(incomplete)]),
 ) -> None:

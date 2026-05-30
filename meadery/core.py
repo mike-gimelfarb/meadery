@@ -57,6 +57,17 @@ def brix_to_sg(brix: float) -> float:
     return 1.0 + (brix / (258.6 - (brix / 258.2) * 227.1))
 
 
+def spirit_abv_to_sg(abv: float) -> float:
+    '''Returns the specific gravity of a spirit given its ABV.
+    
+    :param abv: the ABV of the spirit in percent
+    '''
+    if abv < 0 or abv > 100:
+        raise ValueError('ABV must be between 0 and 100.')
+    x = abv / 100
+    return 1.0001 - 0.0431 * x - 0.4524 * x ** 2 + 0.4352 * x ** 3 - 0.1506 * x ** 4 
+    
+
 def _load_data_json(filename: str) -> dict:
     path = resources.files('meadery').joinpath('data', filename)
     with path.open('r', encoding='utf-8') as fh:
@@ -479,9 +490,11 @@ class Must:
         if self.potential_abv(fg=target_fg, method=method) >= target_abv:
             raise ValueError("The wine has already fermented past your target ABV.")
 
-        def fg_before_of_v(v):
-            return 1.0 + (target_fg - 1.0) * (V + v) / V
+        spirit_sg = spirit_abv_to_sg(spirit_abv)
 
+        def fg_before_of_v(v):
+            return ((target_fg * (V + v)) - (spirit_sg * v)) / V    
+            
         def f_v_to_abv(v):
             post_abv = self.fortify_abv(
                 fg=fg_before_of_v(v), spirit_vol_ml=v, spirit_abv=spirit_abv, method=method)
@@ -889,18 +902,6 @@ def blend_to_abv(abv1: float, abv2: float, target_abv: float) -> float:
         raise ValueError('Input ABVs must be different for blending.')
     
     return (target_abv - abv2) / (abv1 - abv2)
-
-
-def _project_to_simplex(v):
-    u = sorted(v, reverse=True)
-    cssv = 0.0
-    rho = -1
-    for i in range(len(u)):
-        cssv += u[i]
-        if u[i] > (cssv - 1) / (i + 1):
-            rho = i
-    theta = (sum(u[:rho + 1]) - 1) / (rho + 1)
-    return [max(v_i - theta, 0) for v_i in v]
 
 
 def blend_nearest(abvs: List[float], fgs: List[float], 
