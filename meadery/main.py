@@ -217,8 +217,8 @@ def calc_original_gravity(
     echo_boxed(f'{round(result, 4)}')
 
 
-@app.command("potential-abv")
-def calc_potential_abv(
+@app.command("abv")
+def calc_abv(
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     fg: float = typer.Option(..., "--fg", help="Final gravity"),
@@ -226,7 +226,7 @@ def calc_potential_abv(
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
-    result = base_must.potential_abv(fg=fg, method=method.value)
+    result = base_must.abv(fg=fg, method=method.value)
     echo_boxed(f'{round(result, 2)}%')
 
 

@@ -488,7 +488,7 @@ class Must:
             raise ValueError("Spirit ABV must be between target ABV and 100.")
         if target_fg < 1.0:
             raise ValueError('target_fg must be >= 1.0.')
-        if self.potential_abv(fg=target_fg, method=method) >= target_abv:
+        if self.abv(fg=target_fg, method=method) >= target_abv:
             raise ValueError("The wine has already fermented past your target ABV.")
 
         spirit_sg = spirit_abv_to_sg(spirit_abv)
@@ -525,7 +525,7 @@ class Must:
         if fg < 0.0:
             raise ValueError('Final gravity must be non-negative.')
 
-        produced_abv = self.potential_abv(fg=fg, method=method)
+        produced_abv = self.abv(fg=fg, method=method)
         ethanol_from_must_ml = self.volume * (produced_abv / 100.0)
         ethanol_from_spirit_ml = spirit_vol_ml * (spirit_abv / 100.0)
         total_ethanol_ml = ethanol_from_must_ml + ethanol_from_spirit_ml
@@ -538,7 +538,7 @@ class Must:
     #                              Brewing Calculation Methods    
     # ====================================================================================
     
-    def potential_abv(self, fg: float=1.0, method: str='duncan') -> float:
+    def abv(self, fg, method: str='duncan') -> float:
         '''Returns the potential ABV of the must given a final gravity and method.
         
         :param fg: final gravity to use for the ABV calculation
@@ -591,7 +591,7 @@ class Must:
             raise ValueError('min_fg must be positive.')
         
         def f_fg_to_abv(fg):
-            return self.potential_abv(fg=fg, method=method) - yeast.abv_limit
+            return self.abv(fg=fg, method=method) - yeast.abv_limit
         
         if f_fg_to_abv(min_fg) * f_fg_to_abv(self.gravity) > 0:
             raise ValueError("Yeast ABV limit is not between the potential ABV at min_fg "
@@ -867,7 +867,7 @@ def original_gravity(target_abv: float, fg: float,
         raise ValueError('max_og must be greater than final gravity.')
     
     def f_og_to_abv(og):
-        return Must(volume=1, gravity=og, ph=7).potential_abv(fg=fg, method=method) - target_abv
+        return Must(volume=1, gravity=og, ph=7).abv(fg=fg, method=method) - target_abv
     
     if f_og_to_abv(fg) * f_og_to_abv(max_og) > 0:
         raise ValueError("Target ABV is not between the potential ABV at the final gravity "

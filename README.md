@@ -41,10 +41,10 @@ List of supported functions for must calculations:
 
 | Command | Description |
 | --- | --- |
+| `abv [--og \| --recipe] --fg [--method]` | Compute ABV from OG and FG. |
 | `attenuation [--og \| --recipe] --fg` | Compute apparent attenuation. |
 | `load-recipe <file>` | Print summary of must from a recipe file. |
 | `original-gravity --target-abv --target-fg [--method] [--tol] [--max-og]` | Compute OG needed for target ABV. |
-| `potential-abv [--og \| --recipe] --fg [--method]` | Compute potential ABV from OG and FG. |
 | `residual-co2 --temp` | Compute residual dissolved CO2. |
 | `stalled-gravity [--og \| --recipe] --yeast [--method] [--tol] [--min-fg]` | Estimate stall gravity from yeast tolerance. |
 
