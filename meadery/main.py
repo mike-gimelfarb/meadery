@@ -33,6 +33,14 @@ class AbvMethod(str, Enum):
     cutaia = "cutaia"
 
 
+class PotentialAbvMethod(str, Enum):
+    marsh = "marsh"
+    margalit = "margalit"
+    cooke = "cooke"
+    pambianchi = "pambianchi"
+    honneyman = "honneyman"
+
+
 def get_fermentable_choices() -> List[str]:
     return list(FERMENTABLES.keys())
 
@@ -227,6 +235,18 @@ def calc_abv(
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
     result = base_must.abv(fg=fg, method=method.value)
+    echo_boxed(f'{round(result, 2)}%')
+
+
+@app.command("abv-potential")
+def calc_potential_abv(
+    gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
+    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
+    method: PotentialAbvMethod = typer.Option(PotentialAbvMethod.cooke, "--method", help="Potential ABV calculation method"),
+) -> None:
+    base_must = _must_from_args(
+        label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
+    result = base_must.abv_potential(method=method.value)
     echo_boxed(f'{round(result, 2)}%')
 
 

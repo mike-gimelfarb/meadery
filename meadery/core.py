@@ -566,6 +566,29 @@ class Must:
         else:
             raise ValueError(f'Invalid abv method {method}.')
     
+    def abv_potential(self, method: str='duncan') -> float:
+        '''Returns the potential ABV of the must given a method.
+        
+        :param method: calculation method for ABV
+        '''
+        og = self.gravity
+        if method == 'marsh':
+            brix = sg_to_plato(og)
+            return 0.47 * (brix * 0.9982 - 3) / 0.7892
+        elif method == 'margalit':
+            return 0.57 * sg_to_plato(og)
+        elif method == 'cooke':
+            B_c = sg_to_plato(og) - 3
+            sg_c = brix_to_sg(B_c)
+            return 0.59 * B_c * sg_c
+        elif method == 'pambianchi':
+            brix = sg_to_plato(og)
+            return 0.55 * brix - 0.63
+        elif method == 'honneyman':
+            return 165.9 * og - 168.2
+        else:
+            raise ValueError(f'Invalid potential abv method {method}.')
+
     def attenuation(self, fg: float) -> float:
         '''Returns the apparent attenuation percentage.'''
         if fg <= 0.0:

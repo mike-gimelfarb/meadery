@@ -42,6 +42,7 @@ List of supported functions for must calculations:
 | Command | Description |
 | --- | --- |
 | `abv [--og \| --recipe] --fg [--method]` | Compute ABV from OG and FG. |
+| `abv-potential [--og \| --recipe] [--method]` | Compute potential ABV from OG. |
 | `attenuation [--og \| --recipe] --fg` | Compute apparent attenuation. |
 | `load-recipe <file>` | Print summary of must from a recipe file. |
 | `original-gravity --target-abv --target-fg [--method] [--tol] [--max-og]` | Compute OG needed for target ABV. |
@@ -112,6 +113,9 @@ List of supported functions for adding fermentables, fruit and yeast types to th
 - `cutaia`: Cutaia-Reid-Speers formula, accurate but derived from beer data.
 
 The current default in all calculations is `duncan`, unless specified in `--method`.
+
+For potential abv calculations, the options are currently `marsh`, `margalit`, `cooke`, `pambianchi` and `honneyman`, the default is `cooke`.
+
 
 ## Dynamic Fermentables And Fruits
 
