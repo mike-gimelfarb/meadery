@@ -23,7 +23,7 @@ meadery attenuation --og 1.110 --fg 1.010
 
 General notes on usage:
 - `--recipe` arguments always take priority over manual arguments, e.g., `--vol, --og`
-- default values: `--method` is `cutaia`, `--tol` is 1e-6 and `--spirit-abv` is 40, `--extract-yield` is 1
+- default values: `--method` is `duncan`, `--tol` is 1e-6, `--spirit-abv` is 40, `--extract-yield` is 1
 
 
 List of supported functions for conversions and calibration:
