@@ -1,4 +1,4 @@
-# <img src="meadery.svg" width="92" style="vertical-align: middle;"> meadery
+# <img src="https://github.com/mike-gimelfarb/meadery/blob/main/meadery.svg" width="92" style="vertical-align: middle;"> meadery
 
 A command-line toolkit for mead-making calculations and must planning.
 
