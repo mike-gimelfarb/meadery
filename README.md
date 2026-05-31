@@ -1,4 +1,4 @@
-# meadery
+# <img src="meadery.svg" width="92" style="vertical-align: middle;"> meadery
 
 A command-line toolkit for mead-making calculations and must planning.
 
