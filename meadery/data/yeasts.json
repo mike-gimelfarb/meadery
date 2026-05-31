@@ -1,7 +1,7 @@
 {
   "71b": {
     "abv_limit": 14.5,
-    "nitrogen_requirement": "low"
+    "nitrogen_requirement": "medium"
   },
   "ec1118": {
     "abv_limit": 18.0,
@@ -13,7 +13,7 @@
   },
   "qa23": {
     "abv_limit": 16.0,
-    "nitrogen_requirement": "low"
+    "nitrogen_requirement": "medium"
   },
   "d47": {
     "abv_limit": 15.0,
@@ -29,11 +29,11 @@
   },
   "m05": {
     "abv_limit": 18.0,
-    "nitrogen_requirement": "medium"
+    "nitrogen_requirement": "low"
   },
   "rc212": {
     "abv_limit": 16.0,
-    "nitrogen_requirement": "medium"
+    "nitrogen_requirement": "high"
   },
   "voss-kveik": {
     "abv_limit": 12.0,
@@ -45,6 +45,6 @@
   },
   "bread": {
     "abv_limit": 12.0,
-    "nitrogen_requirement": "low"
+    "nitrogen_requirement": "medium"
   }
 }

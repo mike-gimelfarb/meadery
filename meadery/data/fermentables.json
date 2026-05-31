@@ -21,8 +21,8 @@
   },
   "molasses": {
     "ppg": 36,
-    "density": 1.4,
-    "ph": 5.5
+    "density": 1.42,
+    "ph": 5.0
   },
   "table-sugar": {
     "ppg": 46,
@@ -34,9 +34,19 @@
     "density": 1.54,
     "ph": 5.5
   },
+  "corn-sugar": {
+    "ppg": 40,
+    "density": 1.54,
+    "ph": 6.0
+  },
   "liquid-malt-extract": {
     "ppg": 36,
     "density": 1.42,
+    "ph": 5.5
+  },
+  "dry-malt-extract": {
+    "ppg": 45,
+    "density": 1.54,
     "ph": 5.5
   }
 }

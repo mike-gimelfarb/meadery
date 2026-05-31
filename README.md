@@ -120,7 +120,9 @@ Current fermentables are defined in `FERMENTABLES` (`meadery/data/fermentables.j
 - `molasses`
 - `table-sugar`
 - `brown-sugar`
+- `corn-sugar`
 - `liquid-malt-extract`
+- `dry-malt-extract`
 
 Current fruits are defined in `FRUITS` (`meadery/data/fruits.json`):
 - `apple`
@@ -143,6 +145,9 @@ Current fruits are defined in `FRUITS` (`meadery/data/fruits.json`):
 - `canteloupe`
 - `fig`
 - `mango`
+- `lemon`
+- `orange`
+- `pineapple`
 
 Current yeast strains are defined in `YEAST_STRAINS` (`meadery/data/yeasts.json`):
 - `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`

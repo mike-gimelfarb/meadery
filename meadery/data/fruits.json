@@ -118,5 +118,20 @@
     "brix": 15.0,
     "moisture_content": 83.0,
     "ph": 4.0
+  },
+  "lemon": {
+    "brix": 8.0,
+    "moisture_content": 90.0,
+    "ph": 2.2
+  },
+  "orange": {
+    "brix": 12.0,
+    "moisture_content": 86.0,
+    "ph": 3.5
+  },
+  "pineapple": {
+    "brix": 14.0,
+    "moisture_content": 86.0,
+    "ph": 3.5
   }
 }
