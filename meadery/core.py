@@ -471,14 +471,14 @@ class Must:
         return self.combine(juice_must)
 
     def fortify_volume(self, target_abv: float, target_fg: float, spirit_abv: float=40.0,
-                       method: str='cutaia', tol: float=1e-6) -> dict:
+                       method: str='duncan', tol: float=1e-6) -> dict:
         '''Returns the volume of spirit needed to fortify this must to a target ABV and FG.
         Also returns the gravity at which to fortify.
         
         :param target_abv: the target ABV in percent
         :param target_fg: the target final gravity after fortification in specific gravity
         :param spirit_abv: the ABV of the spirit used for fortification in percent
-        :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
+        :param method: calculation method for ABV
         :param tol: tolerance for root finding
         '''
         V = self.volume
@@ -509,14 +509,14 @@ class Must:
         return {"fortify_gravity": fg_before, "spirit_volume": v_needed}
 
     def fortify_abv(self, fg: float, spirit_vol_ml: float, spirit_abv: float=40.0,
-                    method: str='cutaia') -> float:
+                    method: str='duncan') -> float:
         '''Return the resulting ABV (%) after fermenting this must from its OG to
         `fg` and then adding `spirit_vol_ml` milliliters of spirit at `spirit_abv` ABV.
 
         :param fg: the final gravity after fermentation in specific gravity
         :param spirit_vol_ml: the volume of spirit to add in milliliters
         :param spirit_abv: the ABV of the spirit used for fortification in percent
-        :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
+        :param method: calculation method for ABV
         '''
         if spirit_vol_ml < 0:
             raise ValueError('spirit_vol_ml must be non-negative')
@@ -538,11 +538,11 @@ class Must:
     #                              Brewing Calculation Methods    
     # ====================================================================================
     
-    def potential_abv(self, fg: float=1.0, method: str='cutaia') -> float:
+    def potential_abv(self, fg: float=1.0, method: str='duncan') -> float:
         '''Returns the potential ABV of the must given a final gravity and method.
         
         :param fg: final gravity to use for the ABV calculation
-        :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
+        :param method: calculation method for ABV
         '''
         if fg <= 0.0:
             raise ValueError('Final gravity must be positive.')
@@ -552,8 +552,12 @@ class Must:
             return 0.0
         elif method == 'standard':
             return (og - fg) * 131.25
-        elif method == 'alternate':
-            return 76.08 * (og - fg) / (1.775 - og) * (fg / 0.794)
+        elif method == 'berry':
+            return (og - fg) / 0.00736
+        elif method == 'alternate':   # duncan and acton
+            return 76.08 * ((og - fg) / (1.775 - og)) * (fg / 0.794)
+        elif method == 'duncan':
+            return 1000 * (og - fg) / (7.75 - 3.75 * (og - 1.007))
         elif method == 'cutaia':
             oe = sg_to_plato(og)
             ae = sg_to_plato(fg)
@@ -573,13 +577,13 @@ class Must:
         else:
             return ((og - fg) / (og - 1.0)) * 100.0
 
-    def stalled_final_gravity(self, yeast: Yeast, method: str='cutaia', 
+    def stalled_final_gravity(self, yeast: Yeast, method: str='duncan', 
                               tol: float=1e-6, min_fg: float=0.9) -> float:
         '''Returns the final gravity at which fermentation will stall given a yeast ABV 
         limit and method.
         
         :param yeast: Yeast object
-        :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
+        :param method: calculation method for ABV
         :param tol: tolerance for the root-finding algorithm
         :param min_fg: minimum final gravity to consider for root-finding
         '''
@@ -845,13 +849,13 @@ def parse_recipe(path: str) -> Must:
 
 
 def original_gravity(target_abv: float, fg: float, 
-                     method: str='cutaia', tol: float=1e-6, max_og: float=1.3) -> float:
+                     method: str='duncan', tol: float=1e-6, max_og: float=1.3) -> float:
     '''Returns the original gravity needed to achieve a target ABV given a final gravity 
     and method.
     
     :param target_abv: the target ABV in percent
     :param fg: the final gravity to use for the ABV calculation
-    :param method: calculation method for ABV ('standard', 'alternate', or 'cutaia')
+    :param method: calculation method for ABV
     :param tol: tolerance for the root-finding algorithm
     :param max_og: maximum original gravity to consider for root-finding
     '''
