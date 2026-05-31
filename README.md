@@ -7,7 +7,7 @@ A command-line toolkit for mead-making calculations and must planning.
 Install with git:
 
 ```bash
-pip install git+https://github.com/mike-gimelfarb/mead-tools
+pip install git+https://github.com/mike-gimelfarb/meadery
 ```
 
 ## Run
