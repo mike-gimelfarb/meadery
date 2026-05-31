@@ -572,6 +572,9 @@ class Must:
         :param method: calculation method for ABV
         '''
         og = self.gravity
+        if method == 'dubrunfaut':
+            oe = 1000 * (og - 1.0)
+            return 0.059 * (2.66 * oe - 30) 
         if method == 'marsh':
             brix = sg_to_plato(og)
             return 0.47 * (brix * 0.9982 - 3) / 0.7892

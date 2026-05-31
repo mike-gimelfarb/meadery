@@ -34,6 +34,7 @@ class AbvMethod(str, Enum):
 
 
 class PotentialAbvMethod(str, Enum):
+    dubrunfaut = "dubrunfaut"
     marsh = "marsh"
     margalit = "margalit"
     cooke = "cooke"

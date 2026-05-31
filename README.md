@@ -114,7 +114,7 @@ List of supported functions for adding fermentables, fruit and yeast types to th
 
 The current default in all calculations is `duncan`, unless specified in `--method`.
 
-For potential abv calculations, the options are currently `marsh`, `margalit`, `cooke`, `pambianchi` and `honneyman`, the default is `cooke`.
+For potential abv calculations, the options are currently `dubrunfaut`, `marsh`, `margalit`, `cooke`, `pambianchi` and `honneyman`, the default is `cooke`.
 
 
 ## Dynamic Fermentables And Fruits
