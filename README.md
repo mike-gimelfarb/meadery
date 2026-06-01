@@ -25,8 +25,7 @@ General notes on usage:
 - `--recipe` arguments always take priority over manual arguments, e.g., `--vol, --og`
 - default values: `--method` is `duncan`, `--tol` is 1e-6, `--spirit-abv` is 40, `--extract-yield` is 1
 
-
-List of supported functions for conversions and calibration:
+### Conversion Formulas and Calibration
 
 | Command | Description |
 | --- | --- |
@@ -36,8 +35,7 @@ List of supported functions for conversions and calibration:
 | `hydrometer --sg --temp --calib-temp` | Correct hydrometer for sample temperature. |
 | `refractometer --og --brix` | Correct refractometer reading for alcohol. |
 
-
-List of supported functions for must calculations:
+### Must Statistics
 
 | Command | Description |
 | --- | --- |
@@ -49,8 +47,7 @@ List of supported functions for must calculations:
 | `residual-co2 --temp` | Compute residual dissolved CO2. |
 | `stalled-gravity [--og \| --recipe] --yeast [--method] [--tol] [--min-fg]` | Estimate stall gravity from yeast tolerance. |
 
-
-List of supported functions for basic must adjustments:
+### Must Additions and Adjustments
 
 | Command | Description |
 | --- | --- |
@@ -64,8 +61,7 @@ List of supported functions for basic must adjustments:
 | `combine [--vol1 --og1 --ph1 \| --recipe1] [--vol2 --og2 --ph2 \| --recipe2]` | Combine two musts into one. |
 | `volumes --target-og --target-vol [--fermentable] [--base]` | Compute fermentable/base amounts required. |
 
-
-List of supported functions for pitching, nutrients, TA and sulfites:
+### Pitching, Nutrients, TA and Sulfites
 
 | Command | Description |
 | --- | --- |
@@ -75,8 +71,7 @@ List of supported functions for pitching, nutrients, TA and sulfites:
 | `ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
 | `tosna [--vol --og \| --recipe] --yeast` | Compute TOSNA 3.0 nutrient schedule. |
 
-
-List of supported functions for blending fermented musts to satisfy constraints on final gravity, ABV, etc:
+### Blending
 
 | Command | Description |
 | --- | --- |
@@ -84,8 +79,7 @@ List of supported functions for blending fermented musts to satisfy constraints 
 | `blend-to-gravity --fg1 --fg2 --target-fg --target-vol` | Blend two fermented musts to a final gravity. |
 | `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg][--extra-limit]` | Blend any number of musts to achieve a final ABV and gravity as close as possible. |
 
-
-List of supported functions for backsweetening, fortification and priming:
+### Post-Fermentation Adjustments (Backsweetening, Fortification and Priming)
 
 | Command | Description |
 | --- | --- |
@@ -95,15 +89,13 @@ List of supported functions for backsweetening, fortification and priming:
 | `fortify-abv [--vol --og \| --recipe] --fg --spirit-vol [--spirit-abv] [--method]` | Compute ABV after fortification. |
 | `prime [--vol \| --recipe] --co2 --temp --fermentable` | Compute priming sugar. |
 
-
-List of supported functions for adding fermentables, fruit and yeast types to the database:
+### Adding New Types
 
 | Command | Description |
 | --- | --- |
 | `new-fermentable --name --ppg --density --ph` | Add a fermentable entry. |
 | `new-fruit --name --brix --moisture --ph` | Add a fruit profile entry. |
 | `new-yeast --name --abv-limit --nitrogen` | Add a yeast strain entry. |
-
 
 ## ABV Calculation Methods
 
