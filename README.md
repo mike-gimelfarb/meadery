@@ -110,9 +110,11 @@ The current default in all calculations is `duncan`, unless specified in `--meth
 For potential abv calculations, the options are currently `dubrunfaut`, `marsh`, `margalit`, `cooke`, `pambianchi` and `honneyman`, the default is `cooke`.
 
 
-## Dynamic Fermentables And Fruits
+## Dynamic Fermentables, Fruits and Yeast Strains
 
-Current fermentables are defined in `FERMENTABLES` (`meadery/data/fermentables.json`):
+### Fermentables
+
+Current fermentables are defined in `meadery/data/fermentables.json`:
 - `water`
 - `honey`
 - `maple`
@@ -124,7 +126,9 @@ Current fermentables are defined in `FERMENTABLES` (`meadery/data/fermentables.j
 - `liquid-malt-extract`
 - `dry-malt-extract`
 
-Current fruits are defined in `FRUITS` (`meadery/data/fruits.json`):
+### Fruits
+
+Current fruits are defined in `meadery/data/fruits.json`:
 - `apple`
 - `pear`
 - `peach`
@@ -149,8 +153,12 @@ Current fruits are defined in `FRUITS` (`meadery/data/fruits.json`):
 - `orange`
 - `pineapple`
 
-Current yeast strains are defined in `YEAST_STRAINS` (`meadery/data/yeasts.json`):
+### Yeast Strains
+
+Current yeast strains are defined in `meadery/data/yeasts.json`:
 - `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`
+
+### Adding New Objects
 
 Functions `new-fermentable`, `new-fruit` and `new-yeast` allow adding new fermentable, fruit and yeast strains permanently, which can be referred in any calculations, for instance
 
