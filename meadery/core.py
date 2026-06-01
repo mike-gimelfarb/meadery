@@ -783,9 +783,8 @@ class Must:
         volume_L = self.volume / 1000.0
         so2_grams = (volume_L * target_ppm) / 1000.0
         return {
-            'so2_grams':    round(so2_grams, 2),
-            'k2s2o5_grams': round(so2_grams / 0.57, 2),
-            'khso3_grams':  round(so2_grams / 0.61, 2),
+            'SO2_grams':    round(so2_grams, 2),
+            'K2S2O5_grams': round(so2_grams / 0.57, 2),
             'target_ppm':   round(target_ppm, 2)
         }
     
