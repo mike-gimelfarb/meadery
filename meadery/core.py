@@ -470,6 +470,25 @@ class Must:
         juice_must = Must(volume=volume, gravity=sg_juice, ph=fruit.ph)
         return self.combine(juice_must)
 
+    def fortify_volume_simple(self, target_abv: float, current_abv: float, 
+                              spirit_abv: float=40.0) -> float:
+        '''Returns the volume of spirit needed to fortify this must to a target ABV
+        given the current ABV and spirit ABV, using a simple dilution calculation.
+        
+        :param target_abv: the target ABV in percent
+        :param current_abv: the current ABV in percent
+        :param spirit_abv: the ABV of the spirit used for fortification in percent
+        '''
+        if target_abv < 0 or target_abv > 100:
+            raise ValueError('target_abv must be between 0 and 100.')
+        if current_abv < 0 or current_abv > 100:
+            raise ValueError('current_abv must be between 0 and 100.')
+        if spirit_abv <= target_abv or spirit_abv > 100:
+            raise ValueError("Spirit ABV must be between target ABV and 100.")
+        
+        ratio = (target_abv - current_abv) / (spirit_abv - target_abv)
+        return { 'proportion': ratio, 'spirit_volume': self.volume * ratio }
+
     def fortify_volume(self, target_abv: float, target_fg: float, spirit_abv: float=40.0,
                        method: str='duncan', tol: float=1e-6) -> dict:
         '''Returns the volume of spirit needed to fortify this must to a target ABV and FG.
@@ -486,8 +505,6 @@ class Must:
             raise ValueError('target_abv must be between 0 and 100.')
         if spirit_abv <= target_abv or spirit_abv > 100:
             raise ValueError("Spirit ABV must be between target ABV and 100.")
-        if target_fg < 1.0:
-            raise ValueError('target_fg must be >= 1.0.')
         if self.abv(fg=target_fg, method=method) >= target_abv:
             raise ValueError("The wine has already fermented past your target ABV.")
 

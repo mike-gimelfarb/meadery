@@ -90,7 +90,8 @@ List of supported functions for backsweetening, fortification and priming:
 | Command | Description |
 | --- | --- |
 | `backsweeten [--vol \| --recipe ] --fg --target-fg (--fermentable \| --fruit)` | Backsweeten amount to target gravity. |
-| `fortify [--vol --og \| --recipe] --target-abv --target-fg [--spirit-abv] [--method]` | Compute spirit volume for fortification. |
+| `fortify [--vol \| --recipe] --current-abv --target-abv [--spirit-abv]` | Compute spirit volume for fortification. |
+| `fortify-fg [--vol --og \| --recipe] --target-abv --target-fg [--spirit-abv] [--method]` | Compute spirit volume for fortification with target final gravity. |
 | `fortify-abv [--vol --og \| --recipe] --fg --spirit-vol [--spirit-abv] [--method]` | Compute ABV after fortification. |
 | `prime [--vol \| --recipe] --co2 --temp --fermentable` | Compute priming sugar. |
 

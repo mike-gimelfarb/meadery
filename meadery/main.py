@@ -690,6 +690,31 @@ def backsweeten(
 @app.command("fortify")
 def calc_fortify_volume(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
+    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
+    current_abv: Optional[float] = typer.Option(..., "--current-abv", help="Current ABV in percent"),
+    target_abv: Optional[float] = typer.Option(..., "--target-abv", help="Target ABV in percent"),
+    spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
+) -> None:
+    try:
+        base_must = _must_from_args(
+            label="Base must", recipe=recipe, volume=volume, gravity=1.0, ph=None, 
+            require_ph=False)
+        result = base_must.fortify_volume_simple(
+            target_abv=target_abv, current_abv=current_abv, spirit_abv=spirit_abv)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    
+    spirit_vol = round(result["spirit_volume"], 2)
+    aux_value = round(result["proportion"], 2)
+    echo_boxed(
+        f'Spirit volume: {spirit_vol}ml\n'
+        f'Proportion: {aux_value}'
+    )
+
+
+@app.command("fortify-fg")
+def calc_fortify_fg(
+    volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     target_abv: Optional[float] = typer.Option(..., "--target-abv", help="Target ABV in percent"),
@@ -697,19 +722,21 @@ def calc_fortify_volume(
     spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
     method: AbvMethod = typer.Option(AbvMethod.duncan, "--method", help="ABV calculation method"),
 ) -> None:
-    base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
     try:
+        base_must = _must_from_args(
+            label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, 
+            require_ph=False)
         result = base_must.fortify_volume(
             target_abv=target_abv, target_fg=target_gravity, spirit_abv=spirit_abv, 
             method=method.value)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
+    
     spirit_vol = round(result["spirit_volume"], 2)
-    fortify_gravity = round(result["fortify_gravity"], 4)
+    aux_value = round(result["fortify_gravity"], 4)
     echo_boxed(
         f'Spirit volume: {spirit_vol}ml\n'
-        f'Fortify gravity: {fortify_gravity}'
+        f'Fortify gravity: {aux_value}'
     )
 
 
