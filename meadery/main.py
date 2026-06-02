@@ -2,7 +2,13 @@ from enum import Enum
 import os
 from pathlib import Path
 import typer
-from typing import Optional, List
+try:
+    from trogon.typer import init_tui 
+except ImportError:
+    def init_tui(app):
+        pass
+from trogon.typer import init_tui
+from typing import Optional, List 
 
 from meadery.core import (
     ACID_ADJUSTMENTS, FERMENTABLES, FRUITS, YEAST_STRAINS,
@@ -102,7 +108,7 @@ def _must_from_args(*, label: str, recipe: Optional[str], volume: Optional[float
 def echo_boxed(message: str, color: str=None) -> None:
     lines = message.splitlines()
     width = max(len(line) for line in lines)
-    top = f"┌{'─' * (width + 2)}┐"
+    top = "\n" + f"┌{'─' * (width + 2)}┐"
     bottom = f"└{'─' * (width + 2)}┘"
     typer.echo(typer.style(top, fg=color))
     for line in lines:
@@ -816,6 +822,9 @@ def data_add_yeast_strain(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     
+
+init_tui(app)
+
 
 if __name__ == "__main__":
     app()

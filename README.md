@@ -12,7 +12,13 @@ pip install git+https://github.com/mike-gimelfarb/meadery
 
 ## Run
 
-Commands are provided using the keyword `meadery` followed by the name of the command, for example to list all commands and calculate the attenuation:
+The easiest way to run commands is to use the console-native graphical editor `trogon`:
+
+```bash
+meadery tui
+```
+
+Commands can be provided explicitly using the root keyword `meadery` followed by the name of the command, for example to list all commands or calculate the attenuation:
 
 ```bash
 meadery --help
