@@ -265,7 +265,7 @@ def calc_stalled_gravity(
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     yeast: str = typer.Option(..., "--yeast", help="Yeast strain name",
-        case_sensitive=False, show_choices=True, prompt=True,
+        case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_yeast_choices() if k.startswith(incomplete)]),
     method: AbvMethod = typer.Option(AbvMethod.duncan.value, "--method", help="ABV calculation method"),
     tol: float = typer.Option(1e-6, "--tol", help="Root finding tolerance"),
@@ -290,7 +290,7 @@ def must_add(
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     fermentable: str = typer.Option(..., "--fermentable", help="Fermentable name",
-        case_sensitive=False, show_choices=True, prompt=True, 
+        case_sensitive=False, show_choices=True, prompt=False, 
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
     mass: float = typer.Option(..., "--mass", help="Fermentable mass in grams"),
 ) -> None:
@@ -445,10 +445,10 @@ def calc_volumes(
     gravity: Optional[float] = typer.Option(None, "--target-og", help="Target original gravity"),
     volume: Optional[float] = typer.Option(None, "--target-vol", help="Target volume in mL"),
     fermentable: str = typer.Option("honey", "--fermentable", help="Fermentable name",
-        case_sensitive=False, show_choices=True, prompt=True,
+        case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
     base: str = typer.Option("water", "--base", help="Base fermentable or fruit name",
-        case_sensitive=False, show_choices=True, prompt=True,
+        case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [
             k for k in get_fermentable_choices() + get_fruit_choices() if k.startswith(incomplete)]),
 ) -> None:
@@ -556,7 +556,7 @@ def adjust_tosna3(
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     yeast: str = typer.Option(..., "--yeast", help="Yeast strain name",
-        case_sensitive=False, show_choices=True, prompt=True,
+        case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in YEAST_STRAINS.keys() if k.startswith(incomplete)]),
 ) -> None:
     base_must = _must_from_args(
@@ -765,7 +765,7 @@ def calc_priming_sugar(
     target_co2_vol: float = typer.Option(..., "--co2", help="Target CO2 volumes"),
     temp: float = typer.Option(..., "--temp", help="Fermentation temperature in C"),
     fermentable: str = typer.Option(..., "--fermentable", help="Fermentable for priming",
-        case_sensitive=False, show_choices=True, prompt=True,
+        case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in FERMENTABLES.keys() if k.startswith(incomplete)]),
 ) -> None:
     must = _must_from_args(
