@@ -142,7 +142,7 @@ def get_fruit_object(fruit: str) -> object:
 #              Conversion and Calibration
 # ===================================================
 
-@app.command("brix-to-sg")
+@app.command("brix-to-sg", help="Convert Brix to specific gravity")
 def convert_brix_to_sg(
     brix: float = typer.Option(..., "--brix", help="Brix value"),
 ) -> None:
@@ -150,7 +150,7 @@ def convert_brix_to_sg(
     echo_boxed(f'{round(result, 4)}')
 
 
-@app.command("sg-to-plato")
+@app.command("sg-to-plato", help="Convert specific gravity to Plato")
 def convert_sg_to_plato(
     gravity: float = typer.Option(..., "--sg", help="Specific gravity"),
 ) -> None:
@@ -158,7 +158,7 @@ def convert_sg_to_plato(
     echo_boxed(f'{round(result, 2)}')
 
 
-@app.command("spirit-gravity")
+@app.command("spirit-gravity", help="Convert spirit ABV to specific gravity")
 def convert_spirit_abv_to_sg(
     abv: float = typer.Option(..., "--abv", help="Spirit ABV in percent"),
 ) -> None:
@@ -166,7 +166,7 @@ def convert_spirit_abv_to_sg(
     echo_boxed(f'{round(result, 4)}')
 
 
-@app.command("hydrometer")
+@app.command("hydrometer", help="Correct hydrometer reading based on temperature")
 def correct_hydrometer(
     gravity: float = typer.Option(..., "--sg", help="Measured specific gravity"),
     temperature: float = typer.Option(..., "--temp", help="Measured temperature in C"),
@@ -177,7 +177,7 @@ def correct_hydrometer(
     echo_boxed(f'{round(corrected, 4)}')
 
 
-@app.command("refractometer")
+@app.command("refractometer", help="Correct refractometer reading based on original gravity")
 def correct_refractometer(
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
     brix: float = typer.Option(..., "--brix", help="Current measured Brix"),
@@ -190,7 +190,7 @@ def correct_refractometer(
 #           Planning and Calculations
 # ===================================================
 
-@app.command("attenuation")
+@app.command("attenuation", help="Calculate apparent attenuation from gravity")
 def calc_attenuation(
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
@@ -202,7 +202,7 @@ def calc_attenuation(
     echo_boxed(f'{round(result, 2)}%')
 
 
-@app.command("load-recipe")
+@app.command("load-recipe", help="Load a recipe from a file")
 def must_load_recipe(
     recipe: str = typer.Argument(..., help="Path to recipe file"),
 ) -> None:
@@ -214,7 +214,7 @@ def must_load_recipe(
     echo_boxed(str(must))
 
 
-@app.command("original-gravity")
+@app.command("original-gravity", help="Calculate original gravity from target ABV and final gravity")
 def calc_original_gravity(
     target_abv: float = typer.Option(..., "--target-abv", help="Target ABV in percent"),
     fg: float = typer.Option(..., "--target-fg", help="Target final gravity"),
@@ -227,7 +227,7 @@ def calc_original_gravity(
     echo_boxed(f'{round(result, 4)}')
 
 
-@app.command("abv")
+@app.command("abv", help="Calculate ABV from original and final gravity")
 def calc_abv(
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
@@ -240,7 +240,7 @@ def calc_abv(
     echo_boxed(f'{round(result, 2)}%')
 
 
-@app.command("abv-potential")
+@app.command("abv-potential", help="Calculate potential ABV from original gravity")
 def calc_potential_abv(
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
@@ -252,7 +252,7 @@ def calc_potential_abv(
     echo_boxed(f'{round(result, 2)}%')
 
 
-@app.command("residual-co2")
+@app.command("residual-co2", help="Calculate residual CO2 based on temperature")
 def calc_residual_co2(
     temp: float = typer.Option(..., "--temp", help="Temperature in C"),
 ) -> None:
@@ -260,7 +260,7 @@ def calc_residual_co2(
     echo_boxed(f'{round(result, 2)}volumes, {round(result * 1.96, 3)}g/L')
 
 
-@app.command("stalled-gravity")
+@app.command("stalled-gravity", help="Calculate stalled gravity based on yeast and must")
 def calc_stalled_gravity(
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
@@ -283,7 +283,7 @@ def calc_stalled_gravity(
 #           Must Addition and Combination
 # ===================================================
 
-@app.command("add")
+@app.command("add", help="Add a fermentable to the must")
 def must_add(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -301,7 +301,7 @@ def must_add(
     echo_boxed(str(result))
 
 
-@app.command("add-fruit")
+@app.command("add-fruit", help="Add a fruit to the must")
 def must_add_fruit(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -325,7 +325,7 @@ def must_add_fruit(
     echo_boxed(str(result))
 
 
-@app.command("add-fruit-juice")
+@app.command("add-fruit-juice", help="Add fruit juice to the must")
 def must_add_fruit_juice(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -348,7 +348,7 @@ def must_add_fruit_juice(
     echo_boxed(str(result))
 
 
-@app.command("add-honey")
+@app.command("add-honey", help="Add honey to the must")
 def must_add_honey(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -362,7 +362,7 @@ def must_add_honey(
     echo_boxed(str(result))
 
 
-@app.command("add-sugar")
+@app.command("add-sugar", help="Add sugar to the must")
 def must_add_sugar(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -376,7 +376,7 @@ def must_add_sugar(
     echo_boxed(str(result))
 
 
-@app.command("add-water")
+@app.command("add-water", help="Add water to the must")
 def must_add_water(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -390,7 +390,7 @@ def must_add_water(
     echo_boxed(str(result))
 
 
-@app.command("adjust-gravity")
+@app.command("adjust-gravity", help="Adjust the gravity of the must")
 def adjust_gravity(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -420,7 +420,7 @@ def adjust_gravity(
     echo_boxed(result)
 
 
-@app.command("combine")
+@app.command("combine", help="Combine two musts")
 def must_combine(
     volume_a: Optional[float] = typer.Option(None, "--vol1", help="Must A volume in mL"),
     gravity_a: Optional[float] = typer.Option(None, "--og1", help="Must A original gravity"),
@@ -440,7 +440,7 @@ def must_combine(
     echo_boxed(str(result))
 
 
-@app.command("volumes")
+@app.command("volumes", help="Calculate volumes of fermentable and base to achieve a target gravity")
 def calc_volumes(
     gravity: Optional[float] = typer.Option(None, "--target-og", help="Target original gravity"),
     volume: Optional[float] = typer.Option(None, "--target-vol", help="Target volume in mL"),
@@ -479,7 +479,7 @@ def calc_volumes(
 #           Adjuncts and Adjustments
 # ===================================================
 
-@app.command("pitch")
+@app.command("pitch", help="Calculate yeast and nutrient amounts for pitching")
 def adjust_pitching_rate(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -494,7 +494,7 @@ def adjust_pitching_rate(
     )
 
 
-@app.command("so2-ph")
+@app.command("so2-ph", help="Adjust SO2 based on pH")
 def adjust_so2_ph(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
@@ -508,7 +508,7 @@ def adjust_so2_ph(
     echo_boxed(result_str)
 
 
-@app.command("so2-target")
+@app.command("so2-target", help="Adjust SO2 based on target ppm")
 def adjust_so2_target(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
@@ -521,7 +521,7 @@ def adjust_so2_target(
     echo_boxed(result_str)
 
 
-@app.command("ta")
+@app.command("ta", help="Adjust titratable acidity (TA) of the must")
 def adjust_ta(
     volume: Optional[float] = typer.Option(None, "--vol", help="Batch volume in mL"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
@@ -550,7 +550,7 @@ def adjust_ta(
     )
 
 
-@app.command("tosna")
+@app.command("tosna", help="Calculate nutrient requirements based on yeast and must")
 def adjust_tosna3(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -571,7 +571,7 @@ def adjust_tosna3(
 #                 Wine/Mead Blending
 # ===================================================
 
-@app.command("blend-to-abv")
+@app.command("blend-to-abv", help="Calculate blend proportions to achieve a target ABV")
 def blend_to_abv_cli(
     abv_a: float = typer.Option(..., "--abv1", help="ABV of must/wine A (percent)"),
     abv_b: float = typer.Option(..., "--abv2", help="ABV of must/wine B (percent)"),
@@ -591,7 +591,7 @@ def blend_to_abv_cli(
         f'Batch 2: {round(p_b * 100, 2)}%, {round(v_b, 2)}mL'
     )
 
-@app.command("blend-to-gravity")
+@app.command("blend-to-gravity", help="Calculate blend proportions to achieve a target final gravity")
 def blend_to_gravity_cli(
     fg_a: float = typer.Option(..., "--fg1", help="Final gravity of must A"),
     fg_b: float = typer.Option(..., "--fg2", help="Final gravity of must B"),
@@ -611,7 +611,7 @@ def blend_to_gravity_cli(
         f'Batch 2: {round(p_b * 100, 2)}%, {round(v_b, 2)}mL'
     )
 
-@app.command("blend-nearest")
+@app.command("blend-nearest", help="Calculate blend proportions to achieve target ABV and FG")
 def blend_nearest_cli(
     abvs: List[float] = typer.Option(..., "--abvs", help="ABVs of musts; repeat --abvs for each value"),
     fgs: List[float] = typer.Option(..., "--fgs", help="FGs of musts; repeat --fgs for each value"),
@@ -655,7 +655,7 @@ def blend_nearest_cli(
 #           Fortification and Backsweetening
 # ===================================================
 
-@app.command("backsweeten")
+@app.command("backsweeten", help="Calculate backsweetening requirements to achieve target gravity")
 def backsweeten(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
@@ -688,7 +688,7 @@ def backsweeten(
     echo_boxed(result)
 
 
-@app.command("fortify")
+@app.command("fortify", help="Calculate spirit volume to achieve target ABV")
 def calc_fortify_volume(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
@@ -713,7 +713,7 @@ def calc_fortify_volume(
     )
 
 
-@app.command("fortify-fg")
+@app.command("fortify-fg", help="Calculate spirit volume to achieve target ABV and FG")
 def calc_fortify_fg(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -741,7 +741,7 @@ def calc_fortify_fg(
     )
 
 
-@app.command("fortify-abv")
+@app.command("fortify-abv", help="Calculate ABV after fortification")
 def calc_fortify_abv(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must specific gravity"),
@@ -758,7 +758,7 @@ def calc_fortify_abv(
     echo_boxed(f'{round(result, 2)}%')
 
 
-@app.command("prime")
+@app.command("prime", help="Calculate priming sugar required to achieve target carbonation")
 def calc_priming_sugar(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
@@ -780,7 +780,7 @@ def calc_priming_sugar(
 #                  New Entries
 # ===================================================
 
-@app.command("new-fermentable")
+@app.command("new-fermentable", help="Add a new fermentable to the database")
 def data_add_fermentable(
     name: str = typer.Option(..., "--name", help="Fermentable name"),
     ppg: int = typer.Option(..., "--ppg", help="Points per pound per gallon"),
@@ -793,7 +793,7 @@ def data_add_fermentable(
         raise typer.BadParameter(str(exc)) from exc
 
 
-@app.command("new-fruit")
+@app.command("new-fruit", help="Add a new fruit profile to the database")
 def data_add_fruit_profile(
     name: str = typer.Option(..., "--name", help="Fruit name"),
     brix: float = typer.Option(..., "--brix", help="Brix"),
@@ -806,7 +806,7 @@ def data_add_fruit_profile(
         raise typer.BadParameter(str(exc)) from exc
     
 
-@app.command("new-yeast")
+@app.command("new-yeast", help="Add a new yeast strain to the database")
 def data_add_yeast_strain(
     name: str = typer.Option(..., "--name", help="Yeast strain name"),
     limit: float = typer.Option(..., "--abv-limit", help="Yeast alcohol tolerance %"),
