@@ -613,8 +613,8 @@ def blend_to_gravity_cli(
 
 @app.command("blend-nearest")
 def blend_nearest_cli(
-    abvs: str = typer.Option(..., "--abvs", help="Comma-separated ABVs of musts"),
-    fgs: str = typer.Option(..., "--fgs", help="Comma-separated FGs of musts"),
+    abvs: List[float] = typer.Option(..., "--abvs", help="ABVs of musts; repeat --abvs for each value"),
+    fgs: List[float] = typer.Option(..., "--fgs", help="FGs of musts; repeat --fgs for each value"),
     target_abv: float = typer.Option(..., "--target-abv", help="Target blend ABV (percent)"),
     target_fg: float = typer.Option(..., "--target-fg", help="Target blend FG"),
     total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
@@ -623,12 +623,12 @@ def blend_nearest_cli(
     extra_limit: float = typer.Option(0.0, "--extra-limit", help="Limit for adding water, 40 abv ethanol and honey as extras to achieve targets"),
 ) -> None:
     try:
-        abv_list = [float(x.strip()) for x in abvs.split(",") if x.strip()]
-        fg_list = [float(x.strip()) for x in fgs.split(",") if x.strip()]
+        abv_list = abvs
+        fg_list = fgs
         limits = [(0, 1)] * len(abv_list)
         if extra_limit > 0:
-            abv_list.extend([0, 40, 0])
-            fg_list.extend([1.0, 0.95, 1.415])
+            abv_list = list(abv_list) + [0, 40, 0]
+            fg_list = list(fg_list) + [1.0, 0.95, 1.415]
             limits.extend([(0, extra_limit)] * 3)
         result = blend_nearest(
             abvs=abv_list, fgs=fg_list,

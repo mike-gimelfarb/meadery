@@ -83,7 +83,13 @@ General notes on usage:
 | --- | --- |
 | `blend-to-abv --abv1 --abv2 --target-abv --target-vol` | Blend two fermented musts to a final ABV. |
 | `blend-to-gravity --fg1 --fg2 --target-fg --target-vol` | Blend two fermented musts to a final gravity. |
-| `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg][--extra-limit]` | Blend any number of musts to achieve a final ABV and gravity as close as possible. |
+| `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg] [--extra-limit]` | Blend any number of musts to achieve a final ABV and gravity as close as possible; repeat `--abvs` and `--fgs` for each input must. |
+
+For `blend-nearest`, specify each must using repeated flags. For example:
+
+```bash
+meadery blend-nearest --abvs 10 --abvs 14 --fgs 1 --fgs 0.99 --target-abv 14 --target-fg 1.0 --target-vol 3800
+```
 
 ### Post-Fermentation Adjustments (Backsweetening, Fortification and Priming)
 
