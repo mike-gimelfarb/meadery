@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from importlib import resources
 import json
 import math
+import os
 from pathlib import Path
 from typing import List, Tuple
 
@@ -853,6 +854,13 @@ def parse_recipe(path: str) -> Must:
     - fruit juice quantities are in milliliters; write as "<fruit> juice"
     - lines starting with '#' or blank lines are ignored
     """
+    # if path is not valid, try appending .recipe
+    if not os.path.isfile(path):
+        alt_path = path + '.recipe'
+        if os.path.isfile(alt_path):
+            path = alt_path
+
+    # continue parsing file
     must = Must(volume=0.0, gravity=1.0, ph=7.0)
     with open(path, 'r', encoding='utf-8') as fh:
         for lineno, raw in enumerate(fh, start=1):
