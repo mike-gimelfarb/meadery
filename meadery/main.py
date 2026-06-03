@@ -20,7 +20,8 @@ from meadery.core import (
     Hydrometer, Must, Refractometer,
     add_fermentable, add_fruit, add_yeast_strain,
     brix_to_sg, original_gravity, sg_to_brix, parse_recipe,
-    blend_to_gravity, blend_to_abv, blend_nearest, spirit_abv_to_sg
+    blend_to_gravity, blend_to_abv, blend_nearest, spirit_abv_to_sg,
+    PH_BUFFERING_WARNING
 )
 
 
@@ -216,7 +217,7 @@ def must_load_recipe(
         must = parse_recipe(recipe_path)
     except Exception as exc:
         raise typer.BadParameter(str(exc)) from exc
-    echo_boxed(str(must))
+    echo_boxed(f"{str(must)}\n\n{PH_BUFFERING_WARNING}")
 
 
 @app.command("original-gravity", help="Calculate original gravity from target ABV and final gravity")
@@ -303,7 +304,7 @@ def must_add(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
     fermentable_obj = get_fermentable_object(fermentable)
     result = base_must.add(fermentable_obj, mass=mass)
-    echo_boxed(str(result))
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
 @app.command("add-fruit", help="Add a fruit to the must")
@@ -327,7 +328,7 @@ def must_add_fruit(
         result = base_must.add_fruit(selected_fruit, mass=mass, extract_yield=extract_yield)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    echo_boxed(str(result))
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
 @app.command("add-fruit-juice", help="Add fruit juice to the must")
@@ -350,7 +351,7 @@ def must_add_fruit_juice(
         result = base_must.add_fruit_juice(selected_fruit, volume=juice_volume)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    echo_boxed(str(result))
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
 @app.command("add-honey", help="Add honey to the must")
@@ -364,7 +365,7 @@ def must_add_honey(
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
     result = base_must.add_honey(mass=mass)
-    echo_boxed(str(result))
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
 @app.command("add-sugar", help="Add sugar to the must")
@@ -378,7 +379,7 @@ def must_add_sugar(
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
     result = base_must.add_sugar(mass=mass)
-    echo_boxed(str(result))
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
 @app.command("add-water", help="Add water to the must")
@@ -392,7 +393,7 @@ def must_add_water(
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
     result = base_must.add_water(mass=mass)
-    echo_boxed(str(result))
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
 @app.command("adjust-gravity", help="Adjust the gravity of the must")
@@ -442,7 +443,7 @@ def must_combine(
         label="Must B", recipe=recipe2, volume=volume_b, gravity=gravity_b, ph=ph_b)
 
     result = must_a.combine(must_b)
-    echo_boxed(str(result))
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
 @app.command("volumes", help="Calculate volumes of fermentable and base to achieve a target gravity")
@@ -509,8 +510,10 @@ def adjust_so2_ph(
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=1.0, ph=ph, require_ph=not recipe)
     result = base_must.so2_from_ph(target_mol_so2=target_mol_so2)
-    result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
-    echo_boxed(result_str)
+    lines = [f'{key}: {round(val, 4)}' for key, val in result.items()]
+    lines.append('')
+    lines.append(PH_BUFFERING_WARNING)
+    echo_boxed('\n'.join(lines))
 
 
 @app.command("so2-target", help="Adjust SO2 based on target ppm")

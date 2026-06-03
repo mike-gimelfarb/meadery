@@ -68,7 +68,15 @@ def spirit_abv_to_sg(abv: float) -> float:
     x = abv / 100
     sg = 1.0001 - 0.0431 * x - 0.4524 * x ** 2 + 0.4352 * x ** 3 - 0.1506 * x ** 4 
     return min(max(0, sg), 1)
-    
+
+PH_BUFFERING_WARNING = (
+    "WARNING: pH predictions are approximate. "
+    "Honey and water musts have variable buffering capacity, so actual "
+    "pH changes should be verified by measurement."
+)
+
+PH_SO2_WARNING = PH_BUFFERING_WARNING
+
 
 def _load_data_json(filename: str) -> dict:
     path = resources.files('meadery').joinpath('data', filename)
