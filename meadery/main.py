@@ -1,14 +1,19 @@
 from enum import Enum
+import io
 import os
+import shlex
+from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
-import sys
-import typer
-try:
-    from trogon.typer import init_tui 
-except ImportError:
-    def init_tui(app):
-        pass
 from typing import Optional, List 
+
+import click
+import typer
+from textual import events
+from textual.app import ComposeResult
+from textual.containers import Vertical
+from textual.widgets._rich_log import RichLog
+from trogon.trogon import Trogon, CommandBuilder
+from trogon.typer import init_tui 
 
 from meadery.core import (
     ACID_ADJUSTMENTS, FERMENTABLES, FRUITS, YEAST_STRAINS,
@@ -818,18 +823,77 @@ def data_add_yeast_strain(
         raise typer.BadParameter(str(exc)) from exc
     
 
+
+class CommandBuilderWithHistory(CommandBuilder):
+    DEFAULT_CSS = """
+    #home-history {
+        height: 30%;
+        max-height: 30%;
+        min-height: 8;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield from super().compose()
+
+    async def on_mount(self, event: events.Mount) -> None:
+        body = self.query_one("#home-body", Vertical)
+        await body.mount(RichLog(id="home-history"))
+        self.history = self.query_one("#home-history", RichLog)
+        self.history.write("Command history")
+        self.history.write("Press Ctrl+R to execute the selected command and preserve output.")
+
+    def action_close_and_run(self) -> None:
+        if self.command_data is None:
+            return
+
+        args = self.command_data.to_cli_args(include_root_command=not self.is_grouped_cli)
+        self.history.write("\n$ " + " ".join(shlex.quote(arg) for arg in args))
+
+        with io.StringIO() as buffer:
+            try:
+                with redirect_stdout(buffer), redirect_stderr(buffer):
+                    self.cli.main(
+                        args=args,
+                        prog_name=self.click_app_name,
+                        standalone_mode=False,
+                    )
+            except SystemExit as exc:
+                output = buffer.getvalue().strip()
+                if output:
+                    self.history.write(output)
+                if exc.code not in (None, 0):
+                    self.history.write(f"Command exited with code {exc.code}")
+            except Exception as exc:
+                output = buffer.getvalue().strip()
+                if output:
+                    self.history.write(output)
+                self.history.write(f"Error: {exc}")
+            else:
+                output = buffer.getvalue().strip()
+                if output:
+                    self.history.write(output)
+
+
+class MeaderyTrogon(Trogon):
+    def get_default_screen(self) -> CommandBuilder:
+        return CommandBuilderWithHistory(self.cli, self.app_name, self.command_name)
+
+
+def init_tui(app: typer.Typer, name: str | None = None):
+    def wrapped_tui():
+        MeaderyTrogon(
+            typer.main.get_group(app),
+            app_name=name,
+            click_context=click.get_current_context(),
+        ).run()
+
+    app.command("tui", help="Open Textual TUI.")(wrapped_tui)
+    return app
+
+
 # launch gui
 init_tui(app)
-
-
-# ensure cleared outputs between tui commands
-def main():
-    try:
-        click_app = typer.main.get_command(app)
-        click_app()
-    finally:
-        sys.stdout.write("\033[H\033[2J")
-        sys.stdout.flush()
 
 
 if __name__ == "__main__":
