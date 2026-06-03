@@ -65,6 +65,7 @@ General notes on usage:
 | `add-water [--vol --og --ph \| --recipe] --mass` | Add water to a must. |
 | `adjust-gravity [--vol --og \| --recipe] --target-og (--fermentable \| --fruit)` | Compute additions to reach target gravity. |
 | `combine [--vol1 --og1 --ph1 \| --recipe1] [--vol2 --og2 --ph2 \| --recipe2]` | Combine two musts into one. |
+| `solve-recipe --recipe [--target-og] [--target-vol] [--target-ph]` | Solve unknowns in a recipe file to match target OG, volume and pH. |
 | `volumes --target-og --target-vol [--fermentable] [--base]` | Compute fermentable/base amounts required. |
 
 ### Pitching, Nutrients, TA and Sulfites
@@ -186,6 +187,8 @@ will add the `tulaberry` to the `fruits.json` so it can be referred in calculati
 
 ## Recipe Files
 
+### General Format
+
 Many functions accept a `--recipe` argument instead of volume, original graviy and ph, which is either an absolute path to a `.recipe` file, or relative path from the current working sub-directory. Recipe files make it easy to manage existing recipes and musts, and perform calculations or determine adjustments for them.
 
 Rules:
@@ -205,3 +208,17 @@ table-sugar=200
 ```
 
 Ingredient names are matched case-insensitively against the `FERMENTABLES` and `FRUITS` lists in the codebase.
+
+### Solving for Unknown Quantities in a Recipe
+
+The `--solve-recipe` function allows for some ingredients in a recipe file to be unknown quantities, e.g.:
+
+```
+# sample recipe with unknowns
+honey=x
+water=y
+blueberry juice=1000
+table-sugar=200
+```
+
+will determine the amount of honey and water required to match target OG, volume and/or pH. 

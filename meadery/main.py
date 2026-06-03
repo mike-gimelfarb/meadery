@@ -19,7 +19,7 @@ from meadery.core import (
     ACID_ADJUSTMENTS, FERMENTABLES, FRUITS, YEAST_STRAINS,
     Hydrometer, Must, Refractometer,
     add_fermentable, add_fruit, add_yeast_strain,
-    brix_to_sg, original_gravity, sg_to_brix, parse_recipe,
+    brix_to_sg, original_gravity, sg_to_brix, parse_recipe, solve_recipe,
     blend_to_gravity, blend_to_abv, blend_nearest, spirit_abv_to_sg,
     PH_BUFFERING_WARNING
 )
@@ -218,6 +218,29 @@ def must_load_recipe(
     except Exception as exc:
         raise typer.BadParameter(str(exc)) from exc
     echo_boxed(f"{str(must)}\n\n{PH_BUFFERING_WARNING}")
+
+
+@app.command("solve-recipe", help="Solve a recipe with variables to match target OG, volume, and/or pH")
+def must_solve_recipe(
+    recipe: str = typer.Argument(..., help="Path to recipe file"),
+    target_og: float | None = typer.Option(None, "--target-og", help="Target original gravity"),
+    target_vol: float | None = typer.Option(None, "--target-vol", help="Target volume in milliliters"),
+    target_ph: float | None = typer.Option(None, "--target-ph", help="Target pH"),
+) -> None:
+    recipe_path = _recipe_path(recipe)
+    try:
+        result = solve_recipe(
+            recipe_path, target_og=target_og, target_vol=target_vol, target_ph=target_ph)
+    except Exception as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    variable_lines = "\n".join(
+        f"{name} = {value:.6f}" for name, value in result['variables'].items()
+    ) or "(no variables)"
+    echo_boxed(
+        f"Solved variables:\n{variable_lines}\n\n"
+        f"Resulting must:\n{result['must']}\n\n{PH_BUFFERING_WARNING}"
+    )
 
 
 @app.command("original-gravity", help="Calculate original gravity from target ABV and final gravity")

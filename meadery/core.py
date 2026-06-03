@@ -11,6 +11,15 @@ from scipy.optimize import minimize
 from scipy.optimize import root_scalar
     
 
+PH_BUFFERING_WARNING = (
+    "WARNING: pH predictions are approximate. "
+    "Honey and water musts have variable buffering capacity, so actual "
+    "pH changes should be verified by measurement."
+)
+
+PH_SO2_WARNING = PH_BUFFERING_WARNING
+
+
 # ===================================================
 #                  HELPER FUNCTIONS
 # ===================================================
@@ -68,14 +77,6 @@ def spirit_abv_to_sg(abv: float) -> float:
     x = abv / 100
     sg = 1.0001 - 0.0431 * x - 0.4524 * x ** 2 + 0.4352 * x ** 3 - 0.1506 * x ** 4 
     return min(max(0, sg), 1)
-
-PH_BUFFERING_WARNING = (
-    "WARNING: pH predictions are approximate. "
-    "Honey and water musts have variable buffering capacity, so actual "
-    "pH changes should be verified by measurement."
-)
-
-PH_SO2_WARNING = PH_BUFFERING_WARNING
 
 
 def _load_data_json(filename: str) -> dict:
@@ -853,6 +854,63 @@ class Must:
             return f"Must(volume={self.volume:.2f}ml, gravity={self.gravity:.4f}, ph={self.ph:.2f})"
 
 
+def _load_recipe_file(path: str) -> List[Tuple[str, object, object]]:
+
+    # if path is not valid, try appending .recipe
+    if not os.path.isfile(path):
+        alt_path = path + '.recipe'
+        if os.path.isfile(alt_path):
+            path = alt_path
+
+    # continue parsing file
+    result = []
+    with open(path, 'r', encoding='utf-8') as fh:
+        for lineno, raw in enumerate(fh, start=1):
+            line = raw.split('#', 1)[0].strip()
+            if not line:
+                continue
+            if '=' not in line:
+                raise ValueError(f"Line {lineno}: missing '=' separator.")
+
+            # strip statement of the form lhs = rhs
+            lhs, rhs = [s.strip() for s in line.split('=', 1)]
+            if not lhs:
+                raise ValueError(f"Line {lineno}: empty ingredient.")
+            if not rhs:
+                raise ValueError(f"Line {lineno}: empty quantity.")
+
+            # convert ingredient name to lowercase for consistent lookup
+            key = lhs.lower()
+            if key.endswith(' juice'):
+                fruit_name = key[:-6].strip()
+                fruit = FRUITS.get(fruit_name)
+                if fruit is None:
+                    raise ValueError(f"Line {lineno}: unknown fruit '{fruit_name}'.")
+                result.append(('juice', fruit, rhs))
+            elif key in FERMENTABLES:
+                fermentable = FERMENTABLES[key]
+                result.append(('fermentable', fermentable, rhs))
+            elif key in FRUITS:
+                fruit = FRUITS[key]
+                result.append(('fruit', fruit, rhs))
+            else:
+                raise ValueError(f"Line {lineno}: unknown ingredient '{lhs}'.")
+    return result
+
+
+def _load_recipe_list(recipe_list: List[Tuple[str, object, object]]) -> Must:
+    must = Must(volume=0.0, gravity=1.0, ph=7.0)
+    for (line_type, ingredient, qty_str) in recipe_list:
+        qty = float(qty_str)
+        if line_type == 'juice':
+            must = must.add_fruit_juice(ingredient, qty)
+        elif line_type == 'fermentable':
+            must = must.add(ingredient, qty)
+        elif line_type == 'fruit':
+            must = must.add_fruit(ingredient, qty)
+    return must
+        
+
 def parse_recipe(path: str) -> Must:
     """Parse a simple recipe file and return the resulting Must.
 
@@ -862,48 +920,115 @@ def parse_recipe(path: str) -> Must:
     - fruit juice quantities are in milliliters; write as "<fruit> juice"
     - lines starting with '#' or blank lines are ignored
     """
-    # if path is not valid, try appending .recipe
-    if not os.path.isfile(path):
-        alt_path = path + '.recipe'
-        if os.path.isfile(alt_path):
-            path = alt_path
+    return _load_recipe_list(_load_recipe_file(path))
 
-    # continue parsing file
-    must = Must(volume=0.0, gravity=1.0, ph=7.0)
-    with open(path, 'r', encoding='utf-8') as fh:
-        for lineno, raw in enumerate(fh, start=1):
-            line = raw.split('#', 1)[0].strip()
-            if not line:
-                continue
-            if '=' not in line:
-                raise ValueError(f"Line {lineno}: missing '=' separator.")
-            
-            # strip statement of the form lhs = rhs
-            lhs, rhs = [s.strip() for s in line.split('=', 1)]
-            if not lhs:
-                raise ValueError(f"Line {lineno}: empty ingredient.")
-            try:
-                qty = float(rhs)
-            except Exception:
-                raise ValueError(f"Line {lineno}: invalid quantity '{rhs}'.")
-            
-            # convert ingredient name to lowercase for consistent lookup
-            key = lhs.lower()
-            if key.endswith(' juice'):
-                fruit_name = key[:-6].strip()
-                fruit = FRUITS.get(fruit_name)
-                if fruit is None:
-                    raise ValueError(f"Line {lineno}: unknown fruit '{fruit_name}'.")
-                must = must.add_fruit_juice(fruit, volume=qty)
-            elif key in FERMENTABLES:
-                fermentable = FERMENTABLES[key]
-                must = must.add(fermentable, qty)
-            elif key in FRUITS:
-                fruit = FRUITS[key]
-                must = must.add_fruit(fruit, qty)
-            else:
-                raise ValueError(f"Line {lineno}: unknown ingredient '{lhs}'.")
-    return must
+
+def solve_recipe(path: str, target_og: float | None, target_vol: float | None,
+                 target_ph: float | None) -> dict:
+    '''Solve a recipe with symbolic quantities to hit target OG, volume, and pH.
+
+    :param path: path to the recipe file with symbolic variables for quantities
+    :param target_og: the target original gravity to achieve, or None to ignore
+    :param target_vol: the target volume in milliliters to achieve, or None to ignore
+    :param target_ph: the target pH to achieve, or None to ignore
+    '''
+    fixed_lines = []
+    variable_lines = []
+    variable_names = []
+    for line_type, ingredient, qty_str in _load_recipe_file(path):
+        try:
+            fixed_lines.append((line_type, ingredient, float(qty_str)))
+        except ValueError:
+            variable_lines.append((line_type, ingredient, qty_str))
+            if qty_str not in variable_names:
+                variable_names.append(qty_str)
+
+    def build_recipe(variable_values):
+        substitution = {name: float(variable_values[idx])
+                        for idx, name in enumerate(variable_names)}
+        built = [*fixed_lines]
+        for line_type, ingredient, var_name in variable_lines:
+            built.append((line_type, ingredient, substitution[var_name]))
+        return built
+
+    def build_must(variable_values):
+        return _load_recipe_list(build_recipe(variable_values))
+
+    if target_og is None and target_vol is None and target_ph is None:
+        raise ValueError('At least one target must be provided to solve the recipe.')
+
+    if not variable_names:
+        must = _load_recipe_list(fixed_lines)
+        if target_og is not None and not math.isclose(must.gravity, target_og, rel_tol=1e-6, abs_tol=1e-9):
+            raise ValueError('Recipe contains no variables to solve for and does not match target OG.')
+        if target_vol is not None and not math.isclose(must.volume, target_vol, rel_tol=1e-6, abs_tol=1e-6):
+            raise ValueError('Recipe contains no variables to solve for and does not match target volume.')
+        if target_ph is not None and not math.isclose(must.ph, target_ph, rel_tol=1e-6, abs_tol=1e-6):
+            raise ValueError('Recipe contains no variables to solve for and does not match target pH.')
+        return {'variables': {}, 'must': must}
+
+    def residuals(variable_values):
+        must = build_must(variable_values)
+        values = []
+        if target_og is not None:
+            values.append(must.gravity - target_og)
+        if target_vol is not None:
+            values.append(must.volume - target_vol)
+        if target_ph is not None:
+            values.append(must.ph - target_ph)
+        return np.array(values, dtype=float)
+
+    def objective(variable_values):
+        res = residuals(variable_values)
+        scaled_volume = target_vol if target_vol is not None and target_vol > 0 else 1.0
+        return float(np.dot(res, res) +
+                     1e-6 * np.dot(variable_values, variable_values) / (scaled_volume ** 2))
+
+    def residual_og(variable_values):
+        return float(build_must(variable_values).gravity - target_og)
+
+    def residual_vol(variable_values):
+        return float(build_must(variable_values).volume - target_vol)
+
+    def residual_ph(variable_values):
+        return float(build_must(variable_values).ph - target_ph)
+
+    constraints = []
+    if target_og is not None:
+        constraints.append({'type': 'eq', 'fun': residual_og})
+    if target_vol is not None:
+        constraints.append({'type': 'eq', 'fun': residual_vol})
+    if target_ph is not None:
+        constraints.append({'type': 'eq', 'fun': residual_ph})
+
+    bounds = [(0.0, None)] * len(variable_names)
+    initial_guess = np.array([
+        (target_vol / max(1.0, len(variable_lines))) if line_type == 'juice' and target_vol is not None
+        else max(100.0, (target_vol or 1000.0) / 10.0)
+        for line_type, _, _ in variable_lines
+    ], dtype=float)
+
+    result = minimize(
+        objective, initial_guess, bounds=bounds, constraints=constraints,
+        method='SLSQP', options={'maxiter': 1000, 'ftol': 1e-9}
+    )
+    if not result.success:
+        raise RuntimeError(f"Recipe solving failed: {result.message}")
+
+    solved_variables = np.maximum(result.x, 0.0)
+    final_must = build_must(solved_variables)
+    if target_og is not None and not math.isclose(final_must.gravity, target_og, rel_tol=1e-6, abs_tol=1e-6):
+        raise RuntimeError('Unable to satisfy target OG with the provided recipe.')
+    if target_vol is not None and not math.isclose(final_must.volume, target_vol, rel_tol=1e-6, abs_tol=1e-3):
+        raise RuntimeError('Unable to satisfy target volume with the provided recipe.')
+    if target_ph is not None and not math.isclose(final_must.ph, target_ph, rel_tol=1e-6, abs_tol=1e-3):
+        raise RuntimeError('Unable to satisfy target pH with the provided recipe.')
+
+    return {
+        'variables': {name: float(solved_variables[idx])
+                      for idx, name in enumerate(variable_names)},
+        'must': final_must
+    }
 
 
 def original_gravity(target_abv: float, fg: float, 
