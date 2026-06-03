@@ -1,13 +1,13 @@
 from enum import Enum
 import os
 from pathlib import Path
+import sys
 import typer
 try:
     from trogon.typer import init_tui 
 except ImportError:
     def init_tui(app):
         pass
-from trogon.typer import init_tui
 from typing import Optional, List 
 
 from meadery.core import (
@@ -818,7 +818,18 @@ def data_add_yeast_strain(
         raise typer.BadParameter(str(exc)) from exc
     
 
+# launch gui
 init_tui(app)
+
+
+# ensure cleared outputs between tui commands
+def main():
+    try:
+        click_app = typer.main.get_command(app)
+        click_app()
+    finally:
+        sys.stdout.write("\033[H\033[2J")
+        sys.stdout.flush()
 
 
 if __name__ == "__main__":
