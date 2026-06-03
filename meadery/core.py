@@ -47,7 +47,8 @@ def root_bracket(f, a, b, expand=2.0, max_bound=1e7):
 
 def quadratic_solve(f, x0, bounds, constraints):
     '''Solves a quadratic optimization problem using scipy's minimize function.'''
-    result = minimize(f, x0, bounds=bounds, constraints=constraints)
+    result = minimize(f, x0, bounds=bounds, constraints=constraints,
+                      method='SLSQP', options={'maxiter': 1000, 'ftol': 1e-9})
     if not result.success:
         raise RuntimeError(f'Quadratic optimization failed: {result.message}.')
     return result.x
@@ -1008,13 +1009,9 @@ def solve_recipe(path: str, target_og: float | None, target_vol: float | None,
         for line_type, _, _ in variable_lines
     ], dtype=float)
 
-    result = minimize(
-        objective, initial_guess, bounds=bounds, constraints=constraints,
-        method='SLSQP', options={'maxiter': 1000, 'ftol': 1e-9}
-    )
-    if not result.success:
-        raise RuntimeError(f"Recipe solving failed: {result.message}")
-
+    result = quadratic_solve(
+        f=objective, x0=initial_guess, bounds=bounds, constraints=constraints)
+    
     solved_variables = np.maximum(result.x, 0.0)
     final_must = build_must(solved_variables)
     if target_og is not None and not math.isclose(final_must.gravity, target_og, rel_tol=1e-6, abs_tol=1e-6):
@@ -1141,9 +1138,7 @@ def blend_nearest(abvs: List[float], fgs: List[float],
         return w_abv * (blend_abv - target_abv_norm) ** 2 + w_fg * (blend_fg - target_fg_norm) ** 2
 
     lambdas = quadratic_solve(
-        objective,
-        x0=np.ones(N) / N,
-        bounds=limits,
+        objective, x0=np.ones(N) / N, bounds=limits,
         constraints=[{'type': 'eq', 'fun': lambda l: np.sum(l) - 1.0}]
     )
     volumes = lambdas * target_vol
