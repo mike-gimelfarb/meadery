@@ -91,6 +91,9 @@ For `blend-nearest`, specify each must using repeated flags. For example:
 meadery blend-nearest --abvs 10 --abvs 14 --fgs 1 --fgs 0.99 --target-abv 14 --target-fg 1.0 --target-vol 3800
 ```
 
+Since an exact blend could not be achieved in many cases using only two musts, you can allow the function to include water, a spirit and a fermentable when blending to achieve the targets exactly. To do this, pass a non-zero value for `--extra-limit` to specify the maximum proportion to allow for these extras.
+
+
 ### Post-Fermentation Adjustments (Backsweetening, Fortification and Priming)
 
 | Command | Description |
