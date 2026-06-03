@@ -625,16 +625,30 @@ def blend_nearest_cli(
     total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
     w_abv: float = typer.Option(1.0, "--w-abv", help="Weight for ABV in optimization (default 1.0)"),
     w_fg: float = typer.Option(1.0, "--w-fg", help="Weight for FG in optimization (default 1.0)"),
-    extra_limit: float = typer.Option(0.0, "--extra-limit", help="Limit for adding water, 40 abv ethanol and honey as extras to achieve targets"),
+    extra_limit: float = typer.Option(0.0, "--extra-limit", help="Limit for adding water, 40 abv ethanol and a fermentable as extras to achieve targets"),
+    extra_fermentable: str = typer.Option("honey", "--extra-fermentable", help="Fermentable extra component when --extra-limit is set",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
+    extra_spirit_abv: float = typer.Option(40.0, "--extra-spirit-abv", help="ABV of spirit extra component when --extra-limit is set")
 ) -> None:
     try:
         abv_list = abvs
         fg_list = fgs
         limits = [(0, 1)] * len(abv_list)
+        fermentable_sg = 1.0
+        
         if extra_limit > 0:
-            abv_list = list(abv_list) + [0, 40, 0]
-            fg_list = list(fg_list) + [1.0, 0.95, 1.415]
+            fermentable_key = extra_fermentable.strip().lower()
+            if fermentable_key in FERMENTABLES:
+                fermentable_obj = FERMENTABLES[fermentable_key]
+                fermentable_sg = 1.0 + (fermentable_obj.ppg * 8.3454) / 1000.0
+            else:
+                choices = ", ".join(sorted(get_fermentable_choices()))
+                raise typer.BadParameter(f"Unknown extra fermentable: {fermentable_key}. Choose from: {choices}")
+            abv_list = list(abv_list) + [0.0, extra_spirit_abv, 0.0]
+            fg_list = list(fg_list) + [1.0, spirit_abv_to_sg(extra_spirit_abv), fermentable_sg]
             limits.extend([(0, extra_limit)] * 3)
+        
         result = blend_nearest(
             abvs=abv_list, fgs=fg_list,
             target_abv=target_abv, target_fg=target_fg, target_vol=total_volume,
@@ -643,16 +657,25 @@ def blend_nearest_cli(
     except Exception as exc:
         raise typer.BadParameter(str(exc)) from exc
     
-    volumes = ', '.join([f"{round(v, 1)}mL" for v in result['volumes']])
-    proportions = ', '.join([f"{round(100 * p, 2)}%" for p in result['proportions']])
+    if extra_limit > 0:
+        volumes, extra_volumes = result['volumes'][:-3], result['volumes'][-3:]
+        proportions, extra_proportions = result['proportions'][:-3], result['proportions'][-3:]
+    else:
+        volumes, proportions = result['volumes'], result['proportions']
+        extra_volumes = [0, 0, 0]
+        extra_proportions = [0, 0, 0]
+    volumes = ', '.join([f"{round(v, 1)}mL" for v in volumes])
+    proportions = ', '.join([f"{round(100 * p, 2)}%" for p in proportions])
+    
     lines = [
         f"Volumes: {volumes}",
         f"Proportions: {proportions}",
+        f"Water: {round(extra_volumes[0], 1)}mL ({round(100 * extra_proportions[0], 2)}%)",
+        f"Spirit: {round(extra_volumes[1], 1)}mL ({round(100 * extra_proportions[1], 2)}%)",
+        f"Fermentable: {round(extra_volumes[2] * fermentable_sg, 1)}g ({round(100 * extra_proportions[2], 2)}%)",
         f"Blend ABV: {round(result['blend_abv'], 2)}%",
         f"Blend FG: {round(result['blend_fg'], 4)}"
     ]
-    if extra_limit > 0:
-        lines.append(f'Last three components are extras (water, 40% ethanol, honey).')
     echo_boxed("\n".join(lines))
     
 
