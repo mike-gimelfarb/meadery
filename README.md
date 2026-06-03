@@ -36,7 +36,7 @@ General notes on usage:
 | Command | Description |
 | --- | --- |
 | `brix-to-sg --brix` | Convert Brix to specific gravity. |
-| `sg-to-plato --sg` | Convert specific gravity to Plato. |
+| `sg-to-brix --sg` | Convert specific gravity to Brix. |
 | `spirit-gravity --abv`  | Estimate gravity of neutral spirit. |
 | `hydrometer --sg --temp --calib-temp` | Correct hydrometer for sample temperature. |
 | `refractometer --og --brix` | Correct refractometer reading for alcohol. |

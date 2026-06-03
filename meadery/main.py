@@ -19,7 +19,7 @@ from meadery.core import (
     ACID_ADJUSTMENTS, FERMENTABLES, FRUITS, YEAST_STRAINS,
     Hydrometer, Must, Refractometer,
     add_fermentable, add_fruit, add_yeast_strain,
-    brix_to_sg, original_gravity, sg_to_plato, parse_recipe,
+    brix_to_sg, original_gravity, sg_to_brix, parse_recipe,
     blend_to_gravity, blend_to_abv, blend_nearest, spirit_abv_to_sg
 )
 
@@ -155,11 +155,11 @@ def convert_brix_to_sg(
     echo_boxed(f'{round(result, 4)}')
 
 
-@app.command("sg-to-plato", help="Convert specific gravity to Plato")
-def convert_sg_to_plato(
+@app.command("sg-to-brix", help="Convert specific gravity to Brix")
+def convert_sg_to_brix(
     gravity: float = typer.Option(..., "--sg", help="Specific gravity"),
 ) -> None:
-    result = sg_to_plato(gravity)
+    result = sg_to_brix(gravity)
     echo_boxed(f'{round(result, 2)}')
 
 

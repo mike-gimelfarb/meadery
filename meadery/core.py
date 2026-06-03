@@ -44,8 +44,8 @@ def quadratic_solve(f, x0, bounds, constraints):
     return result.x
 
 
-def sg_to_plato(sg: float) -> float:
-    '''Converts specific gravity to Plato using the polynomial approximation.'''
+def sg_to_brix(sg: float) -> float:
+    '''Converts specific gravity to Brix using the polynomial approximation.'''
     if sg <= 0.0:
         raise ValueError('Specific gravity must be positive.')
     return -616.868 + (1111.14 * sg) - (630.272 * sg ** 2) + (135.997 * sg ** 3)
@@ -119,7 +119,7 @@ class Refractometer:
         if original_gravity <= 0.0:
             raise ValueError('Original gravity must be positive.')
         
-        original_brix = sg_to_plato(original_gravity)
+        original_brix = sg_to_brix(original_gravity)
         return (1.001843
             - (0.002318474 * original_brix)
             - (0.000007775 * original_brix**2)
@@ -577,8 +577,8 @@ class Must:
         elif method == 'duncan':
             return 1000 * (og - fg) / (7.75 - 3.75 * (og - 1.007))
         elif method == 'cutaia':
-            oe = sg_to_plato(og)
-            ae = sg_to_plato(fg)
+            oe = sg_to_brix(og)
+            ae = sg_to_brix(fg)
             abw = (0.372 + (0.00357 * oe)) * (oe - ae)
             return abw * fg / 0.7907
         else:
@@ -594,16 +594,16 @@ class Must:
             oe = 1000 * (og - 1.0)
             return 0.059 * (2.66 * oe - 30) 
         if method == 'marsh':
-            brix = sg_to_plato(og)
+            brix = sg_to_brix(og)
             return 0.47 * (brix * 0.9982 - 3) / 0.7892
         elif method == 'margalit':
-            return 0.57 * sg_to_plato(og)
+            return 0.57 * sg_to_brix(og)
         elif method == 'cooke':
-            B_c = sg_to_plato(og) - 3
+            B_c = sg_to_brix(og) - 3
             sg_c = brix_to_sg(B_c)
             return 0.59 * B_c * sg_c
         elif method == 'pambianchi':
-            brix = sg_to_plato(og)
+            brix = sg_to_brix(og)
             return 0.55 * brix - 0.63
         elif method == 'honneyman':
             return 165.9 * og - 168.2
@@ -783,9 +783,9 @@ class Must:
 
     def tosna_3(self, yeast: Yeast) -> dict:
         '''Returns the TOSNA 3.0 schedule for nutrient additions using fermaid O.'''
-        plato = sg_to_plato(self.gravity)
+        brix = sg_to_brix(self.gravity)
         demand_map = { 'low': 0.75, 'medium': 0.9, 'high': 1.25 }
-        total_fermaid_o_g = (plato * 10) * demand_map[yeast.nitrogen_requirement] / 50
+        total_fermaid_o_g = (brix * 10) * demand_map[yeast.nitrogen_requirement] / 50
         total_grams = total_fermaid_o_g * (self.volume / 3785.41)
         return {
             'total_grams':          total_grams,
