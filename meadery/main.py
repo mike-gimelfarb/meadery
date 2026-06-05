@@ -760,11 +760,9 @@ def calc_fortify_volume(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     
-    spirit_vol = round(result["spirit_volume"], 2)
-    aux_value = round(result["proportion"], 2)
     echo_boxed(
-        f'Spirit volume: {spirit_vol}ml\n'
-        f'Proportion: {aux_value}'
+        f'Spirit volume: {round(result["spirit_volume"], 2)}ml\n'
+        f'Proportion: {round(100 * result["proportion"], 2)}%'
     )
 
 
@@ -788,11 +786,11 @@ def calc_fortify_fg(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     
-    spirit_vol = round(result["spirit_volume"], 2)
-    aux_value = round(result["fortify_gravity"], 4)
     echo_boxed(
-        f'Spirit volume: {spirit_vol}ml\n'
-        f'Fortify gravity: {aux_value}'
+        f'Spirit volume: {round(result["spirit_volume"], 2)}ml\n'
+        f'Proportion: {round(100 * result["proportion"], 2)}%\n'
+        f'Fortify gravity: {round(result["fortify_gravity"], 4)}\n'
+        f'Fortify abv: {round(result["fortify_abv"], 2)}%'
     )
 
 

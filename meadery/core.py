@@ -516,7 +516,8 @@ class Must:
             raise ValueError('target_abv must be between 0 and 100.')
         if spirit_abv <= target_abv or spirit_abv > 100:
             raise ValueError("Spirit ABV must be between target ABV and 100.")
-        if self.abv(fg=target_fg, method=method) >= target_abv:
+        fortify_abv = self.abv(fg=target_fg, method=method)
+        if fortify_abv >= target_abv:
             raise ValueError("The wine has already fermented past your target ABV.")
 
         spirit_sg = spirit_abv_to_sg(spirit_abv)
@@ -534,7 +535,10 @@ class Must:
         if v_needed < 0:
             raise ValueError('Calculated spirit volume is negative.')
         fg_before = fg_before_of_v(v_needed)
-        return {"fortify_gravity": fg_before, "spirit_volume": v_needed}
+        proportion = v_needed / (V + v_needed)
+        fortify_at_abv = self.abv(fg=fg_before, method=method) 
+        return {"fortify_gravity": fg_before, "spirit_volume": v_needed,
+                "proportion": proportion, "fortify_abv": fortify_at_abv}
 
     def fortify_abv(self, fg: float, spirit_vol_ml: float, spirit_abv: float=40.0,
                     method: str='duncan') -> float:
