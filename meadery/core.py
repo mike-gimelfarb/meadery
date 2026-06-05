@@ -786,9 +786,11 @@ class Must:
             pitch_rate = 1
         yeast_g = pitch_rate * (self.volume / 3785.41)
         go_ferm_g = 1.25 * yeast_g
+        water_ml = 20 * go_ferm_g
         return {
             'yeast_g': yeast_g,
-            'goferm_g': go_ferm_g
+            'goferm_g': go_ferm_g,
+            'water_ml': water_ml
         }
 
     def tosna_3(self, yeast: Yeast) -> dict:

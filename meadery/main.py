@@ -519,7 +519,8 @@ def adjust_pitching_rate(
     result = base_must.pitch_rate()
     echo_boxed(
         f'Yeast: {round(result["yeast_g"], 2)}g\n'
-        f'Go-Ferm: {round(result["goferm_g"], 2)}g'
+        f'Go-Ferm: {round(result["goferm_g"], 2)}g\n'
+        f'Water: {round(result["water_ml"], 2)}ml'
     )
 
 
