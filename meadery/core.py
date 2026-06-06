@@ -402,16 +402,16 @@ class AcidAddition:
 # Acid additions expressed as g/L tartaric-equivalent TA increase per g/L additive.
 # Components are (weight_fraction, pKa, MW g/mol) for adjust_ph.
 ACID_ADJUSTMENTS = {
-    'tartaric': AcidAddition(ta_effect=1.0,
-                             components=[(1.0, 2.98, 150.09)]),
-    'malic':    AcidAddition(ta_effect=75.04 / 67.05,
-                             components=[(1.0, 3.40, 134.09)]),
-    'citric':   AcidAddition(ta_effect=75.04 / 64.04,
-                             components=[(1.0, 3.13, 192.12)]),
-    'blend':    AcidAddition(ta_effect=1.128,
-                             components=[(1/3, 2.98, 150.09),
-                                         (1/3, 3.40, 134.09),
-                                         (1/3, 3.13, 192.12)]),
+    'tartaric':   AcidAddition(ta_effect=1.0,
+                               components=[(1.0, 2.98, 150.09)]),
+    'malic':      AcidAddition(ta_effect=75.04 / 67.05,
+                               components=[(1.0, 3.40, 134.09)]),
+    'citric':     AcidAddition(ta_effect=75.04 / 64.04,
+                               components=[(1.0, 3.13, 192.12)]),
+    'acid-blend': AcidAddition(ta_effect=1.128,
+                               components=[(1/3, 2.98, 150.09),
+                                           (1/3, 3.40, 134.09),
+                                           (1/3, 3.13, 192.12)]),
 }
 
 

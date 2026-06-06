@@ -373,7 +373,7 @@ def must_add_acid(
     pKa: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
     c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
-    acid: str = typer.Option("blend", "--acid", help="Acid name",
+    acid: str = typer.Option("acid-blend", "--acid", help="Acid name",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
     mass: float = typer.Option(..., "--mass", help="Acid mass in grams"),
@@ -618,7 +618,7 @@ def acidify(
     c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
     target_ph: float = typer.Option(..., "--target-ph", help="Target pH of the must"),
-    acid: str = typer.Option("blend", "--acid", help="Acid to add",
+    acid: str = typer.Option("acid-blend", "--acid", help="Acid to add",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
 ) -> None:
@@ -725,7 +725,7 @@ def adjust_ta(
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
     current_ta: float = typer.Option(..., "--current-ta", help="Current TA in g/L as tartaric equivalent"),
     target_ta: float = typer.Option(..., "--target-ta", help="Target TA in g/L as tartaric equivalent"),
-    acid: str = typer.Option("blend", "--acid", help="Acid to add",
+    acid: str = typer.Option("acid-blend", "--acid", help="Acid to add",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
 ) -> None:
