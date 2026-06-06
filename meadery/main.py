@@ -65,13 +65,18 @@ def get_acid_choices() -> List[str]:
     return list(ACID_ADJUSTMENTS.keys())
 
 
-def _validate_must(volume: float, gravity: float, ph: Optional[float] = None) -> None:
+def _validate_must(volume: float, gravity: float, ph: Optional[float]=None,
+                   pKa: Optional[float]=None, c_buf: Optional[float]=None) -> None:
     if volume < 0:
         raise typer.BadParameter("volume must be >= 0")
     if gravity <= 0:
         raise typer.BadParameter("gravity must be > 0")
     if ph is not None and (ph < 0 or ph > 14):
         raise typer.BadParameter("pH must be between 0 and 14")
+    if pKa is not None and (pKa < 0 or pKa > 14):
+        raise typer.BadParameter("pKa must be between 0 and 14")
+    if c_buf is not None and c_buf < 0:
+        raise typer.BadParameter("Buffering capacity must be non-negative")
 
 
 def _recipe_path(recipe: str) -> str:
@@ -82,9 +87,10 @@ def _recipe_path(recipe: str) -> str:
 
 
 def _must_from_args(*, label: str, recipe: Optional[str], volume: Optional[float],
-                    gravity: Optional[float], ph: Optional[float], require_ph: bool=True) -> Must:
+                    gravity: Optional[float], ph: Optional[float], 
+                    pKa: Optional[float], c_buf: Optional[float], require_ph: bool=True) -> Must:
     """Build a Must from either a recipe path or explicit volume/gravity/pH arguments."""
-    manual_values = [volume, gravity, ph] if require_ph else [volume, gravity]
+    manual_values = [volume, gravity, ph, pKa, c_buf] if require_ph else [volume, gravity]
     has_manual = any(value is not None for value in manual_values)
 
     # recipe takes priority
@@ -96,14 +102,14 @@ def _must_from_args(*, label: str, recipe: Optional[str], volume: Optional[float
 
     # check manual inputs
     if not has_manual:
-        req_args = "--vol, --sg, and --ph" if require_ph else "--vol and --sg"
+        req_args = "--vol, --sg, --ph, --pka, --cbuf" if require_ph else "--vol and --sg"
         raise typer.BadParameter(f"{label} requires either --recipe or manual inputs ({req_args}).")
     if any(value is None for value in manual_values):
-        req_args = "--vol, --sg, and --ph" if require_ph else "--vol and --sg"
+        req_args = "--vol, --sg, --ph, --pka, --cbuf" if require_ph else "--vol and --sg"
         raise typer.BadParameter(f"{label} manual mode requires {req_args} together.")
 
-    _validate_must(volume, gravity, ph)
-    return Must(volume=volume, gravity=gravity, ph=ph)
+    _validate_must(volume, gravity, ph, pKa, c_buf)
+    return Must(volume=volume, gravity=gravity, ph=ph, pka=pKa, c_buf=c_buf)
 
 
 def echo_boxed(message: str, color: str=None) -> None:
@@ -203,7 +209,8 @@ def calc_attenuation(
     fg: float = typer.Option(..., "--fg", help="Final gravity"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
+        label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.attenuation(fg=fg)
     echo_boxed(f'{round(result, 2)}%')
 
@@ -264,7 +271,8 @@ def calc_abv(
     method: AbvMethod = typer.Option(AbvMethod.duncan.value, "--method", help="ABV calculation method"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
+        label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.abv(fg=fg, method=method.value)
     echo_boxed(f'{round(result, 2)}%')
 
@@ -276,7 +284,8 @@ def calc_potential_abv(
     method: PotentialAbvMethod = typer.Option(PotentialAbvMethod.cooke.value, "--method", help="Potential ABV calculation method"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
+        label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.abv_potential(method=method.value)
     echo_boxed(f'{round(result, 2)}%')
 
@@ -301,7 +310,8 @@ def calc_stalled_gravity(
     min_fg: float = typer.Option(0.9, "--min-fg", help="Minimum FG for root finding"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, ph=None, require_ph=False)
+        label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     yeast_obj = get_yeast_obj(yeast)
     result = base_must.stalled_final_gravity(
         yeast=yeast_obj, method=method.value, tol=tol, min_fg=min_fg)
@@ -317,6 +327,8 @@ def must_add(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
+    pKa: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     fermentable: str = typer.Option(..., "--fermentable", help="Fermentable name",
         case_sensitive=False, show_choices=True, prompt=False, 
@@ -324,7 +336,8 @@ def must_add(
     mass: float = typer.Option(..., "--mass", help="Fermentable mass in grams"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=ph, pKa=pKa, c_buf=c_buf)
     fermentable_obj = get_fermentable_object(fermentable)
     result = base_must.add(fermentable_obj, mass=mass)
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
@@ -335,6 +348,8 @@ def must_add_fruit(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
+    pKa: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     fruit: Optional[str] = typer.Option(None, "--fruit", help="Preset fruit name",
         case_sensitive=False, show_choices=True, prompt=False,
@@ -343,7 +358,8 @@ def must_add_fruit(
     extract_yield: float = typer.Option(1.0, "--extract-yield", help="Extracted juice yield from 0 to 1"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=ph, pKa=pKa, c_buf=c_buf)
     if fruit is None:
         raise typer.BadParameter("--fruit is required")
     selected_fruit = get_fruit_object(fruit)
@@ -359,6 +375,8 @@ def must_add_fruit_juice(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
+    pKa: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     fruit: Optional[str] = typer.Option(None, "--fruit", help="Preset fruit name",
         case_sensitive=False, show_choices=True, prompt=False,
@@ -366,7 +384,8 @@ def must_add_fruit_juice(
     juice_volume: float = typer.Option(..., "--juice-vol", help="Fruit juice volume in mL"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=ph, pKa=pKa, c_buf=c_buf)
     if fruit is None:
         raise typer.BadParameter("--fruit is required")
     selected_fruit = get_fruit_object(fruit)    
@@ -382,11 +401,14 @@ def must_add_honey(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
+    pKa: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     mass: float = typer.Option(..., "--mass", help="Honey mass in grams"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=ph, pKa=pKa, c_buf=c_buf)
     result = base_must.add_honey(mass=mass)
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
@@ -396,11 +418,14 @@ def must_add_sugar(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
+    pKa: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     mass: float = typer.Option(..., "--mass", help="Sugar mass in grams"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=ph, pKa=pKa, c_buf=c_buf)
     result = base_must.add_sugar(mass=mass)
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
@@ -410,11 +435,14 @@ def must_add_water(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
+    pKa: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     mass: float = typer.Option(..., "--mass", help="Water mass in grams"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=ph)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=ph, pKa=pKa, c_buf=c_buf)
     result = base_must.add_water(mass=mass)
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
@@ -433,7 +461,8 @@ def adjust_gravity(
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     if fermentable is None:
         if fruit is None:
             raise typer.BadParameter("Either --fermentable or --fruit must be provided")
@@ -454,16 +483,22 @@ def must_combine(
     volume_a: Optional[float] = typer.Option(None, "--vol1", help="Must A volume in mL"),
     gravity_a: Optional[float] = typer.Option(None, "--og1", help="Must A original gravity"),
     ph_a: Optional[float] = typer.Option(None, "--ph1", help="Must A pH"),
+    pKa_a: Optional[float] = typer.Option(3.40, "--pka1", help="Must A pKa"),
+    c_buf_a: Optional[float] = typer.Option(40.0, "--cbuf1", help="Must A buffering capacity in mmol/L"),
     recipe1: Optional[str] = typer.Option(None, "--recipe1", help="Path to recipe for must A"),
     volume_b: Optional[float] = typer.Option(None, "--vol2", help="Must B volume in mL"),
     gravity_b: Optional[float] = typer.Option(None, "--og2", help="Must B original gravity"),
     ph_b: Optional[float] = typer.Option(None, "--ph2", help="Must B pH"),
+    pKa_b: Optional[float] = typer.Option(3.40, "--pka2", help="Must B pKa"),
+    c_buf_b: Optional[float] = typer.Option(40.0, "--cbuf2", help="Must B buffering capacity in mmol/L"),
     recipe2: Optional[str] = typer.Option(None, "--recipe2", help="Path to recipe for must B"),
 ) -> None:
     must_a = _must_from_args(
-        label="Must A", recipe=recipe1, volume=volume_a, gravity=gravity_a, ph=ph_a)
+        label="Must A", recipe=recipe1, volume=volume_a, gravity=gravity_a, 
+        ph=ph_a, pKa=pKa_a, c_buf=c_buf_a)
     must_b = _must_from_args(
-        label="Must B", recipe=recipe2, volume=volume_b, gravity=gravity_b, ph=ph_b)
+        label="Must B", recipe=recipe2, volume=volume_b, gravity=gravity_b, 
+        ph=ph_b, pKa=pKa_b, c_buf=c_buf_b)
 
     result = must_a.combine(must_b)
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
@@ -482,7 +517,8 @@ def calc_volumes(
             k for k in get_fermentable_choices() + get_fruit_choices() if k.startswith(incomplete)]),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=None, volume=volume, gravity=gravity, ph=None, require_ph=False)
+        label="Base must", recipe=None, volume=volume, gravity=gravity, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     fermentable_key = fermentable.strip().lower()
     fermentable_obj = get_fermentable_object(fermentable)
     
@@ -515,7 +551,8 @@ def adjust_pitching_rate(
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.pitch_rate()
     echo_boxed(
         f'Yeast: {round(result["yeast_g"], 2)}g\n'
@@ -532,7 +569,8 @@ def adjust_so2_ph(
     target_mol_so2: float = typer.Option(0.8, "--target-mol-so2", help="Target molecular SO2 in ppm"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=1.0, ph=ph, require_ph=not recipe)
+        label="Base must", recipe=recipe, volume=volume, gravity=1.0, 
+        ph=ph, pKa=3.40, c_buf=40.0, require_ph=not recipe)
     result = base_must.so2_from_ph(target_mol_so2=target_mol_so2)
     lines = [f'{key}: {round(val, 4)}' for key, val in result.items()]
     lines.append('')
@@ -547,7 +585,8 @@ def adjust_so2_target(
     target_ppm: float = typer.Option(50.0, "--target-ppm", help="Target SO2 in ppm"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=1.0, ph=None, require_ph=False)
+        label="Base must", recipe=recipe, volume=volume, gravity=1.0, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.so2_from_target_ppm(target_ppm=target_ppm)
     result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
     echo_boxed(result_str)
@@ -570,7 +609,8 @@ def adjust_ta(
         raise typer.BadParameter(f"unknown acid '{acid}'. Choose one of: {choices}")
 
     must = _must_from_args(
-        label="Must", recipe=recipe, volume=volume, gravity=1.0, ph=None, require_ph=False)
+        label="Must", recipe=recipe, volume=volume, gravity=1.0, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     try:
         result = must.adjust_ta(current_ta=current_ta, target_ta=target_ta, acid=acid_obj)
     except ValueError as exc:
@@ -592,7 +632,8 @@ def adjust_tosna3(
         autocompletion=lambda ctx, args, incomplete: [k for k in YEAST_STRAINS.keys() if k.startswith(incomplete)]),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     yeast_obj = get_yeast_obj(yeast)
     result = base_must.tosna_3(yeast=yeast_obj)
     result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
@@ -668,7 +709,7 @@ def blend_nearest_cli(
             fermentable_key = extra_fermentable.strip().lower()
             if fermentable_key in FERMENTABLES:
                 fermentable_obj = FERMENTABLES[fermentable_key]
-                fermentable_sg = 1.0 + (fermentable_obj.ppg * 8.3454) / 1000.0
+                fermentable_sg = fermentable_obj.specific_gravity()
             else:
                 choices = ", ".join(sorted(get_fermentable_choices()))
                 raise typer.BadParameter(f"Unknown extra fermentable: {fermentable_key}. Choose from: {choices}")
@@ -724,7 +765,8 @@ def backsweeten(
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fruit_choices() if k.startswith(incomplete)]),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=1.0, ph=7, require_ph=False)
+        label="Base must", recipe=recipe, volume=volume, gravity=1.0, 
+        ph=7, pKa=3.40, c_buf=40.0, require_ph=False)
     if fermentable is None:
         if fruit is None:
             raise typer.BadParameter("Either --fermentable or --fruit must be provided")
@@ -753,8 +795,8 @@ def calc_fortify_volume(
 ) -> None:
     try:
         base_must = _must_from_args(
-            label="Base must", recipe=recipe, volume=volume, gravity=1.0, ph=None, 
-            require_ph=False)
+            label="Base must", recipe=recipe, volume=volume, gravity=1.0, 
+            ph=None, pKa=None, c_buf=None, require_ph=False)
         result = base_must.fortify_volume_simple(
             target_abv=target_abv, current_abv=current_abv, spirit_abv=spirit_abv)
     except ValueError as exc:
@@ -778,8 +820,8 @@ def calc_fortify_fg(
 ) -> None:
     try:
         base_must = _must_from_args(
-            label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, 
-            require_ph=False)
+            label="Base must", recipe=recipe, volume=volume, gravity=gravity,
+            ph=None, pKa=None, c_buf=None, require_ph=False)
         result = base_must.fortify_volume(
             target_abv=target_abv, target_fg=target_gravity, spirit_abv=spirit_abv, 
             method=method.value)
@@ -805,7 +847,8 @@ def calc_fortify_abv(
     method: AbvMethod = typer.Option(AbvMethod.duncan.value, "--method", help="ABV calculation method"),
 ) -> None:
     base_must = _must_from_args(
-        label="Base must", recipe=recipe, volume=volume, gravity=gravity, ph=None, require_ph=False)
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.fortify_abv(
         fg=fg, spirit_vol_ml=spirit_vol, spirit_abv=spirit_abv, method=method.value)
     echo_boxed(f'{round(result, 2)}%')
@@ -822,7 +865,8 @@ def calc_priming_sugar(
         autocompletion=lambda ctx, args, incomplete: [k for k in FERMENTABLES.keys() if k.startswith(incomplete)]),
 ) -> None:
     must = _must_from_args(
-        label="Must", recipe=recipe, volume=volume, gravity=1.0, ph=None, require_ph=False)
+        label="Must", recipe=recipe, volume=volume, gravity=1.0, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
     fermentable_obj = get_fermentable_object(fermentable)
     result = must.priming_sugar(
         fermentable=fermentable_obj, target_volumes=target_co2_vol, temp=temp)
@@ -839,9 +883,12 @@ def data_add_fermentable(
     ppg: int = typer.Option(..., "--ppg", help="Points per pound per gallon"),
     density: float = typer.Option(..., "--density", help="Density in g/mL"),
     ph: float = typer.Option(..., "--ph", help="pH"),
+    pka: float = typer.Option(3.40, "--pka", help="pKa"),
+    c_buf: float = typer.Option(40.0, "--cbuf", help="Buffering capacity in mmol/L"),
 ) -> None:
     try:
-        result = add_fermentable(name=name, ppg=ppg, density=density, ph=ph)
+        result = add_fermentable(
+            name=name, ppg=ppg, density=density, ph=ph, pka=pka, c_buf=c_buf)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
@@ -852,9 +899,12 @@ def data_add_fruit_profile(
     brix: float = typer.Option(..., "--brix", help="Brix"),
     moisture: float = typer.Option(..., "--moisture", help="Moisture"),
     ph: float = typer.Option(..., "--ph", help="pH"),
+    pka: float = typer.Option(3.40, "--pka", help="pKa"),
+    c_buf: float = typer.Option(40.0, "--cbuf", help="Buffering capacity in mmol/L")
 ) -> None:
     try:
-        result = add_fruit(name=name, brix=brix, moisture_content=moisture, ph=ph)
+        result = add_fruit(
+            name=name, brix=brix, moisture_content=moisture, ph=ph, pka=pka, c_buf=c_buf)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     
@@ -902,10 +952,7 @@ class CommandBuilderWithHistory(CommandBuilder):
             try:
                 with redirect_stdout(buffer), redirect_stderr(buffer):
                     self.cli.main(
-                        args=args,
-                        prog_name=self.click_app_name,
-                        standalone_mode=False,
-                    )
+                        args=args, prog_name=self.click_app_name, standalone_mode=False)
             except SystemExit as exc:
                 output = buffer.getvalue().strip()
                 if output:
@@ -935,7 +982,6 @@ def init_tui(app: typer.Typer, name: str | None = None):
             app_name=name,
             click_context=click.get_current_context(),
         ).run()
-
     app.command("tui", help="Open Textual TUI.")(wrapped_tui)
     return app
 

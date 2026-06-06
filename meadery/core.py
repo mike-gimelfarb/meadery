@@ -149,13 +149,18 @@ class Fermentable:
     ppg: int
     density: float
     ph: float
+    pka: float    # dominant acid pKa
+    c_buf: float  # dominant acid concentration in mmol/L
 
     def volume(self, mass: float) -> float:
         '''Returns the volume of the additive given a mass in grams.'''
         if mass < 0.0:
-            raise ValueError('Mass must be non-negative.')
-        
+            raise ValueError('Mass must be non-negative.')    
         return mass / self.density
+
+    def specific_gravity(self) -> float:
+        '''Returns the specific gravity of a solution of this fermentable.'''
+        return 1.0 + (self.ppg * 8.3454) / 1000.0
     
 
 def _load_fermentables() -> dict[str, Fermentable]:
@@ -171,6 +176,8 @@ def _load_fermentables() -> dict[str, Fermentable]:
                 ppg=values['ppg'],
                 density=values['density'],
                 ph=values['ph'],
+                pka=values['pka'],
+                c_buf=values['c_buf'],
             )
         except KeyError as exc:
             raise ValueError(f'Missing fermentable field {exc} for {name}.') from exc
@@ -180,13 +187,16 @@ def _load_fermentables() -> dict[str, Fermentable]:
 FERMENTABLES = _load_fermentables()
 
 
-def add_fermentable(name: str, ppg: int, density: float, ph: float) -> Fermentable:
+def add_fermentable(name: str, ppg: int, density: float, ph: float,
+                    pka: float, c_buf: float) -> Fermentable:
     '''Add a fermentable to the JSON data file and refresh `FERMENTABLES`.
 
     :param name: fermentable name key
     :param ppg: points per pound per gallon
     :param density: density in g/mL
     :param ph: pH value in [0, 14]
+    :param pka: dominant acid pKa
+    :param c_buf: dominant acid concentration in mmol/L
     '''
     name_key = name.strip().lower()
     if not name_key:
@@ -197,6 +207,10 @@ def add_fermentable(name: str, ppg: int, density: float, ph: float) -> Fermentab
         raise ValueError('density must be positive.')
     if ph < 0 or ph > 14:
         raise ValueError('ph must be between 0 and 14.')
+    if pka < 0 or pka > 14:
+        raise ValueError('pka must be between 0 and 14.')
+    if c_buf < 0:
+        raise ValueError('c_buf must be non-negative.')
 
     raw = _load_data_json('fermentables.json')
     if name_key in raw:
@@ -205,6 +219,8 @@ def add_fermentable(name: str, ppg: int, density: float, ph: float) -> Fermentab
         'ppg': int(ppg),
         'density': float(density),
         'ph': float(ph),
+        'pka': float(pka),
+        'c_buf': float(c_buf),
     }
 
     data_path = Path(__file__).resolve().parent / 'data' / 'fermentables.json'
@@ -226,15 +242,18 @@ class Fruit:
     brix: float
     moisture_content: float
     ph: float
+    pka: float    # dominant acid pKa
+    c_buf: float  # dominant acid concentration in undiluted juice, mmol/L
 
     def to_fermentable(self, density: float | None=None) -> Fermentable:
         '''Returns a Fermentable representation of this fruit for dilution calculations.'''
         if density is not None and density <= 0.0:
             raise ValueError('Density must be positive if provided.')
-        
+
         ppg_est = 0.46 * self.brix
         density_est = brix_to_sg(self.brix) if density is None else density
-        return Fermentable(ppg=ppg_est, density=density_est, ph=self.ph)
+        return Fermentable(ppg=ppg_est, density=density_est, ph=self.ph,
+                           pka=self.pka, c_buf=self.c_buf)
 
 
 def _load_fruits() -> dict[str, Fruit]:
@@ -250,6 +269,8 @@ def _load_fruits() -> dict[str, Fruit]:
                 brix=values['brix'],
                 moisture_content=values['moisture_content'],
                 ph=values['ph'],
+                pka=values['pka'],
+                c_buf=values['c_buf'],
             )
         except KeyError as exc:
             raise ValueError(f'Missing fruit field {exc} for {name}.') from exc
@@ -259,13 +280,16 @@ def _load_fruits() -> dict[str, Fruit]:
 FRUITS = _load_fruits()
 
 
-def add_fruit(name: str, brix: float, moisture_content: float, ph: float) -> Fruit:
+def add_fruit(name: str, brix: float, moisture_content: float, ph: float,
+              pka: float, c_buf: float) -> Fruit:
     '''Add a fruit to the JSON data file and refresh `FRUITS`.
 
     :param name: fruit name key
     :param brix: sugar concentration in Brix
     :param moisture_content: moisture percentage in [0, 100]
     :param ph: pH value in [0, 14]
+    :param pka: dominant acid pKa
+    :param c_buf: dominant acid concentration in undiluted juice, mmol/L
     '''
     name_key = name.strip().lower()
     if not name_key:
@@ -276,6 +300,10 @@ def add_fruit(name: str, brix: float, moisture_content: float, ph: float) -> Fru
         raise ValueError('moisture_content must be between 0 and 100.')
     if ph < 0 or ph > 14:
         raise ValueError('ph must be between 0 and 14.')
+    if pka < 0 or pka > 14:
+        raise ValueError('pka must be between 0 and 14.')
+    if c_buf < 0:
+        raise ValueError('c_buf must be non-negative.')
 
     raw = _load_data_json('fruits.json')
     if name_key in raw:
@@ -284,6 +312,8 @@ def add_fruit(name: str, brix: float, moisture_content: float, ph: float) -> Fru
         'brix': float(brix),
         'moisture_content': float(moisture_content),
         'ph': float(ph),
+        'pka': float(pka),
+        'c_buf': float(c_buf),
     }
 
     data_path = Path(__file__).resolve().parent / 'data' / 'fruits.json'
@@ -386,34 +416,82 @@ class Must:
     volume: float
     gravity: float
     ph: float
+    pka: float    # effective dominant acid pKa
+    c_buf: float  # effective buffer acid concentration in the current must, mmol/L
 
     # ====================================================================================
     #                                  Must Manipulation Methods    
     # ====================================================================================
 
     @staticmethod
-    def ph_of_mixture(vol1, ph1, vol2, ph2):
-        '''Returns the pH of a mixture of two solutions given their volumes and pH values.'''
+    def ph_of_mixture(vol1, ph1, pka1, cbuf1, vol2, ph2, pka2, cbuf2, tol=1e-6,
+                      buffering=True):
+        '''Returns the pH of a mixture via a Henderson-Hasselbalch charge balance.
+
+        Each solution is described by its dominant weak acid (pka, cbuf in mmol/L of
+        that solution). Solves the exact charge-balance equation; reduces to the plain
+        H⁺ concentration average when both cbuf values are zero.
+        '''
         if vol1 < 0 or vol2 < 0:
             raise ValueError('Volumes must be non-negative.')
         if ph1 < 0 or ph1 > 14 or ph2 < 0 or ph2 > 14:
             raise ValueError('pH values must be between 0 and 14.')
         if vol1 + vol2 <= 0:
             raise ValueError('Total volume must be positive to calculate pH of mixture.')
+
+        # no buffering
+        if not buffering:
+            total_h_conc = (10 ** (-ph1) * vol1 + 10 ** (-ph2) * vol2) / (vol1 + vol2)
+            return -math.log10(total_h_conc)
+
+        # buffering
+        Kw = 1e-14
+        v_total = vol1 + vol2
+        r1, r2 = vol1 / v_total, vol2 / v_total
+        Ka1, Ka2 = 10 ** (-pka1), 10 ** (-pka2)
+        h1, h2 = 10 ** (-ph1), 10 ** (-ph2)
         
-        total_h_conc = (10 ** (-ph1) * vol1 + 10 ** (-ph2) * vol2) / (vol1 + vol2)
-        return -math.log10(total_h_conc)
+        # acid concentrations diluted to the final mixture volume (mol/L)
+        C1 = (cbuf1 / 1000) * r1
+        C2 = (cbuf2 / 1000) * r2
+        
+        # net cation concentration contributed by each source
+        nc1 = (cbuf1 / 1000) * Ka1 / (Ka1 + h1) + Kw / h1 - h1
+        nc2 = (cbuf2 / 1000) * Ka2 / (Ka2 + h2) + Kw / h2 - h2
+        nc = r1 * nc1 + r2 * nc2
+
+        def f(ph_f):
+            h = 10 ** (-ph_f)
+            a1 = C1 * Ka1 / (Ka1 + h) if cbuf1 > 0 else 0.0
+            a2 = C2 * Ka2 / (Ka2 + h) if cbuf2 > 0 else 0.0
+            return h - Kw / h - a1 - a2 + nc
+
+        return root_find(f, a=0.0, b=14.0, tol=tol)
     
     def combine(self, other: 'Must') -> 'Must':
         '''Returns a new Must that is the combination of this Must and another Must.'''
         total_volume = self.volume + other.volume
         if total_volume <= 0:
             raise ValueError('Total volume must be positive when combining musts.')
+        
+        # combined gravity
         points_a = (self.gravity - 1.0) * self.volume
         points_b = (other.gravity - 1.0) * other.volume
         new_gravity = 1.0 + (points_a + points_b) / total_volume
-        new_ph = self.ph_of_mixture(self.volume, self.ph, other.volume, other.ph)
-        return Must(volume=total_volume, gravity=new_gravity, ph=new_ph)
+        
+        # combined ph
+        new_ph = self.ph_of_mixture(
+            self.volume, self.ph, self.pka, self.c_buf,
+            other.volume, other.ph, other.pka, other.c_buf)
+        
+        # combined buffer capacity and pKa
+        acid1 = self.c_buf * self.volume
+        acid2 = other.c_buf * other.volume
+        new_c_buf = (acid1 + acid2) / total_volume
+        new_pka = (self.pka * acid1 + other.pka * acid2) / (acid1 + acid2) if (acid1 + acid2) > 0 else 7.0
+        
+        return Must(volume=total_volume, gravity=new_gravity, ph=new_ph,
+                    pka=new_pka, c_buf=new_c_buf)
 
     def add(self, fermentable: Fermentable, mass: float) -> 'Must':
         '''Returns a new Must with the given fermentable added.
@@ -423,15 +501,31 @@ class Must:
         '''
         if mass < 0:
             raise ValueError('Mass of fermentable must be non-negative.')
-        v_total_ml = self.volume + fermentable.volume(mass)
+        
+        # volume of addition
+        ferm_vol = fermentable.volume(mass)
+        v_total_ml = self.volume + ferm_vol
         v_total_gal = v_total_ml / 3785.41
+        
+        # gravity of addition
         w_additive_lbs = mass / 453.59
         gravity_added = (w_additive_lbs / v_total_gal) * (fermentable.ppg / 1000)
         points_diluted = (self.gravity - 1) * (self.volume / v_total_ml)
         new_gravity = 1.0 + gravity_added + points_diluted
+        
+        # pH of addition
         new_ph = self.ph_of_mixture(
-            self.volume, self.ph, fermentable.volume(mass), fermentable.ph)
-        return Must(volume=v_total_ml, gravity=new_gravity, ph=new_ph)
+            self.volume, self.ph, self.pka, self.c_buf,
+            ferm_vol, fermentable.ph, fermentable.pka, fermentable.c_buf)
+        
+        # buffer capacity and pKa of addition
+        acid1 = self.c_buf * self.volume
+        acid2 = fermentable.c_buf * ferm_vol
+        new_c_buf = (acid1 + acid2) / v_total_ml
+        new_pka = (self.pka * acid1 + fermentable.pka * acid2) / (acid1 + acid2) if (acid1 + acid2) > 0 else 7.0
+        
+        return Must(volume=v_total_ml, gravity=new_gravity, ph=new_ph,
+                    pka=new_pka, c_buf=new_c_buf)
 
     def add_water(self, mass: float) -> 'Must':
         '''Returns a new Must with the given mass of water added.'''
@@ -463,7 +557,8 @@ class Must:
         juice_mass_g = theoretical_juice_mass_g * extract_yield
         sg_juice = brix_to_sg(fruit.brix)
         juice_vol_ml = juice_mass_g / sg_juice if juice_mass_g > 0 else 0.0
-        juice_must = Must(volume=juice_vol_ml, gravity=sg_juice, ph=fruit.ph)
+        juice_must = Must(volume=juice_vol_ml, gravity=sg_juice, ph=fruit.ph,
+                          pka=fruit.pka, c_buf=fruit.c_buf)
         return self.combine(juice_must)
     
     def add_fruit_juice(self, fruit: Fruit, volume: float) -> 'Must':
@@ -478,7 +573,8 @@ class Must:
             raise ValueError('Fruit brix must be between 0 and 100 (exclusive upper bound).')
 
         sg_juice = brix_to_sg(fruit.brix)
-        juice_must = Must(volume=volume, gravity=sg_juice, ph=fruit.ph)
+        juice_must = Must(volume=volume, gravity=sg_juice, ph=fruit.ph,
+                          pka=fruit.pka, c_buf=fruit.c_buf)
         return self.combine(juice_must)
 
     def fortify_volume_simple(self, target_abv: float, current_abv: float, 
@@ -731,20 +827,22 @@ class Must:
         :param sweetener: the Fermentable to add for backsweetening
         :param tol: tolerance for the root-finding algorithm
         '''
-        fermented_must = Must(volume=self.volume, gravity=final_sg, ph=self.ph)
+        fermented_must = Must(volume=self.volume, gravity=final_sg, ph=self.ph,
+                              pka=self.pka, c_buf=self.c_buf)
         return fermented_must.adjust_gravity(target_sg, sweetener, tol=tol)
 
-    def backsweeten_with_fruit_juice(self, final_sg: float, target_sg: float, 
+    def backsweeten_with_fruit_juice(self, final_sg: float, target_sg: float,
                                      fruit: Fruit, tol: float=1e-6) -> float:
-        '''Returns the volume in mL of fruit juice to add to this must to reach `final_sg' 
+        '''Returns the volume in mL of fruit juice to add to this must to reach `final_sg'
         after fermentation.
-        
+
         :param final_sg: the target specific gravity after fermentation and backsweetening
         :param target_sg: the specific gravity after fermentation but before backsweetening
         :param fruit: the Fruit profile to use for the juice
         :param tol: tolerance for the root-finding algorithm
         '''
-        fermented_must = Must(volume=self.volume, gravity=final_sg, ph=self.ph)
+        fermented_must = Must(volume=self.volume, gravity=final_sg, ph=self.ph,
+                              pka=self.pka, c_buf=self.c_buf)
         return fermented_must.adjust_gravity_with_fruit_juice(target_sg, fruit, tol=tol)
     
     def adjust_ta(self, current_ta: float, target_ta: float, acid: AcidAddition) -> dict:
@@ -853,12 +951,12 @@ class Must:
             raise ValueError('Selected fermentable cannot be used for priming (ppg <= 0).')
         multiplier = FERMENTABLES['table-sugar'].ppg / fermentable.ppg
         return max(0, sucrose_g * multiplier)
-        
+    
     def __str__(self):
-        if self.ph is None:
-            return f"Must(volume={self.volume:.2f}ml, gravity={self.gravity:.4f})"
-        else:
-            return f"Must(volume={self.volume:.2f}ml, gravity={self.gravity:.4f}, ph={self.ph:.2f})"
+        return (f"Must(volume={self.volume:.2f}ml, gravity={self.gravity:.4f}, "
+                f"pH={f'{self.ph:.2f}' if self.ph is not None else 'N/A'}, "
+                f"pKa={f'{self.pka:.2f}' if self.pka is not None else 'N/A'}, "
+                f"c_buf={f'{self.c_buf:.2f}' if self.c_buf is not None else 'N/A'})")
 
 
 def _load_recipe_file(path: str) -> List[Tuple[str, object, object]]:
@@ -906,7 +1004,7 @@ def _load_recipe_file(path: str) -> List[Tuple[str, object, object]]:
 
 
 def _load_recipe_list(recipe_list: List[Tuple[str, object, object]]) -> Must:
-    must = Must(volume=0.0, gravity=1.0, ph=7.0)
+    must = Must(volume=0.0, gravity=1.0, ph=7.0, pka=7.0, c_buf=0.0)
     for (line_type, ingredient, qty_str) in recipe_list:
         qty = float(qty_str)
         if line_type == 'juice':
@@ -1018,7 +1116,7 @@ def solve_recipe(path: str, target_og: float | None, target_vol: float | None,
     result = quadratic_solve(
         f=objective, x0=initial_guess, bounds=bounds, constraints=constraints)
     
-    solved_variables = np.maximum(result.x, 0.0)
+    solved_variables = np.maximum(result, 0.0)
     final_must = build_must(solved_variables)
     if target_og is not None and not math.isclose(final_must.gravity, target_og, rel_tol=1e-6, abs_tol=1e-6):
         raise RuntimeError('Unable to satisfy target OG with the provided recipe.')
@@ -1053,7 +1151,8 @@ def original_gravity(target_abv: float, fg: float,
         raise ValueError('max_og must be greater than final gravity.')
     
     def f_og_to_abv(og):
-        return Must(volume=1, gravity=og, ph=7).abv(fg=fg, method=method) - target_abv
+        return Must(volume=1, gravity=og, ph=7, pka=7, c_buf=0).abv(
+            fg=fg, method=method) - target_abv
     
     if f_og_to_abv(fg) * f_og_to_abv(max_og) > 0:
         raise ValueError("Target ABV is not between the potential ABV at the final gravity "

@@ -2,51 +2,71 @@
   "water": {
     "ppg": 0,
     "density": 1.0,
-    "ph": 7.0
+    "ph": 7.0,
+    "pka": 7.0,
+    "c_buf": 0.0
   },
   "honey": {
     "ppg": 35,
     "density": 1.42,
-    "ph": 3.9
+    "ph": 3.9,
+    "pka": 3.86,
+    "c_buf": 41.0
   },
   "maple": {
     "ppg": 30,
     "density": 1.33,
-    "ph": 5.2
+    "ph": 6.2,
+    "pka": 5.40,
+    "c_buf": 45.0
   },
   "agave": {
     "ppg": 34,
     "density": 1.42,
-    "ph": 4.5
+    "ph": 4.5,
+    "pka": 3.40,
+    "c_buf": 4.0
   },
   "molasses": {
     "ppg": 36,
     "density": 1.42,
-    "ph": 5.0
+    "ph": 5.0,
+    "pka": 3.10,
+    "c_buf": 120.0
   },
   "table-sugar": {
     "ppg": 46,
     "density": 1.59,
-    "ph": 6.0
+    "ph": 7.0,
+    "pka": 7.0,
+    "c_buf": 0.0
   },
   "brown-sugar": {
     "ppg": 45,
     "density": 1.54,
-    "ph": 5.5
+    "ph": 5.5,
+    "pka": 3.10,
+    "c_buf": 3.5
   },
   "corn-sugar": {
     "ppg": 40,
     "density": 1.54,
-    "ph": 6.0
+    "ph": 7.0,
+    "pka": 7.0,
+    "c_buf": 0.0
   },
   "liquid-malt-extract": {
     "ppg": 36,
     "density": 1.42,
-    "ph": 5.5
+    "ph": 5.5,
+    "pka": 5.60,
+    "c_buf": 55.0
   },
   "dry-malt-extract": {
     "ppg": 45,
     "density": 1.54,
-    "ph": 5.5
+    "ph": 5.5,
+    "pka": 5.60,
+    "c_buf": 70.0
   }
 }

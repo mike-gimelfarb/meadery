@@ -2,136 +2,190 @@
   "apple": {
     "brix": 12.0,
     "moisture_content": 86.0,
-    "ph": 3.5
+    "ph": 3.5,
+    "pka": 3.40,
+    "c_buf": 40.0
   },
   "pear": {
     "brix": 13.0,
     "moisture_content": 84.0,
-    "ph": 3.6
+    "ph": 3.6,
+    "pka": 3.40,
+    "c_buf": 30.0
   },
   "peach": {
     "brix": 11.0,
     "moisture_content": 88.0,
-    "ph": 3.7
+    "ph": 3.7,
+    "pka": 3.40,
+    "c_buf": 25.0
   },
   "plum": {
     "brix": 12.0,
     "moisture_content": 86.0,
-    "ph": 3.5
+    "ph": 3.5,
+    "pka": 3.40,
+    "c_buf": 90.0
   },
   "apricot": {
     "brix": 13.0,
     "moisture_content": 84.0,
-    "ph": 3.8
+    "ph": 3.5,
+    "pka": 3.25,
+    "c_buf": 75.0
   },
   "cherry-bing": {
     "brix": 18.0,
     "moisture_content": 80.0,
-    "ph": 4.0
+    "ph": 3.8,
+    "pka": 3.40,
+    "c_buf": 52.0
   },
   "cherry-montmorency": {
     "brix": 13.0,
     "moisture_content": 82.0,
-    "ph": 3.5
+    "ph": 3.5,
+    "pka": 3.40,
+    "c_buf": 100.0
   },
   "strawberry": {
     "brix": 8.0,
     "moisture_content": 90.0,
-    "ph": 3.5
+    "ph": 3.5,
+    "pka": 3.13,
+    "c_buf": 115.0
   },
   "raspberry": {
     "brix": 9.0,
     "moisture_content": 86.0,
-    "ph": 3.5
+    "ph": 3.2,
+    "pka": 3.13,
+    "c_buf": 220.0
   },
   "blackberry": {
     "brix": 10.0,
     "moisture_content": 88.0,
-    "ph": 3.5
+    "ph": 3.3,
+    "pka": 3.13,
+    "c_buf": 145.0
   },
   "blueberry": {
     "brix": 12.0,
     "moisture_content": 85.0,
-    "ph": 3.2
+    "ph": 3.7,
+    "pka": 3.13,
+    "c_buf": 95.0
   },
   "cranberry": {
     "brix": 8.0,
     "moisture_content": 87.0,
-    "ph": 2.5
+    "ph": 2.5,
+    "pka": 3.30,
+    "c_buf": 340.0
   },
   "elderberry": {
     "brix": 11.0,
     "moisture_content": 80.0,
-    "ph": 4.9
+    "ph": 4.0,
+    "pka": 3.13,
+    "c_buf": 85.0
   },
   "blackcurrant": {
     "brix": 15.0,
     "moisture_content": 80.0,
-    "ph": 3.0
+    "ph": 3.0,
+    "pka": 3.13,
+    "c_buf": 380.0
   },
   "grape-niagara": {
     "brix": 16.0,
     "moisture_content": 82.0,
-    "ph": 3.2
+    "ph": 3.2,
+    "pka": 3.45,
+    "c_buf": 65.0
   },
   "grape-concord": {
     "brix": 17.0,
     "moisture_content": 82.0,
-    "ph": 3.4
+    "ph": 3.4,
+    "pka": 3.45,
+    "c_buf": 55.0
   },
   "grape-cabernet": {
     "brix": 24.0,
     "moisture_content": 73.0,
-    "ph": 3.4
+    "ph": 3.4,
+    "pka": 3.45,
+    "c_buf": 45.0
   },
   "grape-late-harvest": {
     "brix": 28.0,
     "moisture_content": 65.0,
-    "ph": 3.6
+    "ph": 3.6,
+    "pka": 3.45,
+    "c_buf": 95.0
   },
   "banana": {
     "brix": 20.0,
     "moisture_content": 75.0,
-    "ph": 4.9
+    "ph": 4.9,
+    "pka": 3.40,
+    "c_buf": 45.0
   },
   "pomegranate": {
     "brix": 16.0,
     "moisture_content": 80.0,
-    "ph": 3.1
+    "ph": 3.1,
+    "pka": 3.13,
+    "c_buf": 180.0
   },
   "watermelon": {
     "brix": 10.0,
     "moisture_content": 92.0,
-    "ph": 5.3
+    "ph": 5.3,
+    "pka": 6.50,
+    "c_buf": 0.5
   },
   "cantaloupe": {
     "brix": 12.0,
     "moisture_content": 90.0,
-    "ph": 6.3
+    "ph": 6.3,
+    "pka": 6.50,
+    "c_buf": 0.8
   },
   "fig": {
     "brix": 20.0,
     "moisture_content": 80.0,
-    "ph": 5.5
+    "ph": 5.5,
+    "pka": 3.40,
+    "c_buf": 35.0
   },
   "mango": {
     "brix": 15.0,
     "moisture_content": 83.0,
-    "ph": 4.0
+    "ph": 4.0,
+    "pka": 3.13,
+    "c_buf": 70.0
   },
   "lemon": {
     "brix": 8.0,
     "moisture_content": 90.0,
-    "ph": 2.2
+    "ph": 2.2,
+    "pka": 3.13,
+    "c_buf": 780.0
   },
   "orange": {
     "brix": 12.0,
     "moisture_content": 86.0,
-    "ph": 3.5
+    "ph": 3.5,
+    "pka": 3.13,
+    "c_buf": 140.0
   },
   "pineapple": {
     "brix": 14.0,
     "moisture_content": 86.0,
-    "ph": 3.5
+    "ph": 3.5,
+    "pka": 3.13,
+    "c_buf": 125.0
   }
 }
