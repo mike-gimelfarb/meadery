@@ -20,7 +20,7 @@ from meadery.core import (
     Hydrometer, Must, Refractometer,
     add_fermentable, add_fruit, add_yeast_strain,
     brix_to_sg, original_gravity, sg_to_brix, parse_recipe, solve_recipe,
-    blend_to_gravity, blend_to_abv, blend_nearest, spirit_abv_to_sg,
+    blend_to_gravity, blend_to_abv, blend_to_ph, blend_nearest, spirit_abv_to_sg,
     PH_BUFFERING_WARNING, GRAVITY_WARNING
 )
 
@@ -776,8 +776,8 @@ def adjust_tosna3(
 
 @app.command("blend-to-abv", help="Calculate blend proportions to achieve a target ABV")
 def blend_to_abv_cli(
-    abv_a: float = typer.Option(..., "--abv1", help="ABV of must/wine A (percent)"),
-    abv_b: float = typer.Option(..., "--abv2", help="ABV of must/wine B (percent)"),
+    abv_a: float = typer.Option(..., "--abv1", help="ABV of must A (percent)"),
+    abv_b: float = typer.Option(..., "--abv2", help="ABV of must B (percent)"),
     target_abv: float = typer.Option(..., "--target-abv", help="Target blend ABV (percent)"),
     total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
 ) -> None:
@@ -813,6 +813,41 @@ def blend_to_gravity_cli(
         f'Batch 1: {round(p_a * 100, 2)}%, {round(v_a, 2)}mL\n'
         f'Batch 2: {round(p_b * 100, 2)}%, {round(v_b, 2)}mL'
     )
+
+
+@app.command("blend-to-ph", help="Calculate blend proportions to achieve a target pH")
+def blend_to_ph_cli(
+    ph_a: float = typer.Option(None, "--ph1", help="pH of must A"),
+    pka_a: float = typer.Option(3.40, "--pka1", help="pKa of must A"),
+    c_buf_a: float = typer.Option(40.0, "--cbuf1", help="Buffering capacity of must A"),
+    recipe_a: Optional[str] = typer.Option(None, "--recipe1", help="Path to recipe for must A"),
+    ph_b: float = typer.Option(None, "--ph2", help="pH of must B"),
+    pka_b: float = typer.Option(3.40, "--pka2", help="pKa of must B"),
+    c_buf_b: float = typer.Option(40.0, "--cbuf2", help="Buffering capacity of must B"),
+    recipe_b: Optional[str] = typer.Option(None, "--recipe2", help="Path to recipe for must B"),
+    target_ph: float = typer.Option(..., "--target-ph", help="Target blend pH"),
+    total_volume: float = typer.Option(..., "--target-vol", help="Total blend volume (mL)"),
+    tol: float = typer.Option(1e-6, "--tol", help="Tolerance for root finding in pH calculation"),
+) -> None:
+    try:
+        must1 = _must_from_args(
+            label="Must A", recipe=recipe_a, volume=3785.41, gravity=1.0, 
+            ph=ph_a, pKa=pka_a, c_buf=c_buf_a, require_ph=True)
+        must2 = _must_from_args(
+            label="Must B", recipe=recipe_b, volume=3785.41, gravity=1.0, 
+            ph=ph_b, pKa=pka_b, c_buf=c_buf_b, require_ph=True)
+        p_a = blend_to_ph(must1, must2, target_ph, tol=tol)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    p_b = 1 - p_a
+    v_a = p_a * total_volume
+    v_b = p_b * total_volume
+    
+    echo_boxed(
+        f'Batch 1: {round(p_a * 100, 2)}%, {round(v_a, 2)}mL\n'
+        f'Batch 2: {round(p_b * 100, 2)}%, {round(v_b, 2)}mL\n\n{PH_BUFFERING_WARNING}'
+    )
+
 
 @app.command("blend-nearest", help="Calculate blend proportions to achieve target ABV and FG")
 def blend_nearest_cli(

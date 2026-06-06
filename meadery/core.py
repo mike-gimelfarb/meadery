@@ -1392,8 +1392,31 @@ def blend_to_abv(abv1: float, abv2: float, target_abv: float) -> float:
     return (target_abv - abv2) / (abv1 - abv2)
 
 
-def blend_nearest(abvs: List[float], fgs: List[float], 
-                  target_abv: float, target_fg: float, target_vol: float, 
+def blend_to_ph(must1: Must, must2: Must, target_ph: float, tol: float=1e-6) -> float:
+    '''Returns the proportion of must1 needed to blend with must2 to achieve a target pH.
+
+    :param must1: the first must
+    :param must2: the second must
+    :param target_ph: the target pH after blending
+    :param tol: tolerance for the root-finding algorithm
+    '''
+    if not (0 <= target_ph <= 14):
+        raise ValueError('target_ph must be between 0 and 14.')
+
+    def f(p):
+        return Must.ph_of_mixture(
+            p, must1.ph, must1.pka, must1.c_buf,
+            1 - p, must2.ph, must2.pka, must2.c_buf,
+        ) - target_ph
+
+    if f(0) * f(1) >= 0:
+        raise ValueError('Target pH is not achievable by blending these two musts.')
+
+    return root_find(f, 0, 1, tol=tol)
+
+
+def blend_nearest(abvs: List[float], fgs: List[float],
+                  target_abv: float, target_fg: float, target_vol: float,
                   w_abv: float=1.0, w_fg: float=1.0, 
                   limits: List[Tuple[float, float]] | None=None) -> dict:
     '''Returns the blending proportions of musts with given ABVs and FGs to achieve a 

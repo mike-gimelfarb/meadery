@@ -88,6 +88,7 @@ General notes on usage:
 | --- | --- |
 | `blend-to-abv --abv1 --abv2 --target-abv --target-vol` | Blend two fermented musts to a final ABV. |
 | `blend-to-gravity --fg1 --fg2 --target-fg --target-vol` | Blend two fermented musts to a final gravity. |
+| `blend-to-ph [--ph1 --pka1 --cbuf1 \| --recipe1] [--ph2 --pka2 --cbuf2 \| --recipe2] --target-ph --target-vol [--tol]` | Blend two musts to a final pH. |
 | `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg] [--extra-limit] [--extra-fermentable] [--extra-spirit-abv]` | Blend any number of musts to achieve a final ABV and gravity as close as possible; repeat `--abvs` and `--fgs` for each input must. |
 
 For `blend-nearest`, specify each must using repeated flags. For example:
