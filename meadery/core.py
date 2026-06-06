@@ -586,11 +586,12 @@ class Must:
                           pka=fruit.pka, c_buf=fruit.c_buf)
         return self.combine(juice_must)
 
-    def add_acid(self, acid_grams: float, acid: AcidAddition) -> 'Must':
+    def add_acid(self, acid_grams: float, acid: AcidAddition, tol: float=1e-6) -> 'Must':
         '''Return a new Must after dissolving `acid_grams` of `acid` into this must.
-
+    
         :param acid_grams: mass of acid to add in grams
         :param acid: acid profile; must have components defined
+        :param tol: tolerance for root finding
         '''
         if acid_grams < 0:
             raise ValueError('acid_grams must be non-negative.')
@@ -621,7 +622,7 @@ class Must:
             a_acid = sum(C_i * Ka_i / (Ka_i + h) for C_i, Ka_i in acid_components)
             return h - Kw / h - a_must - a_acid + nc_must
 
-        new_ph = root_find(f, a=0.0, b=14.0)
+        new_ph = root_find(f, a=0.0, b=14.0, tol=tol)
 
         # update buffer state: add to existing
         added_mmol_per_l = sum(frac * x_g_per_l / mw * 1000 for frac, _, mw in acid.components)

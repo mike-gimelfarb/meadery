@@ -58,7 +58,7 @@ General notes on usage:
 | Command | Description |
 | --- | --- |
 | `add [--vol --og --ph --pka --cbuf \| --recipe] --fermentable --mass` | Add a fermentable to a must. |
-| `add-acid [--vol --og --ph --pka --cbuf \| --recipe] [--acid] --mass` | Add a acid to a must. |
+| `add-acid [--vol --og --ph --pka --cbuf \| --recipe] [--acid] --mass [--tol]` | Add a acid to a must. |
 | `add-fruit [--vol --og --ph --pka --cbuf \| --recipe] --fruit --mass [--extract-yield]` | Add solid fruit to a must. |
 | `add-fruit-juice [--vol --og --ph --pka --cbuf \| --recipe] --fruit --juice-vol` | Add fruit juice to a must. |
 | `add-honey [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add honey to a must. |

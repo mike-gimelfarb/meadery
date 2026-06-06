@@ -364,12 +364,13 @@ def must_add_acid(
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
     mass: float = typer.Option(..., "--mass", help="Acid mass in grams"),
+    tol: float = typer.Option(1e-6, "--tol", help="Tolerance for root finding in pH calculation"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
         ph=ph, pKa=pKa, c_buf=c_buf)
     acid_obj = get_acid_object(acid)
-    result = base_must.add_acid(acid_grams=mass, acid=acid_obj).ph
+    result = base_must.add_acid(acid_grams=mass, acid=acid_obj, tol=tol).ph
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
