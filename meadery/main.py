@@ -150,6 +150,15 @@ def get_fruit_object(fruit: str) -> object:
     return fruit_obj
 
 
+def get_acid_object(acid: str) -> object:
+    acid_key = acid.strip().lower()
+    acid_obj = ACID_ADJUSTMENTS.get(acid_key)
+    if acid_obj is None:
+        choices = ", ".join(sorted(ACID_ADJUSTMENTS.keys()))
+        raise typer.BadParameter(f"Unknown acid: {acid_key}, choose from: {choices}")
+    return acid_obj
+
+
 # ===================================================
 #              Conversion and Calibration
 # ===================================================
@@ -340,6 +349,27 @@ def must_add(
         ph=ph, pKa=pKa, c_buf=c_buf)
     fermentable_obj = get_fermentable_object(fermentable)
     result = base_must.add(fermentable_obj, mass=mass)
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+
+
+@app.command("add-acid", help="Add an acid to the must")
+def must_add_acid(
+    volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
+    gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
+    ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
+    pKa: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
+    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
+    acid: str = typer.Option("blend", "--acid", help="Acid name",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
+    mass: float = typer.Option(..., "--mass", help="Acid mass in grams"),
+) -> None:
+    base_must = _must_from_args(
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=ph, pKa=pKa, c_buf=c_buf)
+    acid_obj = get_acid_object(acid)
+    result = base_must.add_acid(acid_grams=mass, acid=acid_obj).ph
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
@@ -557,11 +587,7 @@ def acidify(
         autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
 ) -> None:
     acid_key = acid.strip().lower()
-    adj_obj = ACID_ADJUSTMENTS.get(acid_key)
-    if adj_obj is None:
-        choices = ", ".join(sorted(ACID_ADJUSTMENTS.keys()))
-        raise typer.BadParameter(f"unknown acid '{acid}'. Choose one of: {choices}")
-
+    adj_obj = get_acid_object(acid_key)
     must = _must_from_args(
         label="Must", recipe=recipe, volume=volume, gravity=1.0, 
         ph=ph, pKa=pka, c_buf=c_buf, require_ph=True)
@@ -634,11 +660,7 @@ def adjust_ta(
         autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
 ) -> None:
     acid_key = acid.strip().lower()
-    acid_obj = ACID_ADJUSTMENTS.get(acid_key)
-    if acid_obj is None:
-        choices = ", ".join(sorted(ACID_ADJUSTMENTS.keys()))
-        raise typer.BadParameter(f"unknown acid '{acid}'. Choose one of: {choices}")
-
+    acid_obj = get_acid_object(acid_key)
     must = _must_from_args(
         label="Must", recipe=recipe, volume=volume, gravity=1.0, 
         ph=None, pKa=None, c_buf=None, require_ph=False)

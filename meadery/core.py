@@ -586,6 +586,55 @@ class Must:
                           pka=fruit.pka, c_buf=fruit.c_buf)
         return self.combine(juice_must)
 
+    def add_acid(self, acid_grams: float, acid: AcidAddition) -> 'Must':
+        '''Return a new Must after dissolving `acid_grams` of `acid` into this must.
+
+        :param acid_grams: mass of acid to add in grams
+        :param acid: acid profile; must have components defined
+        '''
+        if acid_grams < 0:
+            raise ValueError('acid_grams must be non-negative.')
+        if not acid.components:
+            raise ValueError('AcidAddition must have components defined.')
+        if acid_grams == 0:
+            return Must(volume=self.volume, gravity=self.gravity,
+                        ph=self.ph, pka=self.pka, c_buf=self.c_buf)
+
+        Kw = 1e-14
+        Ka_must = 10 ** (-self.pka)
+        h_initial = 10 ** (-self.ph)
+        C_must = self.c_buf / 1000  # mol/L
+        x_g_per_l = acid_grams / (self.volume / 1000.0)
+
+        # net cation concentration from the must's initial state
+        nc_must = C_must * Ka_must / (Ka_must + h_initial) + Kw / h_initial - h_initial
+
+        # acid component concentrations in the must (mol/L each)
+        acid_components = [
+            (frac * x_g_per_l / mw, 10 ** (-pka))
+            for frac, pka, mw in acid.components
+        ]
+
+        def f(ph_f):
+            h = 10 ** (-ph_f)
+            a_must = C_must * Ka_must / (Ka_must + h)
+            a_acid = sum(C_i * Ka_i / (Ka_i + h) for C_i, Ka_i in acid_components)
+            return h - Kw / h - a_must - a_acid + nc_must
+
+        new_ph = root_find(f, a=0.0, b=14.0)
+
+        # update buffer state: add to existing
+        added_mmol_per_l = sum(frac * x_g_per_l / mw * 1000 for frac, _, mw in acid.components)
+        new_c_buf = self.c_buf + added_mmol_per_l
+
+        # mole-fraction weighted pKa of the added acid blend
+        total_mol_added = sum(frac * x_g_per_l / mw for frac, _, mw in acid.components)
+        pka_added = sum(frac * x_g_per_l / mw * pka
+                        for frac, pka, mw in acid.components) / total_mol_added
+        new_pka = (self.pka * self.c_buf + pka_added * added_mmol_per_l) / new_c_buf
+        return Must(volume=self.volume, gravity=self.gravity,
+                    ph=new_ph, pka=new_pka, c_buf=new_c_buf)
+
     def fortify_volume_simple(self, target_abv: float, current_abv: float, 
                               spirit_abv: float=40.0) -> float:
         '''Returns the volume of spirit needed to fortify this must to a target ABV
