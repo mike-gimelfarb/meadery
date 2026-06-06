@@ -176,7 +176,7 @@ Current fruits are defined in `meadery/data/fruits.json`:
 ### Yeast Strains
 
 Current yeast strains are defined in `meadery/data/yeasts.json`:
-- `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`
+- `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`.
 
 ### Acids and Bases
 
