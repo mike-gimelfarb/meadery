@@ -598,7 +598,7 @@ def adjust_ta(
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
     current_ta: float = typer.Option(..., "--current-ta", help="Current TA in g/L as tartaric equivalent"),
     target_ta: float = typer.Option(..., "--target-ta", help="Target TA in g/L as tartaric equivalent"),
-    acid: str = typer.Option("tartaric", "--acid", help="Acid to add",
+    acid: str = typer.Option("blend", "--acid", help="Acid to add",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
 ) -> None:

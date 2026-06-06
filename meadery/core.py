@@ -403,6 +403,7 @@ ACID_ADJUSTMENTS = {
     'tartaric': AcidAddition(ta_effect=1.0),
     'malic': AcidAddition(ta_effect=75.04 / 67.05),
     'citric': AcidAddition(ta_effect=75.04 / 64.04),
+    'blend': AcidAddition(ta_effect=1.128),
 }
 
 
