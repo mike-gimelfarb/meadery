@@ -235,4 +235,4 @@ blueberry juice=1000
 acid-blend=z
 ```
 
-will determine the amount of honey and water required to match target OG, volume and/or pH desired. 
+will determine the amount of honey, water and acid blend required to match target OG, volume and/or pH desired. 
