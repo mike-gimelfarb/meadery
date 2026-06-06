@@ -636,6 +636,9 @@ def acidify(
         f'Must pH: {round(must.ph, 2)}\n'
         f'Amount: {round(result, 2)}g {acid_key}\n'
     )
+    if result / (must.volume / 3785) > 3.8:
+        typer.echo("Warning: acid addition exceeds the recommended maximum "
+                   "of 3.8 g/gallon, which may lead to off-flavors or other issues.")
 
 
 @app.command("deacidify", help="Calculate base addition to raise pH")
@@ -657,7 +660,6 @@ def deacidify(
         ph=ph, pKa=pka, c_buf=c_buf, require_ph=True)
     try:
         result = must.deacidify(target_ph=target_ph, base=adj_obj)
-        g_per_L = result / (must.volume / 1000)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
@@ -665,10 +667,9 @@ def deacidify(
         f'Must pH: {round(must.ph, 2)}\n'
         f'Amount: {round(result, 2)}g {base_key}\n'
     )
-    if g_per_L > 2:
+    if result / (must.volume / 3785) > 3.8:
         typer.echo("Warning: base addition exceeds the recommended "
-                   "maximum of 2 g/L, which may lead to off-flavors or "
-                   "other issues.")
+                   "maximum of 3.8 g/gallon, which may lead to off-flavors or other issues.")
 
 
 @app.command("pitch", help="Calculate yeast and nutrient amounts for pitching")
