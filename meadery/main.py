@@ -544,6 +544,37 @@ def calc_volumes(
 #           Adjuncts and Adjustments
 # ===================================================
 
+@app.command("acidify", help="Calculate acid addition to reduce pH")
+def acidify(
+    volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
+    ph: Optional[float] = typer.Option(None, "--ph", help="Must current pH"),
+    pka: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
+    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
+    target_ph: float = typer.Option(..., "--target-ph", help="Target pH of the must"),
+    acid: str = typer.Option("blend", "--acid", help="Acid to add",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
+) -> None:
+    acid_key = acid.strip().lower()
+    adj_obj = ACID_ADJUSTMENTS.get(acid_key)
+    if adj_obj is None:
+        choices = ", ".join(sorted(ACID_ADJUSTMENTS.keys()))
+        raise typer.BadParameter(f"unknown acid '{acid}'. Choose one of: {choices}")
+
+    must = _must_from_args(
+        label="Must", recipe=recipe, volume=volume, gravity=1.0, 
+        ph=ph, pKa=pka, c_buf=c_buf, require_ph=True)
+    try:
+        result = must.acidify(target_ph=target_ph, acid=adj_obj)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    echo_boxed(
+        f'{round(result, 2)}g {acid_key}\n'
+    )
+
+
 @app.command("pitch", help="Calculate yeast and nutrient amounts for pitching")
 def adjust_pitching_rate(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
@@ -561,7 +592,7 @@ def adjust_pitching_rate(
     )
 
 
-@app.command("so2-ph", help="Adjust SO2 based on pH")
+@app.command("sulfite-ph", help="Adjust SO2 based on pH")
 def adjust_so2_ph(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
@@ -578,7 +609,7 @@ def adjust_so2_ph(
     echo_boxed('\n'.join(lines))
 
 
-@app.command("so2-target", help="Adjust SO2 based on target ppm")
+@app.command("sulfite-ppm", help="Adjust SO2 based on target ppm")
 def adjust_so2_target(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),

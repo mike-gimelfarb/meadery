@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib import resources
 import json
 import math
@@ -396,14 +396,22 @@ def add_yeast_strain(name: str, abv_limit: float, nitrogen_requirement: str) -> 
 @dataclass
 class AcidAddition:
     ta_effect: float
+    components: list = field(default_factory=list)   # (weight_fraction, pKa, MW in g/mol)
 
 
 # Acid additions expressed as g/L tartaric-equivalent TA increase per g/L additive.
+# Components are (weight_fraction, pKa, MW g/mol) for adjust_ph.
 ACID_ADJUSTMENTS = {
-    'tartaric': AcidAddition(ta_effect=1.0),
-    'malic': AcidAddition(ta_effect=75.04 / 67.05),
-    'citric': AcidAddition(ta_effect=75.04 / 64.04),
-    'blend': AcidAddition(ta_effect=1.128),
+    'tartaric': AcidAddition(ta_effect=1.0,
+                             components=[(1.0, 2.98, 150.09)]),
+    'malic':    AcidAddition(ta_effect=75.04 / 67.05,
+                             components=[(1.0, 3.40, 134.09)]),
+    'citric':   AcidAddition(ta_effect=75.04 / 64.04,
+                             components=[(1.0, 3.13, 192.12)]),
+    'blend':    AcidAddition(ta_effect=1.128,
+                             components=[(1/3, 2.98, 150.09),
+                                         (1/3, 3.40, 134.09),
+                                         (1/3, 3.13, 192.12)]),
 }
 
 
@@ -873,10 +881,47 @@ class Must:
             'acid_addition_grams': total_grams,
         }
 
+    def acidify(self, target_ph: float, acid: AcidAddition) -> dict:
+        '''Return the acid addition needed to lower must pH to `target_ph`.
+
+        :param target_ph: the desired pH after acid addition (must be below current pH)
+        :param acid: acid profile; must have components defined
+        '''
+        if target_ph < 0 or target_ph > 14:
+            raise ValueError('target_ph must be between 0 and 14.')
+        if target_ph >= self.ph:
+            raise ValueError('target_ph must be lower than the current must pH.')
+        if not acid.components:
+            raise ValueError('AcidAddition must have components defined for pH adjustment.')
+
+        Kw = 1e-14
+        Ka_must = 10 ** (-self.pka)
+        h_initial = 10 ** (-self.ph)
+        h_target = 10 ** (-target_ph)
+        C_must = self.c_buf / 1000  # mol/L
+
+        # net cation concentration — fixed by the must's initial state
+        nc_must = C_must * Ka_must / (Ka_must + h_initial) + Kw / h_initial - h_initial
+
+        # anion contribution of the acid per g/L added, evaluated at target pH
+        anion_per_g = sum(
+            (frac / mw) * (10 ** (-pka) / (10 ** (-pka) + h_target))
+            for frac, pka, mw in acid.components
+        )
+
+        # must's own buffer anion at target pH
+        a_must_at_target = C_must * Ka_must / (Ka_must + h_target)
+
+        # closed-form: charge balance at target pH, solved for dose X
+        x_g_per_l = (h_target - Kw / h_target - a_must_at_target + nc_must) / anion_per_g
+        if x_g_per_l < 0:
+            raise ValueError('Calculated acid dose is negative; target pH may already be met.')
+        return x_g_per_l * (self.volume / 1000.0)
+
     # ====================================================================================
-    #                           Adjustment Calculation Methods    
+    #                           Adjustment Calculation Methods
     # ====================================================================================
-    
+
     def pitch_rate(self) -> dict:
         '''Returns the recommended yeast and Go-Ferm amounts in grams for this must.'''
         if self.gravity > 1.16:
