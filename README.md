@@ -179,7 +179,7 @@ Current yeast strains are defined in `meadery/data/yeasts.json`:
 ### Acids
 
 Current acids include `tartaric`, `malic`, `citric` and `blend` (LD Carlson brand).
-Acid calculations are based on the Henderson-Hasselbalch equation, and remain accurate given accurate `--pka` (pKa) and ``--cbuf` (buffering capacity in mmol/L) values.
+Acid calculations are based on the Henderson-Hasselbalch equation, and remain accurate given accurate `--pka` (pKa) and `--cbuf` (buffering capacity in mmol/L) values.
 
 
 ### Adding New Objects
