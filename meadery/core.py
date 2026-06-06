@@ -19,6 +19,11 @@ PH_BUFFERING_WARNING = (
 
 PH_SO2_WARNING = PH_BUFFERING_WARNING
 
+GRAVITY_WARNING = (
+    'WARNING: Gravity predictions are approximate. Actual gravity may differ due to '
+    'variations in fermentable composition, temperature, and measurement method.'
+)
+
 
 # ===================================================
 #                  HELPER FUNCTIONS

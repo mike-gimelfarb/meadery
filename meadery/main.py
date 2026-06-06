@@ -21,7 +21,7 @@ from meadery.core import (
     add_fermentable, add_fruit, add_yeast_strain,
     brix_to_sg, original_gravity, sg_to_brix, parse_recipe, solve_recipe,
     blend_to_gravity, blend_to_abv, blend_nearest, spirit_abv_to_sg,
-    PH_BUFFERING_WARNING
+    PH_BUFFERING_WARNING, GRAVITY_WARNING
 )
 
 
@@ -234,7 +234,7 @@ def calc_attenuation(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, 
         ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.attenuation(fg=fg)
-    echo_boxed(f'{round(result, 2)}%')
+    echo_boxed(f'{round(result, 2)}%\n\n{GRAVITY_WARNING}')
 
 
 @app.command("load-recipe", help="Load a recipe from a file")
@@ -246,7 +246,7 @@ def must_load_recipe(
         must = parse_recipe(recipe_path)
     except Exception as exc:
         raise typer.BadParameter(str(exc)) from exc
-    echo_boxed(f"{str(must)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(must)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("solve-recipe", help="Solve a recipe with variables to match target OG, volume, and/or pH")
@@ -268,7 +268,7 @@ def must_solve_recipe(
     ) or "(no variables)"
     echo_boxed(
         f"Solved variables:\n{variable_lines}\n\n"
-        f"Resulting must:\n{result['must']}\n\n{PH_BUFFERING_WARNING}"
+        f"Resulting must:\n{result['must']}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}"
     )
 
 
@@ -296,7 +296,7 @@ def calc_abv(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, 
         ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.abv(fg=fg, method=method.value)
-    echo_boxed(f'{round(result, 2)}%')
+    echo_boxed(f'{round(result, 2)}%\n\n{GRAVITY_WARNING}')
 
 
 @app.command("abv-potential", help="Calculate potential ABV from original gravity")
@@ -309,7 +309,7 @@ def calc_potential_abv(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, 
         ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.abv_potential(method=method.value)
-    echo_boxed(f'{round(result, 2)}%')
+    echo_boxed(f'{round(result, 2)}%\n\n{GRAVITY_WARNING}')
 
 
 @app.command("residual-co2", help="Calculate residual CO2 based on temperature")
@@ -337,7 +337,7 @@ def calc_stalled_gravity(
     yeast_obj = get_yeast_obj(yeast)
     result = base_must.stalled_final_gravity(
         yeast=yeast_obj, method=method.value, tol=tol, min_fg=min_fg)
-    echo_boxed(f'{round(result, 4)}')
+    echo_boxed(f'{round(result, 4)}\n\n{GRAVITY_WARNING}')
 
 
 # ===================================================
@@ -362,7 +362,7 @@ def must_add(
         ph=ph, pKa=pKa, c_buf=c_buf)
     fermentable_obj = get_fermentable_object(fermentable)
     result = base_must.add(fermentable_obj, mass=mass)
-    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("add-acid", help="Add an acid to the must")
@@ -384,7 +384,7 @@ def must_add_acid(
         ph=ph, pKa=pKa, c_buf=c_buf)
     acid_obj = get_acid_object(acid)
     result = base_must.add_acid(acid_grams=mass, acid=acid_obj, tol=tol)
-    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("add-base", help="Add a base to the must")
@@ -406,7 +406,7 @@ def must_add_base(
         ph=ph, pKa=pKa, c_buf=c_buf)
     base_obj = get_base_object(base)
     result = base_must.add_base(base_grams=mass, base=base_obj, tol=tol)
-    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("add-fruit", help="Add a fruit to the must")
@@ -433,7 +433,7 @@ def must_add_fruit(
         result = base_must.add_fruit(selected_fruit, mass=mass, extract_yield=extract_yield)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("add-fruit-juice", help="Add fruit juice to the must")
@@ -459,7 +459,7 @@ def must_add_fruit_juice(
         result = base_must.add_fruit_juice(selected_fruit, volume=juice_volume)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("add-honey", help="Add honey to the must")
@@ -476,7 +476,7 @@ def must_add_honey(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
         ph=ph, pKa=pKa, c_buf=c_buf)
     result = base_must.add_honey(mass=mass)
-    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("add-sugar", help="Add sugar to the must")
@@ -493,7 +493,7 @@ def must_add_sugar(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
         ph=ph, pKa=pKa, c_buf=c_buf)
     result = base_must.add_sugar(mass=mass)
-    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("add-water", help="Add water to the must")
@@ -510,7 +510,7 @@ def must_add_water(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
         ph=ph, pKa=pKa, c_buf=c_buf)
     result = base_must.add_water(mass=mass)
-    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("adjust-gravity", help="Adjust the gravity of the must")
@@ -538,9 +538,9 @@ def adjust_gravity(
         fermentable_obj = get_fermentable_object(fermentable)
         result = base_must.adjust_gravity(target_sg=target_sg, fermentable=fermentable_obj)
     if fruit:
-        result = f'{round(result, 2)}ml'
+        result = f'{round(result, 2)}ml\n\n{GRAVITY_WARNING}'
     else:
-        result = f'{round(result, 2)}g'
+        result = f'{round(result, 2)}g\n\n{GRAVITY_WARNING}'
     echo_boxed(result)
 
 
@@ -567,7 +567,7 @@ def must_combine(
         ph=ph_b, pKa=pKa_b, c_buf=c_buf_b)
 
     result = must_a.combine(must_b)
-    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
 @app.command("volumes", help="Calculate volumes of fermentable and base to achieve a target gravity")
@@ -602,7 +602,7 @@ def calc_volumes(
     base_units = "ml" if fruit else "g"
     echo_boxed(
         f'{fermentable_key}: {round(result[0], 2)}g\n'
-        f'{base_key}: {round(result[1], 2)}{base_units}'
+        f'{base_key}: {round(result[1], 2)}{base_units}\n\n{GRAVITY_WARNING}'
     )
 
 
@@ -632,13 +632,16 @@ def acidify(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
-    echo_boxed(
+    print_str = (
         f'Must pH: {round(must.ph, 2)}\n'
-        f'Amount: {round(result, 2)}g {acid_key}\n'
+        f'Amount: {round(result, 2)}g {acid_key}\n\n{PH_BUFFERING_WARNING}'
     )
     if result / (must.volume / 3785) > 3.8:
-        typer.echo("Warning: acid addition exceeds the recommended maximum "
-                   "of 3.8 g/gallon, which may lead to off-flavors or other issues.")
+        print_str += (
+            "\nWarning: acid addition exceeds the recommended maximum "
+            "of 3.8 g/gallon, which may lead to off-flavors or other issues."
+        )
+    echo_boxed(print_str)
 
 
 @app.command("deacidify", help="Calculate base addition to raise pH")
@@ -663,13 +666,16 @@ def deacidify(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
-    echo_boxed(
+    print_str = (
         f'Must pH: {round(must.ph, 2)}\n'
-        f'Amount: {round(result, 2)}g {base_key}\n'
+        f'Amount: {round(result, 2)}g {base_key}\n\n{PH_BUFFERING_WARNING}'
     )
     if result / (must.volume / 3785) > 3.8:
-        typer.echo("Warning: base addition exceeds the recommended "
-                   "maximum of 3.8 g/gallon, which may lead to off-flavors or other issues.")
+        print_str += (
+            "\nWarning: base addition exceeds the recommended "
+            "maximum of 3.8 g/gallon, which may lead to off-flavors or other issues."
+        )
+    echo_boxed(print_str)
 
 
 @app.command("pitch", help="Calculate yeast and nutrient amounts for pitching")
@@ -685,7 +691,7 @@ def adjust_pitching_rate(
     echo_boxed(
         f'Yeast: {round(result["yeast_g"], 2)}g\n'
         f'Go-Ferm: {round(result["goferm_g"], 2)}g\n'
-        f'Water: {round(result["water_ml"], 2)}ml'
+        f'Water: {round(result["water_ml"], 2)}ml\n\n{GRAVITY_WARNING}'
     )
 
 
@@ -717,7 +723,7 @@ def adjust_so2_target(
         ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.so2_from_target_ppm(target_ppm=target_ppm)
     result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
-    echo_boxed(result_str)
+    echo_boxed(result_str + '\n\n' + PH_BUFFERING_WARNING)
 
 
 @app.command("ta", help="Adjust titratable acidity (TA) of the must")
@@ -742,7 +748,7 @@ def adjust_ta(
 
     echo_boxed(
         f'Mass: {round(result["acid_addition_grams"], 2)}g {acid_key}\n'
-        f'Rate: {round(result["acid_addition_g_per_l"], 3)}g/L'
+        f'Rate: {round(result["acid_addition_g_per_l"], 3)}g/L\n\n{PH_BUFFERING_WARNING}'
     )
 
 
@@ -761,7 +767,7 @@ def adjust_tosna3(
     yeast_obj = get_yeast_obj(yeast)
     result = base_must.tosna_3(yeast=yeast_obj)
     result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
-    echo_boxed(result_str)
+    echo_boxed(result_str + '\n\n' + GRAVITY_WARNING)
     
 
 # ===================================================
@@ -903,9 +909,9 @@ def backsweeten(
             final_sg=final_sg, target_sg=target_sg, sweetener=fermentable_obj)
         
     if fruit:
-        result = f'{round(result, 2)}ml'
+        result = f'{round(result, 2)}ml\n\n{GRAVITY_WARNING}'
     else:
-        result = f'{round(result, 2)}g'
+        result = f'{round(result, 2)}g\n\n{GRAVITY_WARNING}'
     echo_boxed(result)
 
 
@@ -956,7 +962,7 @@ def calc_fortify_fg(
         f'Spirit volume: {round(result["spirit_volume"], 2)}ml\n'
         f'Proportion: {round(100 * result["proportion"], 2)}%\n'
         f'Fortify gravity: {round(result["fortify_gravity"], 4)}\n'
-        f'Fortify abv: {round(result["fortify_abv"], 2)}%'
+        f'Fortify abv: {round(result["fortify_abv"], 2)}%\n\n{GRAVITY_WARNING}'
     )
 
 
@@ -975,7 +981,7 @@ def calc_fortify_abv(
         ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.fortify_abv(
         fg=fg, spirit_vol_ml=spirit_vol, spirit_abv=spirit_abv, method=method.value)
-    echo_boxed(f'{round(result, 2)}%')
+    echo_boxed(f'{round(result, 2)}%\n\n{GRAVITY_WARNING}')
 
 
 @app.command("prime", help="Calculate priming sugar required to achieve target carbonation")
@@ -994,7 +1000,7 @@ def calc_priming_sugar(
     fermentable_obj = get_fermentable_object(fermentable)
     result = must.priming_sugar(
         fermentable=fermentable_obj, target_volumes=target_co2_vol, temp=temp)
-    echo_boxed(f'{round(result, 2)}g')
+    echo_boxed(f'{round(result, 2)}g\n\n{GRAVITY_WARNING}')
 
 
 # ===================================================
