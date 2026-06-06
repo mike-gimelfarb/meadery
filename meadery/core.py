@@ -1116,6 +1116,29 @@ class Must:
         target_ppm = target_mol_so2 * (1.0 + (10.0 ** (self.ph - 1.81)))
         return self.so2_from_target_ppm(target_ppm=target_ppm)
 
+    def ph_dilution_correction(self, parts_water: int, strip_ph: float, tol: float = 1e-6) -> float:
+        '''Returns the corrected must pH from a strip reading taken on a diluted sample.
+
+        Useful when dark-colored musts obscure pH strip readings: dilute one part must
+        with `parts_water` parts of distilled water to lighten the color, read the strip,
+        then pass that reading here to recover the original must pH.
+
+        :param parts_water: parts of distilled water per part of must (e.g. 5 for 1:5)
+        :param strip_ph: pH value read from the strip on the diluted sample
+        :param tol: tolerance for the internal root-finding
+        '''
+        if parts_water <= 0:
+            raise ValueError('parts_water must be positive.')
+        if not (0 <= strip_ph <= 14):
+            raise ValueError('strip_ph must be between 0 and 14.')
+
+        WATER = FERMENTABLES['water']
+        predicted_diluted_ph = Must.ph_of_mixture(
+            1.0, self.ph, self.pka, self.c_buf,
+            parts_water, WATER.ph, WATER.pka, WATER.c_buf, tol=tol,
+        )
+        return strip_ph - (predicted_diluted_ph - self.ph)
+
     @staticmethod
     def residual_co2(temp: float) -> float:
         '''Returns the residual CO2 given the temperature of the liquid in Celsius.'''

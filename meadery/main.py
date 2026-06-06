@@ -670,6 +670,27 @@ def adjust_ta(
     )
 
 
+@app.command("adjust-ph-strip", help="Adjustment of test strip pH to account for dilution")
+def adjust_ph_strip(
+    ph: Optional[float] = typer.Option(None, "--ph", help="Must current pH"),
+    pka: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
+    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
+    ph_strip: float = typer.Option(..., "--ph-strip", help="pH reading from test strip after dilution"),
+    parts_water: int = typer.Option(5, "--parts-water", help="Parts water added for dilution"),
+) -> None:
+    must = _must_from_args(
+        label="Must", recipe=recipe, volume=1.0, gravity=1.0, 
+        ph=ph, pKa=pka, c_buf=c_buf, require_ph=True)
+    try:
+        result = must.ph_dilution_correction(parts_water=parts_water, strip_ph=ph_strip)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    echo_boxed(
+        f'{round(result, 2)}\n\n{PH_BUFFERING_WARNING}'
+    )
+
 @app.command("deacidify", help="Calculate base addition to raise pH")
 def deacidify(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
