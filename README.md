@@ -128,7 +128,7 @@ The current default in all calculations is `duncan`, unless specified in `--meth
 For potential abv calculations, the options are currently `dubrunfaut`, `marsh`, `margalit`, `cooke`, `pambianchi` and `honneyman`, the default is `cooke`.
 
 
-## Dynamic Fermentables, Fruits and Yeast Strains
+## Dynamic Fermentables, Fruits, Yeast Strains and Adjuncts
 
 ### Fermentables
 
@@ -176,12 +176,18 @@ Current fruits are defined in `meadery/data/fruits.json`:
 Current yeast strains are defined in `meadery/data/yeasts.json`:
 - `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`
 
+## Acids
+
+Current acids include `tartaric`, `malic`, `citric` and `blend` (LD Carlson brand).
+Acid calculations are based on the Henderson-Hasselbalch equation, and remain accurate given accurate `--pka` (pKa) and ``--cbuf` (buffering capacity in mmol/L) values.
+
+
 ### Adding New Objects
 
 Functions `new-fermentable`, `new-fruit` and `new-yeast` allow adding new fermentable, fruit and yeast strains permanently, which can be referred in any calculations, for instance
 
 ```bash
-meadery new-fruit --name tulaberry --brix 18 --moisture 84 --ph 3.5
+meadery new-fruit --name tulaberry --brix 18 --moisture 84 --ph 3.5 --pka 3.40 --cbuf 40
 ```
 
 will add the `tulaberry` to the `fruits.json` so it can be referred in calculations involving fruit additions.
