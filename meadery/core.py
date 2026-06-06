@@ -415,6 +415,21 @@ ACID_ADJUSTMENTS = {
 }
 
 
+@dataclass
+class BaseAddition:
+    mw: float               # molecular weight in g/mol
+    cations_per_mol: float  # equivalents of positive charge added per mole dissolved
+
+
+# At must pH (3–4.5) all bicarbonate/carbonate reacts with H⁺ and escapes as CO₂.
+# The only permanent effect is the cation (K⁺, Na⁺, Ca²⁺), which raises nc.
+BASE_ADJUSTMENTS = {
+    'potassium-bicarbonate': BaseAddition(mw=100.12, cations_per_mol=1),
+    'sodium-bicarbonate':    BaseAddition(mw=84.01,  cations_per_mol=1),
+    'calcium-carbonate':     BaseAddition(mw=100.09, cations_per_mol=2),
+}
+
+
 # ===================================================
 #                  MUST FUNCTIONS
 # ===================================================
@@ -635,6 +650,44 @@ class Must:
         new_pka = (self.pka * self.c_buf + pka_added * added_mmol_per_l) / new_c_buf
         return Must(volume=self.volume, gravity=self.gravity,
                     ph=new_ph, pka=new_pka, c_buf=new_c_buf)
+
+    def add_base(self, base_grams: float, base: BaseAddition, tol: float=1e-6) -> 'Must':
+        '''Return a new Must after dissolving `base_grams` of `base` into this must.
+
+        At must pH (3–4.5) bicarbonate and carbonate react immediately with H⁺ and
+        escape as CO₂. The permanent effect is only the cation (K⁺, Ca²⁺, etc.)
+        which raises nc (net cation concentration), shifting pH up.
+
+        Volume and gravity are treated as unchanged at typical brewing doses (< 5 g/L).
+
+        :param base_grams: mass of base to add in grams
+        :param base: base profile from BASE_ADJUSTMENTS
+        :param tol: tolerance for root finding
+        '''
+        if base_grams < 0:
+            raise ValueError('base_grams must be non-negative.')
+        if base_grams == 0:
+            return Must(volume=self.volume, gravity=self.gravity,
+                        ph=self.ph, pka=self.pka, c_buf=self.c_buf)
+
+        Kw = 1e-14
+        Ka_must = 10 ** (-self.pka)
+        h_initial = 10 ** (-self.ph)
+        C_must = self.c_buf / 1000  # mol/L
+        x_g_per_l = base_grams / (self.volume / 1000.0)
+
+        # net cation concentration from must's initial state, plus cations from base
+        nc_must = C_must * Ka_must / (Ka_must + h_initial) + Kw / h_initial - h_initial
+        nc_new = nc_must + (x_g_per_l / base.mw) * base.cations_per_mol
+
+        def f(ph_f):
+            h = 10 ** (-ph_f)
+            a_must = C_must * Ka_must / (Ka_must + h)
+            return h - Kw / h - a_must + nc_new
+
+        new_ph = root_find(f, a=0.0, b=14.0, tol=tol)
+        return Must(volume=self.volume, gravity=self.gravity,
+                    ph=new_ph, pka=self.pka, c_buf=self.c_buf)
 
     def fortify_volume_simple(self, target_abv: float, current_abv: float, 
                               spirit_abv: float=40.0) -> float:
@@ -968,6 +1021,40 @@ class Must:
             raise ValueError('Calculated acid dose is negative; target pH may already be met.')
         return x_g_per_l * (self.volume / 1000.0)
 
+    def deacidify(self, target_ph: float, base: BaseAddition) -> float:
+        '''Return the base addition in grams needed to raise must pH to `target_ph`.
+
+        At must pH the bicarbonate/carbonate reacts completely with H⁺ and escapes as
+        CO₂; the permanent effect is the cation raising nc. This gives a closed-form
+        solution — no root-finding required.
+
+        :param target_ph: the desired pH after base addition (must be above current pH)
+        :param base: base profile from BASE_ADJUSTMENTS
+        '''
+        if target_ph < 0 or target_ph > 14:
+            raise ValueError('target_ph must be between 0 and 14.')
+        if target_ph <= self.ph:
+            raise ValueError('target_ph must be higher than the current must pH.')
+
+        Kw = 1e-14
+        Ka_must = 10 ** (-self.pka)
+        h_initial = 10 ** (-self.ph)
+        h_target = 10 ** (-target_ph)
+        C_must = self.c_buf / 1000  # mol/L
+
+        # net cation concentration from the must's initial state
+        nc_must = C_must * Ka_must / (Ka_must + h_initial) + Kw / h_initial - h_initial
+
+        # must's buffer anion at target pH
+        a_must_at_target = C_must * Ka_must / (Ka_must + h_target)
+
+        # closed-form: charge balance at target pH, solved for cation increment
+        delta_nc = a_must_at_target + Kw / h_target - h_target - nc_must
+        x_g_per_l = delta_nc * base.mw / base.cations_per_mol
+        if x_g_per_l < 0:
+            raise ValueError('Calculated base dose is negative; target pH may already be met.')
+        return x_g_per_l * (self.volume / 1000.0)
+
     # ====================================================================================
     #                           Adjustment Calculation Methods
     # ====================================================================================
@@ -1094,6 +1181,12 @@ def _load_recipe_file(path: str) -> List[Tuple[str, object, object]]:
             elif key in FRUITS:
                 fruit = FRUITS[key]
                 result.append(('fruit', fruit, rhs))
+            elif key in ACID_ADJUSTMENTS:
+                acid = ACID_ADJUSTMENTS[key]
+                result.append(('acid', acid, rhs))
+            elif key in BASE_ADJUSTMENTS:
+                base = BASE_ADJUSTMENTS[key]
+                result.append(('base', base, rhs))
             else:
                 raise ValueError(f"Line {lineno}: unknown ingredient '{lhs}'.")
     return result
@@ -1109,6 +1202,10 @@ def _load_recipe_list(recipe_list: List[Tuple[str, object, object]]) -> Must:
             must = must.add(ingredient, qty)
         elif line_type == 'fruit':
             must = must.add_fruit(ingredient, qty)
+        elif line_type == 'acid':
+            must = must.add_acid(qty, ingredient)
+        elif line_type == 'base':
+            must = must.add_base(qty, ingredient)
     return must
         
 

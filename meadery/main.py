@@ -16,7 +16,7 @@ from trogon.trogon import Trogon, CommandBuilder
 from trogon.typer import init_tui 
 
 from meadery.core import (
-    ACID_ADJUSTMENTS, FERMENTABLES, FRUITS, YEAST_STRAINS,
+    ACID_ADJUSTMENTS, BASE_ADJUSTMENTS, FERMENTABLES, FRUITS, YEAST_STRAINS,
     Hydrometer, Must, Refractometer,
     add_fermentable, add_fruit, add_yeast_strain,
     brix_to_sg, original_gravity, sg_to_brix, parse_recipe, solve_recipe,
@@ -63,6 +63,10 @@ def get_yeast_choices() -> List[str]:
 
 def get_acid_choices() -> List[str]:
     return list(ACID_ADJUSTMENTS.keys())
+
+
+def get_base_choices() -> List[str]:
+    return list(BASE_ADJUSTMENTS.keys())
 
 
 def _validate_must(volume: float, gravity: float, ph: Optional[float]=None,
@@ -157,6 +161,15 @@ def get_acid_object(acid: str) -> object:
         choices = ", ".join(sorted(ACID_ADJUSTMENTS.keys()))
         raise typer.BadParameter(f"Unknown acid: {acid_key}, choose from: {choices}")
     return acid_obj
+
+
+def get_base_object(base: str) -> object:
+    base_key = base.strip().lower()
+    base_obj = BASE_ADJUSTMENTS.get(base_key)
+    if base_obj is None:
+        choices = ", ".join(sorted(BASE_ADJUSTMENTS.keys()))
+        raise typer.BadParameter(f"Unknown base: {base_key}, choose from: {choices}")
+    return base_obj
 
 
 # ===================================================
@@ -370,7 +383,29 @@ def must_add_acid(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
         ph=ph, pKa=pKa, c_buf=c_buf)
     acid_obj = get_acid_object(acid)
-    result = base_must.add_acid(acid_grams=mass, acid=acid_obj, tol=tol).ph
+    result = base_must.add_acid(acid_grams=mass, acid=acid_obj, tol=tol)
+    echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
+
+
+@app.command("add-base", help="Add a base to the must")
+def must_add_base(
+    volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
+    gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
+    ph: Optional[float] = typer.Option(None, "--ph", help="Must pH"),
+    pKa: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
+    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
+    base: str = typer.Option("potassium-bicarbonate", "--base", help="Base name",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_base_choices() if k.startswith(incomplete)]),
+    mass: float = typer.Option(..., "--mass", help="Base mass in grams"),
+    tol: float = typer.Option(1e-6, "--tol", help="Tolerance for root finding in pH calculation"),
+) -> None:
+    base_must = _must_from_args(
+        label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
+        ph=ph, pKa=pKa, c_buf=c_buf)
+    base_obj = get_base_object(base)
+    result = base_must.add_base(base_grams=mass, base=base_obj, tol=tol)
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}")
 
 
@@ -598,8 +633,42 @@ def acidify(
         raise typer.BadParameter(str(exc)) from exc
 
     echo_boxed(
-        f'{round(result, 2)}g {acid_key}\n'
+        f'Must pH: {round(must.ph, 2)}\n'
+        f'Amount: {round(result, 2)}g {acid_key}\n'
     )
+
+
+@app.command("deacidify", help="Calculate base addition to raise pH")
+def deacidify(
+    volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
+    ph: Optional[float] = typer.Option(None, "--ph", help="Must current pH"),
+    pka: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
+    c_buf: Optional[float] = typer.Option(40.0, "--cbuf", help="Must buffering capacity in mmol/L"),
+    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
+    target_ph: float = typer.Option(..., "--target-ph", help="Target pH of the must"),
+    base: str = typer.Option("potassium-bicarbonate", "--base", help="Base to add",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_base_choices() if k.startswith(incomplete)]),
+) -> None:
+    base_key = base.strip().lower()
+    adj_obj = get_base_object(base_key)
+    must = _must_from_args(
+        label="Must", recipe=recipe, volume=volume, gravity=1.0, 
+        ph=ph, pKa=pka, c_buf=c_buf, require_ph=True)
+    try:
+        result = must.deacidify(target_ph=target_ph, base=adj_obj)
+        g_per_L = result / (must.volume / 1000)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    echo_boxed(
+        f'Must pH: {round(must.ph, 2)}\n'
+        f'Amount: {round(result, 2)}g {base_key}\n'
+    )
+    if g_per_L > 2:
+        typer.echo("Warning: base addition exceeds the recommended "
+                   "maximum of 2 g/L, which may lead to off-flavors or "
+                   "other issues.")
 
 
 @app.command("pitch", help="Calculate yeast and nutrient amounts for pitching")

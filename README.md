@@ -59,6 +59,7 @@ General notes on usage:
 | --- | --- |
 | `add [--vol --og --ph --pka --cbuf \| --recipe] --fermentable --mass` | Add a fermentable to a must. |
 | `add-acid [--vol --og --ph --pka --cbuf \| --recipe] [--acid] --mass [--tol]` | Add a acid to a must. |
+| `add-base [--vol --og --ph --pka --cbuf \| --recipe] [--base] --mass [--tol]` | Add a base to a must. |
 | `add-fruit [--vol --og --ph --pka --cbuf \| --recipe] --fruit --mass [--extract-yield]` | Add solid fruit to a must. |
 | `add-fruit-juice [--vol --og --ph --pka --cbuf \| --recipe] --fruit --juice-vol` | Add fruit juice to a must. |
 | `add-honey [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add honey to a must. |
@@ -74,6 +75,7 @@ General notes on usage:
 | Command | Description |
 | --- | --- |
 | `acidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--acid]` | Compute acid addition to reduce pH. |
+| `deacidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--base]` | Compute base addition to increase pH. |
 | `pitch [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. |
 | `sulfite-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. |
 | `sulfite-ppm [--vol \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. |
@@ -176,10 +178,12 @@ Current fruits are defined in `meadery/data/fruits.json`:
 Current yeast strains are defined in `meadery/data/yeasts.json`:
 - `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`
 
-### Acids
+### Acids and Bases
 
 Current acids include `tartaric`, `malic`, `citric` and `blend` (LD Carlson brand).
-Acid calculations are based on the Henderson-Hasselbalch equation, and remain accurate given accurate `--pka` (pKa) and `--cbuf` (buffering capacity in mmol/L) values.
+Current bases include `calcium-carbonate`, `potassium-bicarbonate` and `sodium-bicarbonate`.
+
+pH calculations are based on the Henderson-Hasselbalch equation, and remain accurate given accurate `--pka` (pKa) and `--cbuf` (buffering capacity in mmol/L) values.
 
 
 ### Adding New Objects
