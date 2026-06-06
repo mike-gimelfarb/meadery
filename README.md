@@ -205,7 +205,8 @@ Many functions accept a `--recipe` argument instead of volume, original graviy a
 
 Rules:
 - One instruction per non-empty line: `<ingredient>=<quantity>`
-- Quantities: fermentables and whole fruit are in grams; fruit juice is in milliliters.
+- `<ingredient>` must be a valid fermentable, fruit, fruit juice, acid or base.
+- Quantities: fermentables, whole fruit, acids and bases are in grams; fruit juice is in milliliters.
 - Fruit juice lines use the form `<fruit> juice=<ml>` (example: `blueberry juice=500`).
 - `water` may be specified as a fermentable (grams; 1 g = 1 mL).
 - Lines beginning with `#` or blank lines are ignored.
@@ -217,6 +218,7 @@ honey=500
 water=2500
 blueberry juice=1000
 table-sugar=200
+acid-blend=2
 ```
 
 Ingredient names are matched case-insensitively against the `FERMENTABLES` and `FRUITS` lists in the codebase.
@@ -230,7 +232,7 @@ The `--solve-recipe` function allows for some ingredients in a recipe file to be
 honey=x
 water=y
 blueberry juice=1000
-table-sugar=200
+acid-blend=z
 ```
 
-will determine the amount of honey and water required to match target OG, volume and/or pH. 
+will determine the amount of honey and water required to match target OG, volume and/or pH desired. 
