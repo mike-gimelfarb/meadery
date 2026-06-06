@@ -70,16 +70,16 @@ General notes on usage:
 | `solve-recipe --recipe [--target-og] [--target-vol] [--target-ph]` | Solve unknowns in a recipe file to match target OG, volume and pH. |
 | `volumes --target-og --target-vol [--fermentable] [--base]` | Compute fermentable/base amounts required. |
 
-### Pitching, Nutrients, Acidity Adjustmnt and Sulfites
+### Pitching, Nutrients, Acid Adjustments and Sulfites
 
 | Command | Description |
 | --- | --- |
 | `acidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--acid]` | Compute acid addition to reduce pH. |
+| `acidify-ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
 | `deacidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--base]` | Compute base addition to increase pH. |
 | `pitch [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. |
 | `sulfite-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. |
 | `sulfite-ppm [--vol \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. |
-| `ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
 | `tosna [--vol --og \| --recipe] --yeast` | Compute TOSNA 3.0 nutrient schedule. |
 
 ### Blending

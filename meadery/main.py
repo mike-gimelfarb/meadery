@@ -644,6 +644,32 @@ def acidify(
     echo_boxed(print_str)
 
 
+@app.command("acidify-ta", help="Adjust titratable acidity (TA) of the must")
+def adjust_ta(
+    volume: Optional[float] = typer.Option(None, "--vol", help="Batch volume in mL"),
+    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
+    current_ta: float = typer.Option(..., "--current-ta", help="Current TA in g/L as tartaric equivalent"),
+    target_ta: float = typer.Option(..., "--target-ta", help="Target TA in g/L as tartaric equivalent"),
+    acid: str = typer.Option("acid-blend", "--acid", help="Acid to add",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
+) -> None:
+    acid_key = acid.strip().lower()
+    acid_obj = get_acid_object(acid_key)
+    must = _must_from_args(
+        label="Must", recipe=recipe, volume=volume, gravity=1.0, 
+        ph=None, pKa=None, c_buf=None, require_ph=False)
+    try:
+        result = must.adjust_ta(current_ta=current_ta, target_ta=target_ta, acid=acid_obj)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    echo_boxed(
+        f'Mass: {round(result["acid_addition_grams"], 2)}g {acid_key}\n'
+        f'Rate: {round(result["acid_addition_g_per_l"], 3)}g/L\n\n{PH_BUFFERING_WARNING}'
+    )
+
+
 @app.command("deacidify", help="Calculate base addition to raise pH")
 def deacidify(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
@@ -724,32 +750,6 @@ def adjust_so2_target(
     result = base_must.so2_from_target_ppm(target_ppm=target_ppm)
     result_str = '\n'.join(f'{key}: {round(val, 4)}' for key, val in result.items())
     echo_boxed(result_str + '\n\n' + PH_BUFFERING_WARNING)
-
-
-@app.command("ta", help="Adjust titratable acidity (TA) of the must")
-def adjust_ta(
-    volume: Optional[float] = typer.Option(None, "--vol", help="Batch volume in mL"),
-    recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
-    current_ta: float = typer.Option(..., "--current-ta", help="Current TA in g/L as tartaric equivalent"),
-    target_ta: float = typer.Option(..., "--target-ta", help="Target TA in g/L as tartaric equivalent"),
-    acid: str = typer.Option("acid-blend", "--acid", help="Acid to add",
-        case_sensitive=False, show_choices=True, prompt=False,
-        autocompletion=lambda ctx, args, incomplete: [k for k in get_acid_choices() if k.startswith(incomplete)]),
-) -> None:
-    acid_key = acid.strip().lower()
-    acid_obj = get_acid_object(acid_key)
-    must = _must_from_args(
-        label="Must", recipe=recipe, volume=volume, gravity=1.0, 
-        ph=None, pKa=None, c_buf=None, require_ph=False)
-    try:
-        result = must.adjust_ta(current_ta=current_ta, target_ta=target_ta, acid=acid_obj)
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-
-    echo_boxed(
-        f'Mass: {round(result["acid_addition_grams"], 2)}g {acid_key}\n'
-        f'Rate: {round(result["acid_addition_g_per_l"], 3)}g/L\n\n{PH_BUFFERING_WARNING}'
-    )
 
 
 @app.command("tosna", help="Calculate nutrient requirements based on yeast and must")
