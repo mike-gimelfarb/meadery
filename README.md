@@ -176,7 +176,7 @@ Current fruits are defined in `meadery/data/fruits.json`:
 Current yeast strains are defined in `meadery/data/yeasts.json`:
 - `71b`, `ec1118`, `k1v1116`, `qa23`, `d47`, `s04`, `us05`, `m05`, `rc212`, `voss-kveik`, `montrachet`, `bread`
 
-## Acids
+### Acids
 
 Current acids include `tartaric`, `malic`, `citric` and `blend` (LD Carlson brand).
 Acid calculations are based on the Henderson-Hasselbalch equation, and remain accurate given accurate `--pka` (pKa) and ``--cbuf` (buffering capacity in mmol/L) values.
