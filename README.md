@@ -57,24 +57,26 @@ General notes on usage:
 
 | Command | Description |
 | --- | --- |
-| `add [--vol --og --ph \| --recipe] --fermentable --mass` | Add a fermentable to a must. |
-| `add-fruit [--vol --og --ph \| --recipe] --fruit --mass [--extract-yield]` | Add solid fruit to a must. |
-| `add-fruit-juice [--vol --og --ph \| --recipe] --fruit --juice-vol` | Add fruit juice to a must. |
-| `add-honey [--vol --og --ph \| --recipe] --mass` | Add honey to a must. |
-| `add-sugar [--vol --og --ph \| --recipe] --mass` | Add table sugar to a must. |
-| `add-water [--vol --og --ph \| --recipe] --mass` | Add water to a must. |
+| `add [--vol --og --ph --pka --cbuf \| --recipe] --fermentable --mass` | Add a fermentable to a must. |
+| `add-acid [--vol --og --ph --pka --cbuf \| --recipe] [--acid] --mass` | Add a acid to a must. |
+| `add-fruit [--vol --og --ph --pka --cbuf \| --recipe] --fruit --mass [--extract-yield]` | Add solid fruit to a must. |
+| `add-fruit-juice [--vol --og --ph --pka --cbuf \| --recipe] --fruit --juice-vol` | Add fruit juice to a must. |
+| `add-honey [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add honey to a must. |
+| `add-sugar [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add table sugar to a must. |
+| `add-water [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add water to a must. |
 | `adjust-gravity [--vol --og \| --recipe] --target-og (--fermentable \| --fruit)` | Compute additions to reach target gravity. |
-| `combine [--vol1 --og1 --ph1 \| --recipe1] [--vol2 --og2 --ph2 \| --recipe2]` | Combine two musts into one. |
+| `combine [--vol1 --og1 --ph1 --pka1 --cbuf1 \| --recipe1] [--vol2 --og2 --ph2 --pka2 --cbuf2 \| --recipe2]` | Combine two musts into one. |
 | `solve-recipe --recipe [--target-og] [--target-vol] [--target-ph]` | Solve unknowns in a recipe file to match target OG, volume and pH. |
 | `volumes --target-og --target-vol [--fermentable] [--base]` | Compute fermentable/base amounts required. |
 
-### Pitching, Nutrients, TA and Sulfites
+### Pitching, Nutrients, Acidity Adjustmnt and Sulfites
 
 | Command | Description |
 | --- | --- |
+| `acidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--acid]` | Compute acid addition to reduce pH. |
 | `pitch [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. |
-| `so2-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. |
-| `so2-target [--vol \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. |
+| `sulfite-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. |
+| `sulfite-ppm [--vol \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. |
 | `ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
 | `tosna [--vol --og \| --recipe] --yeast` | Compute TOSNA 3.0 nutrient schedule. |
 
@@ -109,8 +111,8 @@ Since an exact blend could not be achieved in many cases using only two musts, y
 
 | Command | Description |
 | --- | --- |
-| `new-fermentable --name --ppg --density --ph` | Add a fermentable entry. |
-| `new-fruit --name --brix --moisture --ph` | Add a fruit profile entry. |
+| `new-fermentable --name --ppg --density --ph --pka --cbuf` | Add a fermentable entry. |
+| `new-fruit --name --brix --moisture --ph --pka --cbuf` | Add a fruit profile entry. |
 | `new-yeast --name --abv-limit --nitrogen` | Add a yeast strain entry. |
 
 ## ABV Calculation Methods
