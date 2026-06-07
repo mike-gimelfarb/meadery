@@ -137,7 +137,7 @@ For potential abv calculations, the options are currently `dubrunfaut`, `marsh`,
 ### Fermentables
 
 Current fermentables are defined in `meadery/data/fermentables.json`:
-- water types (`water`, `hard-water`, `spring-water`)
+- water types (`water`, `hard-water`, `spring-water`, `filtered-water`)
 - `honey`
 - `maple`
 - `agave`
