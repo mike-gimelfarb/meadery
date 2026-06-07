@@ -1,8 +1,10 @@
 # <img src="https://github.com/mike-gimelfarb/meadery/blob/main/meadery.svg" width="92" style="vertical-align: middle;"> meadery
 
+[Installation](#installation) | [Running](#running) | [Supported Functions](#supported-functions) | [Ingredients and Additives](#ingredients-and-additives) | [Recipe Files](#recipe-files)
+
 A command-line toolkit for mead-making calculations and must planning.
 
-## Install
+## Installation
 
 Install with git:
 
@@ -10,7 +12,7 @@ Install with git:
 pip install git+https://github.com/mike-gimelfarb/meadery
 ```
 
-## Run
+## Running
 
 The easiest way to run commands is to use the console-native graphical editor `trogon`:
 
@@ -172,7 +174,7 @@ Current potential ABV calculations methods include `cooke` [^cookeabv],`dubrunfa
 [^pambianchiabv]: proposed by Pambianchi (2008) (implemented according to the formula on the FermCalc website)
 
 
-## Dynamic Fermentables, Fruits, Yeast Strains and Adjuncts
+## Ingredients and Additives
 
 ### Fermentables
 
@@ -227,7 +229,7 @@ Current acids include `tartaric`, `malic`, `citric` and `acid-blend` (LD Carlson
 Current bases include `calcium-carbonate`, `potassium-bicarbonate` and `sodium-bicarbonate`.
 
 
-### Adding New Objects
+### Adding New Ingredients or Additives
 
 Functions `new-fermentable`, `new-fruit` and `new-yeast` allow adding new fermentable, fruit and yeast strains permanently, which can be referred in any calculations, for instance
 
