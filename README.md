@@ -83,7 +83,7 @@ General usage notes:
 | `adjust-gravity [--vol --og \| --recipe] --target-og (--fermentable \| --fruit)` | Compute additions to reach target gravity. [^brentq] |
 | `combine [--vol1 --og1 --ph1 --pka1 --cbuf1 \| --recipe1] [--vol2 --og2 --ph2 --pka2 --cbuf2 \| --recipe2]` | Combine two musts into one. |
 | `solve-recipe --recipe [--target-og] [--target-vol] [--target-ph]` | Solve unknowns in a recipe file to match target OG, volume and pH. [^slsqp] |
-| `volumes --target-og --target-vol [--fermentable] [--base]` | Compute fermentable/base amounts required. [^pearson] |
+| `volumes --target-og --target-vol [--fermentable] [--dilutant]` | Compute fermentable amounts required for OG and volume. [^pearson] |
 
 [^hh]: solves the complete transcendental electrical charge-balance equation using Brent's iterative root finding algorithm
 [^slsqp]: uses the SLSQP algorithm for constrained optimization
@@ -127,7 +127,7 @@ For `blend-nearest`, specify `--abvs` and `--fgs` using repeated flags, e.g.:
 meadery blend-nearest --abvs 10 --abvs 14 --fgs 1 --fgs 0.99 --target-abv 14 --target-fg 1.0 --target-vol 3800
 ```
 
-Since an exact blend cannot always be achieved using two musts, you can allow the function to include water, a spirit and a fermentable when blending. To do this, pass a positive value for `--extra-limit` to specify the maximum proportion of these additives.
+Since an exact blend cannot always be achieved using two musts, you can allow the command to include water, a spirit and a fermentable when blending. To do this, pass a positive value for `--extra-limit` to specify the maximum proportion of these additives.
 
 
 ### Post-Fermentation Adjustments (Backsweetening, Fortification and Priming)
@@ -154,7 +154,8 @@ Since an exact blend cannot always be achieved using two musts, you can allow th
 
 ### ABV Calculation Methods
 
-Current ABV calculation methods include `asbc` [^abscabv], `balling` [^ballingabv], `berry` [^berryabv], `cutaia` [^cutaiaabv], `duncan` [^duncanabv], `hall` [^hallabv] and `standard` [^standardabv]. The default is `balling` and can be specified in `--method`.
+Current ABV calculation methods `--method` (default `balling`):
+- `asbc` [^abscabv], `balling` [^ballingabv], `berry` [^berryabv], `cutaia` [^cutaiaabv], `duncan` [^duncanabv], `hall` [^hallabv] and `standard` [^standardabv]. 
 
 [^abscabv]: standard of the American Society of Brewing Chemists (ASBC)
 [^ballingabv]: popularized by De Clerck in "A Textbook of Brewing" (1957)
@@ -165,7 +166,8 @@ Current ABV calculation methods include `asbc` [^abscabv], `balling` [^ballingab
 [^standardabv]: simple linear formula popularized by C. Papazian in "The Joy of Homebrewing" (1984)
 
 
-Current potential ABV calculations methods include `cooke` [^cookeabv],`dubrunfaut` [^dubrunfautabv], `honneyman` [^honneymanabv], `margalit` [^margalitabv], `marsh` [^marshabv], `pambianchi` [^pambianchiabv].  The default is `cooke` and can be specified in `--method`.
+Current potential ABV calculations methods `--method` (default `cooke`):
+- `cooke` [^cookeabv],`dubrunfaut` [^dubrunfautabv], `honneyman` [^honneymanabv], `margalit` [^margalitabv], `marsh` [^marshabv], `pambianchi` [^pambianchiabv].  
 
 [^cookeabv]: proposed by Cooke and Lapsley (1988) (implemented according to the formula on the FermCalc website)
 [^dubrunfautabv]: reported by Boulton et al (1999) and attributed to Dubrunfaut (implemented according to the formula on the FermCalc website)
@@ -226,10 +228,10 @@ Current yeast strains are defined in `meadery/data/yeasts.json`:
 
 ### Acids and Bases
 
-Current acids:
+Current acids `--acid` (default `acid-blend`):
 - `tartaric`, `malic`, `citric`, `acid-blend` (LD Carlson brand).
 
-Current bases:
+Current bases `--base` (default `potassium-bicarbonate`):
 - `calcium-carbonate`, `potassium-bicarbonate`, `sodium-bicarbonate`.
 
 

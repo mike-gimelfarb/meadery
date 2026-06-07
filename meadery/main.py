@@ -585,14 +585,14 @@ def must_combine(
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
-@app.command("volumes", help="Calculate volumes of fermentable and base to achieve a target gravity")
+@app.command("volumes", help="Calculate volumes of fermentables to achieve a target OG and volume")
 def calc_volumes(
     gravity: Optional[float] = typer.Option(None, "--target-og", help="Target original gravity"),
     volume: Optional[float] = typer.Option(None, "--target-vol", help="Target volume in mL"),
     fermentable: str = typer.Option("honey", "--fermentable", help="Fermentable name",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
-    base: str = typer.Option("spring-water", "--base", help="Base fermentable or fruit name",
+    base: str = typer.Option("spring-water", "--dilutant", help="Dilutant fermentable/fruit name",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [
             k for k in get_fermentable_choices() + get_fruit_choices() if k.startswith(incomplete)]),
