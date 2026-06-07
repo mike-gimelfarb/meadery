@@ -670,7 +670,7 @@ def adjust_ta(
     )
 
 
-@app.command("adjust-ph-strip", help="Adjustment of test strip pH to account for dilution")
+@app.command("adjust-ph-strip", help="Adjustment of test strip pH for dilution")
 def adjust_ph_strip(
     ph: Optional[float] = typer.Option(None, "--ph", help="Must current pH"),
     pka: Optional[float] = typer.Option(3.40, "--pka", help="Must pKa"),
@@ -678,12 +678,18 @@ def adjust_ph_strip(
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for must"),
     ph_strip: float = typer.Option(..., "--ph-strip", help="pH reading from test strip after dilution"),
     parts_water: int = typer.Option(5, "--parts-water", help="Parts water added for dilution"),
+    water: str = typer.Option("water", "--fermentable", help="Medium used for dilution",
+        case_sensitive=False, show_choices=True, prompt=False,
+        autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
 ) -> None:
     must = _must_from_args(
         label="Must", recipe=recipe, volume=1.0, gravity=1.0, 
         ph=ph, pKa=pka, c_buf=c_buf, require_ph=True)
+    water_key = water.strip().lower()
+    water_obj = get_fermentable_object(water_key)
     try:
-        result = must.ph_dilution_correction(parts_water=parts_water, strip_ph=ph_strip)
+        result = must.ph_dilution_correction(
+            parts_water=parts_water, strip_ph=ph_strip, fermentable=water_obj)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 

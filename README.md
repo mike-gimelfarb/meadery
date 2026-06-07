@@ -76,7 +76,7 @@ General notes on usage:
 | --- | --- |
 | `acidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--acid]` | Compute acid addition to reduce pH. |
 | `acidify-ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
-| `adjust-ph-strip [--ph --pka --cbuf \| --recipe] --strip-ph --parts-water` | Adjust pH strip estimate of a must sample diluted with water. |
+| `adjust-ph-strip [--ph --pka --cbuf \| --recipe] --strip-ph --parts-water [--fermentable]` | Adjust pH strip estimate for dilution. |
 | `deacidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--base]` | Compute base addition to increase pH. |
 | `pitch [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. |
 | `sulfite-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. |
