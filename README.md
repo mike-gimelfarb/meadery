@@ -91,15 +91,16 @@ General notes on usage:
 
 | Command | Description |
 | --- | --- |
-| `acidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--acid]` | Compute acid addition to reduce pH. [^hh] |
+| `acidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--acid]` | Compute acid addition to reduce pH. [^chargebalance] |
 | `acidify-ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
 | `adjust-ph-strip [--ph --pka --cbuf \| --recipe] --strip-ph --parts-water [--fermentable]` | Adjust pH strip estimate for dilution. |
-| `deacidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--base]` | Compute base addition to increase pH. |
+| `deacidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--base]` | Compute base addition to increase pH. [^chargebalance] |
 | `nutrient [--vol --og \| --recipe] --yeast` | Compute Fermaid O nutrient schedule. [^tosna] |
 | `pitch [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. [^goferm] |
 | `sulfite-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. [^hhso2] |
 | `sulfite-ppm [--vol \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. |
 
+[^chargebalance]: solves the charge-balance equation exactly
 [^tosna]: follows the TOSNA 3.0 nutrient schedule
 [^hhso2]: uses the free SO2 Henderson-Hasselbalch equation
 [^goferm]: follows the rehydration guidelines of Lallemand
@@ -112,7 +113,7 @@ General notes on usage:
 | `blend-to-abv --abv1 --abv2 --target-abv --target-vol` | Blend two fermented musts to a final ABV. [^pearson] |
 | `blend-to-gravity --fg1 --fg2 --target-fg --target-vol` | Blend two fermented musts to a final gravity. [^pearson] |
 | `blend-to-ph [--ph1 --pka1 --cbuf1 \| --recipe1] [--ph2 --pka2 --cbuf2 \| --recipe2] --target-ph --target-vol [--tol]` | Blend two musts to a final pH. [^brentq] |
-| `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg] [--extra-limit] [--extra-fermentable] [--extra-spirit-abv]` | Blend any number of musts to achieve a final ABV and gravity as close as possible; repeat `--abvs` and `--fgs` for each input must. [^slsqp] |
+| `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg] [--extra-limit] [--extra-fermentable] [--extra-spirit-abv]` | Blend any number of musts to achieve a final ABV and gravity as close as possible. [^slsqp] |
 
 [^pearson]: uses Pearson's square blending ratio
 
