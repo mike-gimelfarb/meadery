@@ -556,9 +556,9 @@ class Must:
         return Must(volume=v_total_ml, gravity=new_gravity, ph=new_ph,
                     pka=new_pka, c_buf=new_c_buf)
 
-    def add_water(self, mass: float) -> 'Must':
-        '''Returns a new Must with the given mass of water added.'''
-        return self.add(FERMENTABLES['water'], mass)
+    def add_spring_water(self, mass: float) -> 'Must':
+        '''Returns a new Must with the given mass of spring water added.'''
+        return self.add(FERMENTABLES['spring-water'], mass)
 
     def add_honey(self, mass: float) -> 'Must':
         '''Returns a new Must with the given mass of honey added.'''
@@ -869,7 +869,7 @@ class Must:
                              "and the potential ABV at the must's gravity.")
         return root_find(f_fg_to_abv, min_fg, self.gravity, tol=tol)
      
-    def volumes(self, fermentable: Fermentable, base: Fermentable=FERMENTABLES['water']) -> float:
+    def volumes(self, fermentable: Fermentable, base: Fermentable=FERMENTABLES['spring-water']) -> float:
         '''Returns the mass of a fermentable and base required to create this must.'''
         target_points = (self.gravity - 1.0) * 1000.0
         total_mass_g = self.gravity * self.volume

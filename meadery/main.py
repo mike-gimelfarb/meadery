@@ -496,7 +496,7 @@ def must_add_sugar(
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
-@app.command("add-water", help="Add water to the must")
+@app.command("add-water", help="Add spring water to the must")
 def must_add_water(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
@@ -509,7 +509,7 @@ def must_add_water(
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
         ph=ph, pKa=pKa, c_buf=c_buf)
-    result = base_must.add_water(mass=mass)
+    result = base_must.add_spring_water(mass=mass)
     echo_boxed(f"{str(result)}\n\n{PH_BUFFERING_WARNING}\n{GRAVITY_WARNING}")
 
 
@@ -577,7 +577,7 @@ def calc_volumes(
     fermentable: str = typer.Option("honey", "--fermentable", help="Fermentable name",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_fermentable_choices() if k.startswith(incomplete)]),
-    base: str = typer.Option("water", "--base", help="Base fermentable or fruit name",
+    base: str = typer.Option("spring-water", "--base", help="Base fermentable or fruit name",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [
             k for k in get_fermentable_choices() + get_fruit_choices() if k.startswith(incomplete)]),

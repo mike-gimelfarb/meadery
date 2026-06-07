@@ -64,7 +64,7 @@ General notes on usage:
 | `add-fruit-juice [--vol --og --ph --pka --cbuf \| --recipe] --fruit --juice-vol` | Add fruit juice to a must. |
 | `add-honey [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add honey to a must. |
 | `add-sugar [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add table sugar to a must. |
-| `add-water [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add water to a must. |
+| `add-water [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add spring water to a must. |
 | `adjust-gravity [--vol --og \| --recipe] --target-og (--fermentable \| --fruit)` | Compute additions to reach target gravity. |
 | `combine [--vol1 --og1 --ph1 --pka1 --cbuf1 \| --recipe1] [--vol2 --og2 --ph2 --pka2 --cbuf2 \| --recipe2]` | Combine two musts into one. |
 | `solve-recipe --recipe [--target-og] [--target-vol] [--target-ph]` | Solve unknowns in a recipe file to match target OG, volume and pH. |
