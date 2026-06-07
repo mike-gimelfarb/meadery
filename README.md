@@ -1,6 +1,6 @@
 # <img src="https://github.com/mike-gimelfarb/meadery/blob/main/meadery.svg" width="92" style="vertical-align: middle;"> meadery
 
-[Installation](#installation) | [Running](#running) | [Supported Functions](#supported-functions) | [Ingredients and Additives](#ingredients-and-additives) | [Recipe Files](#recipe-files)
+[Installation](#installation) | [Running](#running) | [Supported Commands](#supported-commands) | [Ingredients and Additives](#ingredients-and-additives) | [Recipe Files](#recipe-files)
 
 A command-line toolkit for mead-making calculations and must planning.
 
@@ -20,18 +20,18 @@ The easiest way to run commands is to use the console-native graphical editor `t
 meadery tui
 ```
 
-Commands can be provided explicitly using the root keyword `meadery` followed by the name of the command, for example to list all commands or calculate the attenuation:
+Commands can be provided using the root `meadery` followed by the name of the command, for example to list all commands or calculate the attenuation:
 
 ```bash
 meadery --help
 meadery attenuation --og 1.110 --fg 1.010
 ```
 
-## Supported Functions
+## Supported Commands
 
-General notes on usage:
-- `--recipe` arguments always take priority over manual arguments, e.g., `--vol, --og`
-- default values: `--method` is `duncan`, `--tol` is 1e-6, `--spirit-abv` is 40, `--extract-yield` is 1
+General usage notes:
+- `--recipe` arguments take priority over manual arguments such as `--vol, --og`, `--ph`
+- by default, `--method duncan`, `--tol 1e-6`, `--spirit-abv 40`, `--extract-yield 1`, `--wcf 1.04`, `--target-mol-so2 0.8`.
 
 ### Conversion Formulas and Calibration
 
@@ -100,7 +100,7 @@ General notes on usage:
 | `nutrient [--vol --og \| --recipe] --yeast` | Compute Fermaid O nutrient schedule. [^tosna] |
 | `pitch [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. [^goferm] |
 | `sulfite-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. [^hhso2] |
-| `sulfite-ppm [--vol \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. [^so2ppm] |
+| `sulfite-ppm [--vol \| --recipe] --target-ppm` | Compute sulfite additions from target ppm. [^so2ppm] |
 
 [^chargebalance]: solves the charge-balance equation exactly
 [^tosna]: follows the TOSNA 3.0 nutrient schedule
@@ -121,13 +121,13 @@ General notes on usage:
 [^pearson]: uses Pearson's square blending ratio
 
 
-For `blend-nearest`, specify each must using repeated flags. For example:
+For `blend-nearest`, specify `--abvs` and `--fgs` using repeated flags, e.g.:
 
 ```bash
 meadery blend-nearest --abvs 10 --abvs 14 --fgs 1 --fgs 0.99 --target-abv 14 --target-fg 1.0 --target-vol 3800
 ```
 
-Since an exact blend could not be achieved in many cases using only two musts, you can allow the function to include water, a spirit and a fermentable when blending to achieve the targets exactly. To do this, pass a non-zero value for `--extra-limit` to specify the maximum proportion to allow for these extras.
+Since an exact blend cannot always be achieved using two musts, you can allow the function to include water, a spirit and a fermentable when blending. To do this, pass a positive value for `--extra-limit` to specify the maximum proportion of these additives.
 
 
 ### Post-Fermentation Adjustments (Backsweetening, Fortification and Priming)
@@ -180,7 +180,7 @@ Current potential ABV calculations methods include `cooke` [^cookeabv],`dubrunfa
 ### Fermentables
 
 Current fermentables are defined in `meadery/data/fermentables.json`:
-- water types (`water`, `hard-water`, `spring-water`, `filtered-water`)
+- water (`water`, `hard-water`, `spring-water`, `filtered-water`)
 - `honey`
 - `maple`
 - `agave`
@@ -226,33 +226,34 @@ Current yeast strains are defined in `meadery/data/yeasts.json`:
 
 ### Acids and Bases
 
-Current acids include `tartaric`, `malic`, `citric` and `acid-blend` (LD Carlson brand).
-Current bases include `calcium-carbonate`, `potassium-bicarbonate` and `sodium-bicarbonate`.
+Current acids:
+- `tartaric`, `malic`, `citric`, `acid-blend` (LD Carlson brand).
+
+Current bases:
+- `calcium-carbonate`, `potassium-bicarbonate`, `sodium-bicarbonate`.
 
 
-### Adding New Ingredients or Additives
+### Adding New Ingredients and Additives
 
-Functions `new-fermentable`, `new-fruit` and `new-yeast` allow adding new fermentable, fruit and yeast strains permanently, which can be referred in any calculations, for instance
+Functions `new-fermentable`, `new-fruit` and `new-yeast` allow adding new fermentable, fruit and yeast strains permanently to the json, which can then be referred to in any calculations, e.g.:
 
 ```bash
 meadery new-fruit --name tulaberry --brix 18 --moisture 84 --ph 3.5 --pka 3.40 --cbuf 40
 ```
-
-will add the `tulaberry` to the `fruits.json` so it can be referred in calculations involving fruit additions.
 
 
 ## Recipe Files
 
 ### General Format
 
-Many functions accept a `--recipe` argument instead of volume, original graviy and ph, which is either an absolute path to a `.recipe` file, or relative path from the current working sub-directory. Recipe files make it easy to manage existing recipes and musts, and perform calculations or determine adjustments for them.
+Many functions accept a `--recipe` argument, which is either an absolute or relative path to a `.recipe` file. Recipe files make it easy to manage existing recipes and musts, and run commands without manually computing `--vol`, `--og`, `--ph`, `--pka` or `--cbuf`.
 
 Rules:
-- One instruction per non-empty line: `<ingredient>=<quantity>`
-- `<ingredient>` must be a valid fermentable, fruit, fruit juice, acid or base.
-- Quantities: fermentables, whole fruit, acids and bases are in grams; fruit juice is in milliliters.
-- Fruit juice lines use the form `<fruit> juice=<ml>` (example: `blueberry juice=500`).
-- `water` may be specified as a fermentable (grams; 1 g = 1 mL).
+- One instruction per non-empty line of the form `<ingredient>=<quantity>`.
+- `<ingredient>` must be a valid fermentable, fruit, acid or base, matched case-insensitively.
+- `<quantity>` for fermentable, fruit, acid or base is in grams.
+- Fruit juice lines use the form `<fruit> juice=<quantity>`, e.g. `blueberry juice=500`, where `<quantity>` is in mL.
+- `water` is a fermentable with unit density.
 - Lines beginning with `#` or blank lines are ignored.
 
 Example:
@@ -265,11 +266,9 @@ table-sugar=200
 acid-blend=2
 ```
 
-Ingredient names are matched case-insensitively against the `FERMENTABLES` and `FRUITS` lists in the codebase.
-
 ### Solving for Unknown Quantities in a Recipe
 
-The `--solve-recipe` function allows for some ingredients in a recipe file to be unknown quantities, e.g.:
+The `--solve-recipe` command allows some ingredients in a recipe file to have unknown quantities, e.g.:
 
 ```
 # sample recipe with unknowns
@@ -279,4 +278,4 @@ blueberry juice=1000
 acid-blend=z
 ```
 
-will determine the amount of honey, water and acid blend required to match target OG, volume and/or pH desired. 
+will determine the amount of honey, water and acid blend required to match target OG, volume and pH desired. The number of unknowns must match the number of targets.

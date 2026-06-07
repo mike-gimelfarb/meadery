@@ -784,7 +784,7 @@ def adjust_so2_ph(
 def adjust_so2_target(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
-    target_ppm: float = typer.Option(50.0, "--target-ppm", help="Target SO2 in ppm"),
+    target_ppm: float = typer.Option(..., "--target-ppm", help="Target SO2 in ppm"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=1.0, 
