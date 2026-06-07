@@ -13,6 +13,13 @@
     "pka": 6.35,
     "c_buf": 3.0
   },
+  "filtered-water": {
+    "ppg": 0,
+    "density": 1.0,
+    "ph": 7.3,
+    "pka": 6.35,
+    "c_buf": 2.2
+  },
   "spring-water": {
     "ppg": 0,
     "density": 1.0,
