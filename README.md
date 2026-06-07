@@ -114,7 +114,7 @@ General notes on usage:
 | `blend-to-ph [--ph1 --pka1 --cbuf1 \| --recipe1] [--ph2 --pka2 --cbuf2 \| --recipe2] --target-ph --target-vol [--tol]` | Blend two musts to a final pH. [^brentq] |
 | `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg] [--extra-limit] [--extra-fermentable] [--extra-spirit-abv]` | Blend any number of musts to achieve a final ABV and gravity as close as possible; repeat `--abvs` and `--fgs` for each input must. [^slsqp] |
 
-[^pearson]: Uses Pearson's square blending ratio
+[^pearson]: uses Pearson's square blending ratio
 
 
 For `blend-nearest`, specify each must using repeated flags. For example:
