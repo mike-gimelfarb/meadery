@@ -794,7 +794,7 @@ def adjust_so2_target(
     echo_boxed(result_str + '\n\n' + PH_BUFFERING_WARNING)
 
 
-@app.command("tosna", help="Calculate nutrient requirements based on yeast and must")
+@app.command("nutrient", help="Calculate nutrient requirements based on yeast and must")
 def adjust_tosna3(
     volume: Optional[float] = typer.Option(None, "--vol", help="Must volume in mL"),
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),

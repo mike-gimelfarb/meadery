@@ -35,30 +35,42 @@ General notes on usage:
 
 | Command | Description |
 | --- | --- |
-| `brix-to-sg --brix` | Convert Brix to specific gravity. |
-| `sg-to-brix --sg` | Convert specific gravity to Brix. |
-| `spirit-gravity --abv`  | Estimate gravity of neutral spirit. |
-| `hydrometer --sg --temp --calib-temp` | Correct hydrometer for sample temperature. |
-| `refractometer --og --brix` | Correct refractometer reading for alcohol. |
+| `brix-to-sg --brix` | Convert Brix to specific gravity. [^lincoln] |
+| `sg-to-brix --sg` | Convert specific gravity to Brix. [^absc] |
+| `spirit-gravity --abv` | Estimate gravity of neutral spirit. [^oiml] |
+| `hydrometer --sg --temp --calib-temp` | Correct hydrometer for sample temperature. [^glance] |
+| `refractometer --og --brix` | Correct refractometer reading for alcohol. [^terrill] |
+
+[^lincoln]: uses the Lincoln formula published in "Brew Your Own (BYO) Magazine"
+[^absc]: uses the ABSC polynomial
+[^oiml]: uses a 4th order alcohol density regression formula
+[^glance]: uses the Kent Glass polynomial (or Glance polynomial) for water density
+[^terrill]: uses Terrill's New Cubic formula (2012)
+
 
 ### Must Statistics
 
 | Command | Description |
 | --- | --- |
 | `abv [--og \| --recipe] --fg [--method]` | Compute ABV from OG and FG. |
-| `abv-dual --brix --fg [--wcf]` | Compute ABV without original gravity using refractometer and hydrometer estimates. |
+| `abv-dual --brix --fg [--wcf]` | Compute ABV without original gravity using refractometer and hydrometer estimates. [^bonham] |
 | `abv-potential [--og \| --recipe] [--method]` | Compute potential ABV from OG. |
 | `attenuation [--og \| --recipe] --fg` | Compute apparent attenuation. |
 | `load-recipe <file>` | Print summary of must from a recipe file. |
-| `original-gravity --target-abv --target-fg [--method] [--tol] [--max-og]` | Compute OG needed for target ABV. |
-| `residual-co2 --temp` | Compute residual dissolved CO2. |
-| `stalled-gravity [--og \| --recipe] --yeast [--method] [--tol] [--min-fg]` | Estimate stall gravity from yeast tolerance. |
+| `original-gravity --target-abv --target-fg [--method] [--tol] [--max-og]` | Compute OG needed for target ABV. [^brentq] |
+| `residual-co2 --temp` | Compute residual dissolved CO2. [^henry] |
+| `stalled-gravity [--og \| --recipe] --yeast [--method] [--tol] [--min-fg]` | Estimate stall gravity from yeast tolerance. [^brentq] |
+
+[^bonham]: uses the Dual-Instrument ABV formula published in "Brew Your Own (BYO) Magazine"
+[^brentq]: uses Brent's iterative root finding algorithm to numerically solve for this
+[^henry]: based on Henry's law
+
 
 ### Must Additions and Adjustments
 
 | Command | Description |
 | --- | --- |
-| `add [--vol --og --ph --pka --cbuf \| --recipe] --fermentable --mass` | Add a fermentable to a must. |
+| `add [--vol --og --ph --pka --cbuf \| --recipe] --fermentable --mass` | Add a fermentable to a must. [^hh] |
 | `add-acid [--vol --og --ph --pka --cbuf \| --recipe] [--acid] --mass [--tol]` | Add a acid to a must. |
 | `add-base [--vol --og --ph --pka --cbuf \| --recipe] [--base] --mass [--tol]` | Add a base to a must. |
 | `add-fruit [--vol --og --ph --pka --cbuf \| --recipe] --fruit --mass [--extract-yield]` | Add solid fruit to a must. |
@@ -66,32 +78,44 @@ General notes on usage:
 | `add-honey [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add honey to a must. |
 | `add-sugar [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add table sugar to a must. |
 | `add-water [--vol --og --ph --pka --cbuf \| --recipe] --mass` | Add spring water to a must. |
-| `adjust-gravity [--vol --og \| --recipe] --target-og (--fermentable \| --fruit)` | Compute additions to reach target gravity. |
+| `adjust-gravity [--vol --og \| --recipe] --target-og (--fermentable \| --fruit)` | Compute additions to reach target gravity. [^brentq] |
 | `combine [--vol1 --og1 --ph1 --pka1 --cbuf1 \| --recipe1] [--vol2 --og2 --ph2 --pka2 --cbuf2 \| --recipe2]` | Combine two musts into one. |
-| `solve-recipe --recipe [--target-og] [--target-vol] [--target-ph]` | Solve unknowns in a recipe file to match target OG, volume and pH. |
-| `volumes --target-og --target-vol [--fermentable] [--base]` | Compute fermentable/base amounts required. |
+| `solve-recipe --recipe [--target-og] [--target-vol] [--target-ph]` | Solve unknowns in a recipe file to match target OG, volume and pH. [^slsqp] |
+| `volumes --target-og --target-vol [--fermentable] [--base]` | Compute fermentable/base amounts required. [^pearson] |
+
+[^hh]: solves the complete transcendental electrical charge-balance equation using Brent's iterative root finding algorithm
+[^slsqp]: uses the SLSQP algorithm for constrained optimization
+
 
 ### Pitching, Nutrients, Acid Adjustments and Sulfites
 
 | Command | Description |
 | --- | --- |
-| `acidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--acid]` | Compute acid addition to reduce pH. |
+| `acidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--acid]` | Compute acid addition to reduce pH. [^hh] |
 | `acidify-ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
 | `adjust-ph-strip [--ph --pka --cbuf \| --recipe] --strip-ph --parts-water [--fermentable]` | Adjust pH strip estimate for dilution. |
 | `deacidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--base]` | Compute base addition to increase pH. |
-| `pitch [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. |
-| `sulfite-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. |
+| `nutrient [--vol --og \| --recipe] --yeast` | Compute Fermaid O nutrient schedule. [^tosna] |
+| `pitch [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. [^goferm] |
+| `sulfite-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. [^hhso2] |
 | `sulfite-ppm [--vol \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. |
-| `tosna [--vol --og \| --recipe] --yeast` | Compute TOSNA 3.0 nutrient schedule. |
+
+[^tosna]: follows the TOSNA 3.0 nutrient schedule
+[^hhso2]: uses the free SO2 Henderson-Hasselbalch equation
+[^goferm]: follows the rehydration guidelines of Lallemand
+
 
 ### Blending
 
 | Command | Description |
 | --- | --- |
-| `blend-to-abv --abv1 --abv2 --target-abv --target-vol` | Blend two fermented musts to a final ABV. |
-| `blend-to-gravity --fg1 --fg2 --target-fg --target-vol` | Blend two fermented musts to a final gravity. |
-| `blend-to-ph [--ph1 --pka1 --cbuf1 \| --recipe1] [--ph2 --pka2 --cbuf2 \| --recipe2] --target-ph --target-vol [--tol]` | Blend two musts to a final pH. |
-| `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg] [--extra-limit] [--extra-fermentable] [--extra-spirit-abv]` | Blend any number of musts to achieve a final ABV and gravity as close as possible; repeat `--abvs` and `--fgs` for each input must. |
+| `blend-to-abv --abv1 --abv2 --target-abv --target-vol` | Blend two fermented musts to a final ABV. [^pearson] |
+| `blend-to-gravity --fg1 --fg2 --target-fg --target-vol` | Blend two fermented musts to a final gravity. [^pearson] |
+| `blend-to-ph [--ph1 --pka1 --cbuf1 \| --recipe1] [--ph2 --pka2 --cbuf2 \| --recipe2] --target-ph --target-vol [--tol]` | Blend two musts to a final pH. [^brentq] |
+| `blend-nearest --abvs --fgs --target-abv --target-fg --target-vol [--w-abv] [--w-fg] [--extra-limit] [--extra-fermentable] [--extra-spirit-abv]` | Blend any number of musts to achieve a final ABV and gravity as close as possible; repeat `--abvs` and `--fgs` for each input must. [^slsqp] |
+
+[^pearson]: Uses Pearson's square blending ratio
+
 
 For `blend-nearest`, specify each must using repeated flags. For example:
 
@@ -106,11 +130,14 @@ Since an exact blend could not be achieved in many cases using only two musts, y
 
 | Command | Description |
 | --- | --- |
-| `backsweeten [--vol \| --recipe ] --fg --target-fg (--fermentable \| --fruit)` | Backsweeten amount to target gravity. |
-| `fortify [--vol \| --recipe] --current-abv --target-abv [--spirit-abv]` | Compute spirit volume for fortification. |
-| `fortify-fg [--vol --og \| --recipe] --target-abv --target-fg [--spirit-abv] [--method]` | Compute spirit volume for fortification with target final gravity. |
+| `backsweeten [--vol \| --recipe ] --fg --target-fg (--fermentable \| --fruit)` | Backsweeten amount to target gravity. [^brentq] |
+| `fortify [--vol \| --recipe] --current-abv --target-abv [--spirit-abv]` | Compute spirit volume for fortification. [^pearson] |
+| `fortify-fg [--vol --og \| --recipe] --target-abv --target-fg [--spirit-abv] [--method]` | Compute spirit volume for fortification with target final gravity. [^brentq] |
 | `fortify-abv [--vol --og \| --recipe] --fg --spirit-vol [--spirit-abv] [--method]` | Compute ABV after fortification. |
-| `prime [--vol \| --recipe] --co2 --temp --fermentable` | Compute priming sugar. |
+| `prime [--vol \| --recipe] --co2 --temp --fermentable` | Compute priming sugar. [^prime] |
+
+[^prime]: uses the equivalent mass priming sugar formula
+
 
 ### Adding New Types
 
@@ -188,8 +215,6 @@ Current yeast strains are defined in `meadery/data/yeasts.json`:
 
 Current acids include `tartaric`, `malic`, `citric` and `acid-blend` (LD Carlson brand).
 Current bases include `calcium-carbonate`, `potassium-bicarbonate` and `sodium-bicarbonate`.
-
-pH calculations are based on the Henderson-Hasselbalch equation, and remain accurate given accurate `--pka` (pKa) and `--cbuf` (buffering capacity in mmol/L) values.
 
 
 ### Adding New Objects
