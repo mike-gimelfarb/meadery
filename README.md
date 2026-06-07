@@ -44,7 +44,7 @@ General notes on usage:
 | `refractometer --og --brix` | Correct refractometer reading for alcohol. [^terrill] |
 
 [^lincoln]: uses the Lincoln formula published in "Brew Your Own (BYO) Magazine"
-[^absc]: uses the ABSC polynomial
+[^absc]: uses the ASBC polynomial
 [^oiml]: uses a 4th order alcohol density regression formula
 [^glance]: uses the Kent Glass polynomial (or Glance polynomial) for water density
 [^terrill]: uses Terrill's New Cubic formula (2012)
@@ -95,17 +95,18 @@ General notes on usage:
 | --- | --- |
 | `acidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--acid]` | Compute acid addition to reduce pH. [^chargebalance] |
 | `acidify-ta [--vol \| --recipe] --current-ta --target-ta [--acid]` | Compute acid addition to raise TA. |
-| `adjust-ph-strip [--ph --pka --cbuf \| --recipe] --strip-ph --parts-water [--fermentable]` | Adjust pH strip estimate for dilution. |
+| `adjust-ph-strip [--ph --pka --cbuf \| --recipe] --strip-ph --parts-water [--fermentable]` | Adjust pH strip estimate for dilution. [^hh] |
 | `deacidify [--vol --ph --pka --cbuf \| --recipe] --target-ph [--base]` | Compute base addition to increase pH. [^chargebalance] |
 | `nutrient [--vol --og \| --recipe] --yeast` | Compute Fermaid O nutrient schedule. [^tosna] |
 | `pitch [--vol --og \| --recipe]` | Compute yeast and Go-Ferm pitch amounts. [^goferm] |
 | `sulfite-ph [--vol --ph \| --recipe] [--target-mol-so2]` | Compute sulfite additions from pH. [^hhso2] |
-| `sulfite-ppm [--vol \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. |
+| `sulfite-ppm [--vol \| --recipe] [--target-ppm]` | Compute sulfite additions from target ppm. [^so2ppm] |
 
 [^chargebalance]: solves the charge-balance equation exactly
 [^tosna]: follows the TOSNA 3.0 nutrient schedule
 [^hhso2]: uses the free SO2 Henderson-Hasselbalch equation
 [^goferm]: follows the rehydration guidelines of Lallemand
+[^so2ppm]: conversion of target ppm to mass via standard K2S2O5 -> SO2 stoichiometric weight ratio (0.57)
 
 
 ### Blending
@@ -153,9 +154,9 @@ Since an exact blend could not be achieved in many cases using only two musts, y
 
 ### ABV Calculation Methods
 
-Current ABV calculation methods include `absc` [^abscabv], `balling` [^ballingabv], `berry` [^berryabv], `cutaia` [^cutaiaabv], `duncan` [^duncanabv], `hall` [^hallabv] and `standard` [^standardabv]. The default is `balling` and can be specified in `--method`.
+Current ABV calculation methods include `asbc` [^abscabv], `balling` [^ballingabv], `berry` [^berryabv], `cutaia` [^cutaiaabv], `duncan` [^duncanabv], `hall` [^hallabv] and `standard` [^standardabv]. The default is `balling` and can be specified in `--method`.
 
-[^abscabv]: standard of the American Society of Brewing Chemists
+[^abscabv]: standard of the American Society of Brewing Chemists (ASBC)
 [^ballingabv]: popularized by De Clerck in "A Textbook of Brewing" (1957)
 [^berryabv]: described in "First Steps in Winemaking" by C. J. J. Berry (1987)
 [^cutaiaabv]: Cutaia-Reid-Speers formula derived from beer data and published in (2009)
@@ -166,7 +167,7 @@ Current ABV calculation methods include `absc` [^abscabv], `balling` [^ballingab
 
 Current potential ABV calculations methods include `cooke` [^cookeabv],`dubrunfaut` [^dubrunfautabv], `honneyman` [^honneymanabv], `margalit` [^margalitabv], `marsh` [^marshabv], `pambianchi` [^pambianchiabv].  The default is `cooke` and can be specified in `--method`.
 
-[^cooke]: proposed by Cooke and Lapsley (1988) (implemented according to the formula on the FermCalc website)
+[^cookeabv]: proposed by Cooke and Lapsley (1988) (implemented according to the formula on the FermCalc website)
 [^dubrunfautabv]: reported by Boulton et al (1999) and attributed to Dubrunfaut (implemented according to the formula on the FermCalc website)
 [^honneymanabv]: proposed by Honneyman (1966) (implemented according to the formula on the FermCalc website)
 [^margalitabv]: proposed by Margalit (2004) (implemented according to the formula on the FermCalc website)

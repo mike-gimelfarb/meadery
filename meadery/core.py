@@ -841,7 +841,7 @@ class Must:
             re = (0.1808 * oe) + (0.8192 * ae)
             abw = (oe - re) / (2.0665 - (0.010665 * oe))
             return abw * fg / 0.78924
-        elif method == 'absc':
+        elif method == 'asbc':
             oe = sg_to_brix(og)
             ae = sg_to_brix(fg)
             abw = (0.387 * (oe - ae)) + (0.00307 * ((oe - ae) ** 2))

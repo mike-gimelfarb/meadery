@@ -39,7 +39,7 @@ class AbvMethod(str, Enum):
     duncan = "duncan"
     cutaia = "cutaia"
     balling = "balling"
-    absc = "absc"
+    asbc = "asbc"
 
 DEFAULT_ABV_METHOD = AbvMethod.balling.value
 
