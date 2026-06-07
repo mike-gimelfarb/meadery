@@ -454,9 +454,11 @@ class BaseAddition:
 # At must pH (3–4.5) all bicarbonate/carbonate reacts with H⁺ and escapes as CO₂.
 # The only permanent effect is the cation (K⁺, Na⁺, Ca²⁺), which raises nc.
 BASE_ADJUSTMENTS = {
-    'potassium-bicarbonate': BaseAddition(mw=100.12, cations_per_mol=1),
-    'sodium-bicarbonate':    BaseAddition(mw=84.01,  cations_per_mol=1),
     'calcium-carbonate':     BaseAddition(mw=100.09, cations_per_mol=2),
+    'magnesium-carbonate':   BaseAddition(mw=84.31, cations_per_mol=2),
+    'potassium-bicarbonate': BaseAddition(mw=100.12, cations_per_mol=1),
+    'potassium-carbonate':   BaseAddition(mw=138.21, cations_per_mol=2),
+    'sodium-bicarbonate':    BaseAddition(mw=84.01,  cations_per_mol=1),
 }
 
 

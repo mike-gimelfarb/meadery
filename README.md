@@ -232,7 +232,7 @@ Current acids `--acid` (default `acid-blend`):
 - `tartaric`, `malic`, `citric`, `acid-blend` (LD Carlson brand).
 
 Current bases `--base` (default `potassium-bicarbonate`):
-- `calcium-carbonate`, `potassium-bicarbonate`, `sodium-bicarbonate`.
+- `calcium-carbonate`, `magnesium-carbonate`, `potassium-carbonate`, `potassium-bicarbonate`, `sodium-bicarbonate`.
 
 
 ### Adding New Ingredients and Additives
