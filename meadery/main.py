@@ -219,8 +219,9 @@ def correct_hydrometer(
 def correct_refractometer(
     gravity: float = typer.Option(..., "--og", help="Original gravity"),
     brix: float = typer.Option(..., "--brix", help="Current measured Brix"),
+    wcf: float = typer.Option(1.04, "--wcf", help="Optional wort correction factor")
 ) -> None:
-    corrected = Refractometer().corrected_gravity(current_brix=brix, original_gravity=gravity)
+    corrected = Refractometer().corrected_gravity(current_brix=brix, original_gravity=gravity, wcf=wcf)
     echo_boxed(f'{round(corrected, 4)}')
 
 

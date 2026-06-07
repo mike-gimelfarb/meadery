@@ -142,11 +142,13 @@ class Hydrometer:
 class Refractometer:
     '''Represents a refractometer, a device used to measure the Brix of a liquid.'''
 
-    def corrected_gravity(self, current_brix: float, original_gravity: float) -> float:
+    def corrected_gravity(self, current_brix: float, original_gravity: float,
+                          wcf: float=1.04) -> float:
         '''Returns the corrected gravity given a measured Brix and original gravity.
         
         :param current_brix: the measured Brix value
         :param original_gravity: the original gravity of the must before fermentation
+        :param wcf: optional correction factor to account for variations in fermentable composition
         '''
         if current_brix < 0.0:
             raise ValueError('Current Brix must be non-negative.')
@@ -154,13 +156,17 @@ class Refractometer:
             raise ValueError('Original gravity must be positive.')
         
         original_brix = sg_to_brix(original_gravity)
-        return (1.001843
-            - (0.002318474 * original_brix)
-            - (0.000007775 * original_brix**2)
-            - (0.000000034 * original_brix**3)
-            + (0.00574 * current_brix)
-            + (0.00003344 * current_brix**2)
-            + (0.000000086 * current_brix**3))
+        ri_i = original_brix / wcf
+        ri_f = current_brix / wcf
+        return (
+            1.0000 
+            - (0.0044993 * ri_i) 
+            + (0.011774 * ri_f) 
+            + (0.00027581 * ri_i ** 2) 
+            - (0.0012717 * ri_f ** 2) 
+            - (0.0000072800 * ri_i ** 3) 
+            + (0.000063293 * ri_f ** 3)
+        )
 
 
 # ===================================================
