@@ -85,6 +85,25 @@ def spirit_abv_to_sg(abv: float) -> float:
     return min(max(0, sg), 1)
 
 
+def abv_dual(brix_refractometer: float, sg_hydrometer: float, wcf: float=1.04) -> float:
+    '''Returns the ABV calculated from both a hydrometer and refractometer measurement.
+    
+    :param brix_refractometer: the Brix reading from the refractometer
+    :param sg_hydrometer: the specific gravity reading from the hydrometer
+    :param wcf: optional correction factor to account for variations in fermentable composition
+    '''
+    sg = sg_hydrometer
+    brix = brix_refractometer / wcf
+    abv = (
+        277.8851 
+        - 277.4 * sg 
+        + 0.9956 * brix 
+        + 0.00523 * (brix ** 2) 
+        + 0.000013 * (brix ** 3)
+    ) * (sg / 0.78942)
+    return max(0.0, abv)
+
+
 def _load_data_json(filename: str) -> dict:
     path = resources.files('meadery').joinpath('data', filename)
     with path.open('r', encoding='utf-8') as fh:

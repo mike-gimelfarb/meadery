@@ -18,7 +18,7 @@ from trogon.typer import init_tui
 from meadery.core import (
     ACID_ADJUSTMENTS, BASE_ADJUSTMENTS, FERMENTABLES, FRUITS, YEAST_STRAINS,
     Hydrometer, Must, Refractometer,
-    add_fermentable, add_fruit, add_yeast_strain,
+    abv_dual, add_fermentable, add_fruit, add_yeast_strain,
     brix_to_sg, original_gravity, sg_to_brix, parse_recipe, solve_recipe,
     blend_to_gravity, blend_to_abv, blend_to_ph, blend_nearest, spirit_abv_to_sg,
     PH_BUFFERING_WARNING, GRAVITY_WARNING
@@ -300,6 +300,16 @@ def calc_abv(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, 
         ph=None, pKa=None, c_buf=None, require_ph=False)
     result = base_must.abv(fg=fg, method=method.value)
+    echo_boxed(f'{round(result, 2)}%\n\n{GRAVITY_WARNING}')
+
+
+@app.command("abv-dual", help="Calculate ABV without original gravity using refractometer and hydrometer")
+def calc_abv_dual(
+    brix: float = typer.Option(..., "--brix", help="Brix reading from refractometer"),
+    gravity: float = typer.Option(..., "--fg", help="Gravity from hydrometer"),
+    wcf: float = typer.Option(1.04, "--wcf", help="Optional wort correction factor"),
+) -> None:
+    result = abv_dual(brix_refractometer=brix, sg_hydrometer=gravity, wcf=wcf)
     echo_boxed(f'{round(result, 2)}%\n\n{GRAVITY_WARNING}')
 
 

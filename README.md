@@ -46,6 +46,7 @@ General notes on usage:
 | Command | Description |
 | --- | --- |
 | `abv [--og \| --recipe] --fg [--method]` | Compute ABV from OG and FG. |
+| `abv-dual --brix --fg [--wcf]` | Compute ABV without original gravity using refractometer and hydrometer estimates. |
 | `abv-potential [--og \| --recipe] [--method]` | Compute potential ABV from OG. |
 | `attenuation [--og \| --recipe] --fg` | Compute apparent attenuation. |
 | `load-recipe <file>` | Print summary of must from a recipe file. |
