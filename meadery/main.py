@@ -38,6 +38,7 @@ class AbvMethod(str, Enum):
     hall = "hall"
     duncan = "duncan"
     cutaia = "cutaia"
+    balling = "balling"
 
 
 class PotentialAbvMethod(str, Enum):
@@ -276,7 +277,7 @@ def must_solve_recipe(
 def calc_original_gravity(
     target_abv: float = typer.Option(..., "--target-abv", help="Target ABV in percent"),
     fg: float = typer.Option(..., "--target-fg", help="Target final gravity"),
-    method: AbvMethod = typer.Option(AbvMethod.duncan.value, "--method", help="ABV calculation method"),
+    method: AbvMethod = typer.Option(AbvMethod.balling.value, "--method", help="ABV calculation method"),
     tol: float = typer.Option(1e-6, "--tol", help="Root finding tolerance"),
     max_og: float = typer.Option(1.3, "--max-og", help="Maximum original gravity bound"),
 ) -> None:
@@ -290,7 +291,7 @@ def calc_abv(
     gravity: Optional[float] = typer.Option(None, "--og", help="Must original gravity"),
     recipe: Optional[str] = typer.Option(None, "--recipe", help="Path to recipe for base must"),
     fg: float = typer.Option(..., "--fg", help="Final gravity"),
-    method: AbvMethod = typer.Option(AbvMethod.duncan.value, "--method", help="ABV calculation method"),
+    method: AbvMethod = typer.Option(AbvMethod.balling.value, "--method", help="ABV calculation method"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=3785.41, gravity=gravity, 
@@ -327,7 +328,7 @@ def calc_stalled_gravity(
     yeast: str = typer.Option(..., "--yeast", help="Yeast strain name",
         case_sensitive=False, show_choices=True, prompt=False,
         autocompletion=lambda ctx, args, incomplete: [k for k in get_yeast_choices() if k.startswith(incomplete)]),
-    method: AbvMethod = typer.Option(AbvMethod.duncan.value, "--method", help="ABV calculation method"),
+    method: AbvMethod = typer.Option(AbvMethod.balling.value, "--method", help="ABV calculation method"),
     tol: float = typer.Option(1e-6, "--tol", help="Root finding tolerance"),
     min_fg: float = typer.Option(0.9, "--min-fg", help="Minimum FG for root finding"),
 ) -> None:
@@ -1008,7 +1009,7 @@ def calc_fortify_fg(
     target_abv: Optional[float] = typer.Option(..., "--target-abv", help="Target ABV in percent"),
     target_gravity: float = typer.Option(..., "--target-fg", help="Target final gravity after fortification"),
     spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
-    method: AbvMethod = typer.Option(AbvMethod.duncan.value, "--method", help="ABV calculation method"),
+    method: AbvMethod = typer.Option(AbvMethod.balling.value, "--method", help="ABV calculation method"),
 ) -> None:
     try:
         base_must = _must_from_args(
@@ -1036,7 +1037,7 @@ def calc_fortify_abv(
     fg: float = typer.Option(..., "--fg", help="Final gravity after fermentation"),
     spirit_vol: float = typer.Option(..., "--spirit-vol", help="Volume of fortifying spirit in mL"),
     spirit_abv: float = typer.Option(40.0, "--spirit-abv", help="Fortifying spirit ABV in percent"),
-    method: AbvMethod = typer.Option(AbvMethod.duncan.value, "--method", help="ABV calculation method"),
+    method: AbvMethod = typer.Option(AbvMethod.balling.value, "--method", help="ABV calculation method"),
 ) -> None:
     base_must = _must_from_args(
         label="Base must", recipe=recipe, volume=volume, gravity=gravity, 
