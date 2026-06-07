@@ -159,7 +159,7 @@ Current ABV calculation methods include `absc` [^abscabv], `balling` [^ballingab
 [^cutaiaabv]: Cutaia-Reid-Speers formula derived from beer data and published in (2009)
 [^duncanabv]: described in "Progressive Winemaking" by Peter Duncan and Bryan Acton (1967)
 [^hallabv]: described in "Brew by the Numbers: The Mathematics of Homebrewing" by M. L. Hall (1995)
-[^standardabv]`: simple linear formula popularized by C. Papazian in "The Joy of Homebrewing" (1984)
+[^standardabv]: simple linear formula popularized by C. Papazian in "The Joy of Homebrewing" (1984)
 
 
 Current potential ABV calculations methods include `cooke` [^cookeabv],`dubrunfaut` [^dubrunfautabv], `honneyman` [^honneymanabv], `margalit` [^margalitabv], `marsh` [^marshabv], `pambianchi` [^pambianchiabv].  The default is `cooke` and can be specified in `--method`.
