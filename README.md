@@ -155,7 +155,7 @@ Since an exact blend cannot always be achieved using two musts, you can allow th
 ### ABV Calculation Methods
 
 Current ABV calculation methods `--method` (default `balling`):
-- `asbc` [^abscabv], `balling` [^ballingabv], `berry` [^berryabv], `cutaia` [^cutaiaabv], `duncan` [^duncanabv], `hall` [^hallabv] and `standard` [^standardabv]. 
+- `asbc` [^abscabv], `balling` [^ballingabv], `berry` [^berryabv], `cutaia` [^cutaiaabv], `duncan` [^duncanabv], `hall` [^hallabv], `standard` [^standardabv]. 
 
 [^abscabv]: standard of the American Society of Brewing Chemists (ASBC)
 [^ballingabv]: popularized by De Clerck in "A Textbook of Brewing" (1957)
