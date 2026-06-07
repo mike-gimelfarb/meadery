@@ -229,7 +229,9 @@ Current yeast strains are defined in `meadery/data/yeasts.json`:
 ### Acids and Bases
 
 Current acids `--acid` (default `acid-blend`):
-- `tartaric`, `malic`, `citric`, `acid-blend` (LD Carlson brand).
+- `acid-blend` [^ldcarlson], `citric`, `lactic`, `malic`, `tartaric`.
+
+[^ldcarlson]: based on the chemical composition of LD Carlson brand acid blend
 
 Current bases `--base` (default `potassium-bicarbonate`):
 - `calcium-carbonate`, `magnesium-carbonate`, `potassium-carbonate`, `potassium-bicarbonate`, `sodium-bicarbonate`.
