@@ -148,19 +148,28 @@ Since an exact blend could not be achieved in many cases using only two musts, y
 | `new-fruit --name --brix --moisture --ph --pka --cbuf` | Add a fruit profile entry. |
 | `new-yeast --name --abv-limit --nitrogen` | Add a yeast strain entry. |
 
-## ABV Calculation Methods
 
-- `absc`: standard of the American Society of Brewing Chemists
-- `balling`: popularized by De Clerck in "A Textbook of Brewing" (1957)
-- `berry`: described in "First Steps in Winemaking" by C. J. J. Berry (1987)
-- `cutaia`: Cutaia-Reid-Speers formula, accurate but derived from beer data
-- `duncan`: described in "Progressive Winemaking" by Peter Duncan and Bryan Acton (1967)
-- `hall`: non-linear Hall formula, more accurate for higher gravities than the above
-- `standard`: simple linear formula, fast but inaccurate for wine/mead gravities.
+### ABV Calculation Methods
 
-The current default in all calculations is `balling`, unless specified in `--method`.
+Current ABV calculation methods include `absc` [^abscabv], `balling` [^ballingabv], `berry` [^berryabv], `cutaia` [^cutaiaabv], `duncan` [^duncanabv], `hall` [^hallabv] and `standard` [^standardabv]. The default is `balling` and can be specified in `--method`.
 
-For potential abv calculations, the options are currently `dubrunfaut`, `marsh`, `margalit`, `cooke`, `pambianchi` and `honneyman`, the default is `cooke`.
+[^abscabv]: standard of the American Society of Brewing Chemists
+[^ballingabv]: popularized by De Clerck in "A Textbook of Brewing" (1957)
+[^berryabv]: described in "First Steps in Winemaking" by C. J. J. Berry (1987)
+[^cutaiaabv]: Cutaia-Reid-Speers formula derived from beer data and published in (2009)
+[^duncanabv]: described in "Progressive Winemaking" by Peter Duncan and Bryan Acton (1967)
+[^hallabv]: described in "Brew by the Numbers: The Mathematics of Homebrewing" by M. L. Hall (1995)
+[^standardabv]`: simple linear formula popularized by C. Papazian in "The Joy of Homebrewing" (1984)
+
+
+Current potential ABV calculations methods include `cooke` [^cookeabv],`dubrunfaut` [^dubrunfautabv], `honneyman` [^honneymanabv], `margalit` [^margalitabv], `marsh` [^marshabv], `pambianchi` [^pambianchiabv].  The default is `cooke` and can be specified in `--method`.
+
+[^cooke]: proposed by Cooke and Lapsley (1988) (implemented according to the formula on the FermCalc website)
+[^dubrunfautabv]: reported by Boulton et al (1999) and attributed to Dubrunfaut (implemented according to the formula on the FermCalc website)
+[^honneymanabv]: proposed by Honneyman (1966) (implemented according to the formula on the FermCalc website)
+[^margalitabv]: proposed by Margalit (2004) (implemented according to the formula on the FermCalc website)
+[^marshabv]: proposed by Marsh (1958) (implemented according to the formula on the FermCalc website)
+[^pambianchiabv]: proposed by Pambianchi (2008) (implemented according to the formula on the FermCalc website)
 
 
 ## Dynamic Fermentables, Fruits, Yeast Strains and Adjuncts
