@@ -121,12 +121,13 @@ Since an exact blend could not be achieved in many cases using only two musts, y
 
 ## ABV Calculation Methods
 
-- `standard`: simple linear formula, fast but inaccurate for wine/mead gravities
+- `absc`: standard of the American Society of Brewing Chemists
+- `balling`: popularized by De Clerck in "A Textbook of Brewing" (1957)
 - `berry`: described in "First Steps in Winemaking" by C. J. J. Berry (1987)
-- `hall`: non-linear Hall formula, more accurate for higher gravities than the above
-- `duncan`: described in "Progressive Winemaking" by Peter Duncan and Bryan Acton (1967)
 - `cutaia`: Cutaia-Reid-Speers formula, accurate but derived from beer data
-- `balling`: popularized by De Clerck in "A Textbook of Brewing" (1957).
+- `duncan`: described in "Progressive Winemaking" by Peter Duncan and Bryan Acton (1967)
+- `hall`: non-linear Hall formula, more accurate for higher gravities than the above
+- `standard`: simple linear formula, fast but inaccurate for wine/mead gravities.
 
 The current default in all calculations is `balling`, unless specified in `--method`.
 

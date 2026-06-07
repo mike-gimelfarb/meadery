@@ -439,6 +439,8 @@ BASE_ADJUSTMENTS = {
 #                  MUST FUNCTIONS
 # ===================================================
 
+DEFAULT_ABV = 'balling'
+
 @dataclass
 class Must:
     '''Represents a must, a mixture of water and fermentable sugars before fermentation.'''
@@ -714,7 +716,7 @@ class Must:
         return { 'proportion': ratio, 'spirit_volume': self.volume * ratio }
 
     def fortify_volume(self, target_abv: float, target_fg: float, spirit_abv: float=40.0,
-                       method: str='balling', tol: float=1e-6) -> dict:
+                       method: str=DEFAULT_ABV, tol: float=1e-6) -> dict:
         '''Returns the volume of spirit needed to fortify this must to a target ABV and FG.
         Also returns the gravity at which to fortify.
         
@@ -754,7 +756,7 @@ class Must:
                 "proportion": proportion, "fortify_abv": fortify_at_abv}
 
     def fortify_abv(self, fg: float, spirit_vol_ml: float, spirit_abv: float=40.0,
-                    method: str='balling') -> float:
+                    method: str=DEFAULT_ABV) -> float:
         '''Return the resulting ABV (%) after fermenting this must from its OG to
         `fg` and then adding `spirit_vol_ml` milliliters of spirit at `spirit_abv` ABV.
 
@@ -783,7 +785,7 @@ class Must:
     #                              Brewing Calculation Methods    
     # ====================================================================================
     
-    def abv(self, fg, method: str='balling') -> float:
+    def abv(self, fg, method: str=DEFAULT_ABV) -> float:
         '''Returns the potential ABV of the must given a final gravity and method.
         
         :param fg: final gravity to use for the ABV calculation
@@ -814,10 +816,15 @@ class Must:
             re = (0.1808 * oe) + (0.8192 * ae)
             abw = (oe - re) / (2.0665 - (0.010665 * oe))
             return abw * fg / 0.78924
+        elif method == 'absc':
+            oe = sg_to_brix(og)
+            ae = sg_to_brix(fg)
+            abw = (0.387 * (oe - ae)) + (0.00307 * ((oe - ae) ** 2))
+            return abw * fg / 0.78924
         else:
             raise ValueError(f'Invalid abv method {method}.')
     
-    def abv_potential(self, method: str='balling') -> float:
+    def abv_potential(self, method: str=DEFAULT_ABV) -> float:
         '''Returns the potential ABV of the must given a method.
         
         :param method: calculation method for ABV
@@ -854,7 +861,7 @@ class Must:
         else:
             return ((og - fg) / (og - 1.0)) * 100.0
 
-    def stalled_final_gravity(self, yeast: Yeast, method: str='balling', 
+    def stalled_final_gravity(self, yeast: Yeast, method: str=DEFAULT_ABV, 
                               tol: float=1e-6, min_fg: float=0.9) -> float:
         '''Returns the final gravity at which fermentation will stall given a yeast ABV 
         limit and method.
@@ -1361,7 +1368,7 @@ def solve_recipe(path: str, target_og: float | None, target_vol: float | None,
 
 
 def original_gravity(target_abv: float, fg: float, 
-                     method: str='balling', tol: float=1e-6, max_og: float=1.3) -> float:
+                     method: str=DEFAULT_ABV, tol: float=1e-6, max_og: float=1.3) -> float:
     '''Returns the original gravity needed to achieve a target ABV given a final gravity 
     and method.
     
