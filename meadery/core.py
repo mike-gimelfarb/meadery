@@ -799,7 +799,7 @@ class Must:
             return (og - fg) * 131.25
         elif method == 'berry':
             return (og - fg) / 0.00736
-        elif method == 'alternate':   # duncan and acton
+        elif method == 'hall':
             return 76.08 * ((og - fg) / (1.775 - og)) * (fg / 0.794)
         elif method == 'duncan':
             return 1000 * (og - fg) / (7.75 - 3.75 * (og - 1.007))

@@ -35,7 +35,7 @@ app = typer.Typer(help="Meadery tools command-line app")
 class AbvMethod(str, Enum):
     standard = "standard"
     berry = "berry"
-    alternate = "alternate"
+    hall = "hall"
     duncan = "duncan"
     cutaia = "cutaia"
 

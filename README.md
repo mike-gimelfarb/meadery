@@ -123,7 +123,7 @@ Since an exact blend could not be achieved in many cases using only two musts, y
 
 - `standard`: simple linear formula, fast but inaccurate for wine/mead gravities
 - `berry`: described in "First Steps in Winemaking" by C. J. J. Berry (1987)
-- `alternate`: non-linear Hall formula, more accurate for higher gravities than the above
+- `hall`: non-linear Hall formula, more accurate for higher gravities than the above
 - `duncan`: described in "Progressive Winemaking" by Peter Duncan and Bryan Acton (1967)
 - `cutaia`: Cutaia-Reid-Speers formula, accurate but derived from beer data.
 
