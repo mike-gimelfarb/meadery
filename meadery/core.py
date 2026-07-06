@@ -432,7 +432,7 @@ class AcidAddition:
 # Acid additions expressed as g/L tartaric-equivalent TA increase per g/L additive.
 # Components are (weight_fraction, pKa, MW g/mol) for adjust_ph.
 ACID_ADJUSTMENTS = {
-    'acid-blend': AcidAddition(ta_effect=1.128,
+    'acid-blend': AcidAddition(ta_effect=1.097,
                                components=[(1/3, 2.98, 150.09),
                                            (1/3, 3.40, 134.09),
                                            (1/3, 3.13, 192.12)]),
@@ -862,7 +862,7 @@ class Must:
         if method == 'dubrunfaut':
             oe = 1000 * (og - 1.0)
             return 0.059 * (2.66 * oe - 30) 
-        if method == 'marsh':
+        elif method == 'marsh':
             brix = sg_to_brix(og)
             return 0.47 * (brix * 0.9982 - 3) / 0.7892
         elif method == 'margalit':
@@ -978,11 +978,10 @@ class Must:
 
     def backsweeten(self, final_sg: float, target_sg: float, 
                     sweetener: Fermentable, tol: float=1e-6) -> float:
-        '''Returns the mass in grams of `sweetener` to add to this must to reach `final_sg'
-        after fermentation.
+        '''Returns the mass in grams of `sweetener` to add to reach `target_sg`.
         
-        :param final_sg: the target specific gravity after fermentation and backsweetening
-        :param target_sg: the specific gravity after fermentation but before backsweetening
+        :param final_sg: the specific gravity after fermentation but before backsweetening
+        :param target_sg: the desired specific gravity after backsweetening
         :param sweetener: the Fermentable to add for backsweetening
         :param tol: tolerance for the root-finding algorithm
         '''
@@ -992,11 +991,10 @@ class Must:
 
     def backsweeten_with_fruit_juice(self, final_sg: float, target_sg: float,
                                      fruit: Fruit, tol: float=1e-6) -> float:
-        '''Returns the volume in mL of fruit juice to add to this must to reach `final_sg'
-        after fermentation.
+        '''Returns the volume in mL of fruit juice to add to reach `target_sg`.
 
-        :param final_sg: the target specific gravity after fermentation and backsweetening
-        :param target_sg: the specific gravity after fermentation but before backsweetening
+        :param final_sg: the specific gravity after fermentation but before backsweetening
+        :param target_sg: the desired specific gravity after backsweetening
         :param fruit: the Fruit profile to use for the juice
         :param tol: tolerance for the root-finding algorithm
         '''
