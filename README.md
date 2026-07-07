@@ -253,21 +253,21 @@ meadery new-fruit --name tulaberry --brix 18 --moisture 84 --ph 3.5 --pka 3.40 -
 Many functions accept a `--recipe` argument, which is either an absolute or relative path to a `.recipe` file. Recipe files make it easy to manage existing recipes and musts, and run commands without manually computing `--vol`, `--og`, `--ph`, `--pka` or `--cbuf`.
 
 Rules:
-- One instruction per non-empty line of the form `<ingredient>=<quantity>`.
+- One instruction per non-empty line of the form `<ingredient>=<quantity> <unit>`.
 - `<ingredient>` must be a valid fermentable, fruit, acid or base, matched case-insensitively.
-- `<quantity>` for fermentable, fruit, acid or base is in grams.
-- Fruit juice lines use the form `<fruit> juice=<quantity>`, e.g. `blueberry juice=500`, where `<quantity>` is in mL.
+- `<unit>` must be `g` for acids, bases and fruit, must be `ml` for juice, and can be either `g` or `ml` for fermentables.
+- Fruit juice lines use the form `<fruit> juice=<quantity> ml`, e.g. `blueberry juice=500 ml`.
 - `water` is a fermentable with unit density.
 - Lines beginning with `#` or blank lines are ignored.
 
 Example:
 ```
 # sample recipe
-honey=500
-water=2500
-blueberry juice=1000
-table-sugar=200
-acid-blend=2
+honey=500 g
+water=2500 ml
+blueberry juice=1000 ml
+table-sugar=200 g
+acid-blend=2 g
 ```
 
 ### Solving for Unknown Quantities in a Recipe
@@ -276,10 +276,10 @@ The `--solve-recipe` command allows some ingredients in a recipe file to have un
 
 ```
 # sample recipe with unknowns
-honey=x
-water=y
-blueberry juice=1000
-acid-blend=z
+honey=x g
+water=y ml
+blueberry juice=1000 ml
+acid-blend=z g
 ```
 
 will determine the amount of honey, water and acid blend required to match target OG, volume and pH desired. The number of unknowns must match the number of targets.

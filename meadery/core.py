@@ -4,6 +4,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 from typing import List, Tuple
 
 import numpy as np
@@ -1211,8 +1212,21 @@ class Must:
                 f"c_buf={f'{self.c_buf:.2f}' if self.c_buf is not None else 'N/A'})")
 
 
-def _load_recipe_file(path: str) -> List[Tuple[str, object, object]]:
+# Matches a quantity with a required unit suffix, e.g. "600 g", "2500ml", "x g"
+_UNIT_RE = re.compile(r'^(.+?)\s*(g|ml)\s*$', re.IGNORECASE)
 
+
+def _load_recipe_file(path: str) -> List[Tuple[str, object, str, float]]:
+    '''Parse a recipe file and return a list of (line_type, ingredient, value_str, factor).
+
+    *value_str* is the raw numeric or symbolic token from the RHS (unit stripped).
+    *factor* converts that value to the canonical unit expected by the must methods:
+    - juice: ml  (factor always 1.0)
+    - fruit: g   (factor always 1.0)
+    - acid/base: g (factor always 1.0)
+    - fermentable in g: factor = 1.0
+    - fermentable in ml: factor = fermentable.density  (ml × density → g)
+    '''
     # if path is not valid, try appending .recipe
     if not os.path.isfile(path):
         alt_path = path + '.recipe'
@@ -1236,6 +1250,14 @@ def _load_recipe_file(path: str) -> List[Tuple[str, object, object]]:
             if not rhs:
                 raise ValueError(f"Line {lineno}: empty quantity.")
 
+            # parse and validate unit
+            m = _UNIT_RE.match(rhs)
+            if not m:
+                raise ValueError(
+                    f"Line {lineno}: quantity '{rhs}' must end with a unit ('g' or 'ml').")
+            value_str = m.group(1).strip()
+            unit = m.group(2).lower()
+
             # convert ingredient name to lowercase for consistent lookup
             key = lhs.lower()
             if key.endswith(' juice'):
@@ -1243,28 +1265,45 @@ def _load_recipe_file(path: str) -> List[Tuple[str, object, object]]:
                 fruit = FRUITS.get(fruit_name)
                 if fruit is None:
                     raise ValueError(f"Line {lineno}: unknown fruit '{fruit_name}'.")
-                result.append(('juice', fruit, rhs))
+                if unit != 'ml':
+                    raise ValueError(
+                        f"Line {lineno}: juice quantities must be in 'ml', got '{unit}'.")
+                result.append(('juice', fruit, value_str, 1.0))
             elif key in FERMENTABLES:
                 fermentable = FERMENTABLES[key]
-                result.append(('fermentable', fermentable, rhs))
+                factor = fermentable.density if unit == 'ml' else 1.0
+                result.append(('fermentable', fermentable, value_str, factor))
             elif key in FRUITS:
                 fruit = FRUITS[key]
-                result.append(('fruit', fruit, rhs))
+                if unit != 'g':
+                    raise ValueError(
+                        f"Line {lineno}: fruit quantities must be in 'g', got '{unit}'.")
+                result.append(('fruit', fruit, value_str, 1.0))
             elif key in ACID_ADJUSTMENTS:
                 acid = ACID_ADJUSTMENTS[key]
-                result.append(('acid', acid, rhs))
+                if unit != 'g':
+                    raise ValueError(
+                        f"Line {lineno}: acid quantities must be in 'g', got '{unit}'.")
+                result.append(('acid', acid, value_str, 1.0))
             elif key in BASE_ADJUSTMENTS:
                 base = BASE_ADJUSTMENTS[key]
-                result.append(('base', base, rhs))
+                if unit != 'g':
+                    raise ValueError(
+                        f"Line {lineno}: base quantities must be in 'g', got '{unit}'.")
+                result.append(('base', base, value_str, 1.0))
             else:
                 raise ValueError(f"Line {lineno}: unknown ingredient '{lhs}'.")
     return result
 
 
-def _load_recipe_list(recipe_list: List[Tuple[str, object, object]]) -> Must:
+def _load_recipe_list(recipe_list: List[Tuple[str, object, float]]) -> Must:
+    '''Build a Must from a list of (line_type, ingredient, qty) tuples.
+    
+    qty must already be in the canonical unit (g for fermentables/fruit/acid/base,
+    ml for juice).
+    '''
     must = Must(volume=0.0, gravity=1.0, ph=7.0, pka=7.0, c_buf=0.0)
-    for (line_type, ingredient, qty_str) in recipe_list:
-        qty = float(qty_str)
+    for (line_type, ingredient, qty) in recipe_list:
         if line_type == 'juice':
             must = must.add_fruit_juice(ingredient, qty)
         elif line_type == 'fermentable':
@@ -1276,18 +1315,23 @@ def _load_recipe_list(recipe_list: List[Tuple[str, object, object]]) -> Must:
         elif line_type == 'base':
             must = must.add_base(qty, ingredient)
     return must
-        
+
 
 def parse_recipe(path: str) -> Must:
-    """Parse a simple recipe file and return the resulting Must.
+    """Parse a recipe file and return the resulting Must.
 
-    Recipe format (one instruction per line):
-      <ingredient>=<quantity>
-    - fermentables and whole fruit quantities are in grams
-    - fruit juice quantities are in milliliters; write as "<fruit> juice"
-    - lines starting with '#' or blank lines are ignored
+    Recipe format (one instruction per line, comments with '#'):
+      <ingredient> = <quantity> <unit>
+
+    Units:
+      - fermentables: 'g' (grams) or 'ml' (millilitres; converted to g via density)
+      - whole fruit:  'g'
+      - fruit juice:  'ml'  (write ingredient as "<fruit> juice")
+      - acid/base:    'g'
     """
-    return _load_recipe_list(_load_recipe_file(path))
+    raw = _load_recipe_file(path)
+    canonical = [(lt, ing, float(val) * factor) for lt, ing, val, factor in raw]
+    return _load_recipe_list(canonical)
 
 
 def solve_recipe(path: str, target_og: float | None, target_vol: float | None,
@@ -1302,20 +1346,20 @@ def solve_recipe(path: str, target_og: float | None, target_vol: float | None,
     fixed_lines = []
     variable_lines = []
     variable_names = []
-    for line_type, ingredient, qty_str in _load_recipe_file(path):
+    for line_type, ingredient, qty_str, factor in _load_recipe_file(path):
         try:
-            fixed_lines.append((line_type, ingredient, float(qty_str)))
+            fixed_lines.append((line_type, ingredient, float(qty_str) * factor))
         except ValueError:
-            variable_lines.append((line_type, ingredient, qty_str))
+            variable_lines.append((line_type, ingredient, qty_str, factor))
             if qty_str not in variable_names:
                 variable_names.append(qty_str)
 
     def build_recipe(variable_values):
         substitution = {name: float(variable_values[idx])
                         for idx, name in enumerate(variable_names)}
-        built = [*fixed_lines]
-        for line_type, ingredient, var_name in variable_lines:
-            built.append((line_type, ingredient, substitution[var_name]))
+        built = list(fixed_lines)
+        for line_type, ingredient, var_name, factor in variable_lines:
+            built.append((line_type, ingredient, substitution[var_name] * factor))
         return built
 
     def build_must(variable_values):
@@ -1372,7 +1416,7 @@ def solve_recipe(path: str, target_og: float | None, target_vol: float | None,
     initial_guess = np.array([
         (target_vol / max(1.0, len(variable_lines))) if line_type == 'juice' and target_vol is not None
         else max(100.0, (target_vol or 1000.0) / 10.0)
-        for line_type, _, _ in variable_lines
+        for line_type, _, _, _ in variable_lines
     ], dtype=float)
 
     result = quadratic_solve(
